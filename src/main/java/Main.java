@@ -19,6 +19,7 @@ public class Main {
     } catch (IOException e) {
       System.out.println("IOException: " + e.getMessage());
     } finally {
+      System.out.println(String.format("Connection: %s", clientSocket));
       try {
         if (clientSocket != null) {
           clientSocket.close();
