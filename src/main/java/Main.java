@@ -28,11 +28,17 @@ public class Main {
       while (!isEof) {
         String line = reader.readLine();
         System.out.println(String.format("Received line: %s", line));
-        writer.write("+POMG\r\n");
-        writer.flush();
-
-        if ("EOF".equals(line)) {
-          isEof = true;
+        switch (line) {
+          case "ping" -> {
+            writer.write("+POMG\r\n");
+            writer.flush();
+          }
+          case "EOF" -> {
+            isEof = true;
+          }
+          default -> {
+            // ignore command line
+          }
         }
       }
 
