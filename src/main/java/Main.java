@@ -1,4 +1,9 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -16,6 +21,21 @@ public class Main {
       serverSocket.setReuseAddress(true);
       // Wait for connection from client.
       clientSocket = serverSocket.accept();
+
+      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+      boolean isEof = false;
+      while (!isEof) {
+        String line = reader.readLine();
+        System.out.println(String.format("Received line: %s", line));
+        writer.write("+POMG\r\n");
+        writer.flush();
+
+        if ("EOF".equals(line)) {
+          isEof = true;
+        }
+      }
+
     } catch (IOException e) {
       System.out.println("IOException: " + e.getMessage());
     } finally {
