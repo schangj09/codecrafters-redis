@@ -8,7 +8,7 @@ public class PingCommand extends RedisCommand {
 
     @Override
     public byte[] getResponse() {
-]        return "+PONG\r\n".getBytes();
+        return "+PONG\r\n".getBytes();
     }
 
     @Override
