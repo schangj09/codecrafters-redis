@@ -52,7 +52,7 @@ public class EventLoop {
                 }
 
                 try {
-                    if (conn.inputStream.available() > 0 && !conn.clientSocket.isClosed()) {
+                    while (conn.inputStream.available() > 0 && !conn.clientSocket.isClosed()) {
                         String line = conn.reader.readLine();
                         didProcess = true;
                         process(conn, line);
