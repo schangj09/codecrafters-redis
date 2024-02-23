@@ -1,24 +1,22 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 public class ClientConnection {
     Socket clientSocket;
     InputStream inputStream;
     OutputStream outputStream;
-    BufferedReader reader;
-    BufferedWriter writer;
+    BufferedInputLineReader reader;
+    BufferedOutputStream writer;
 
     public ClientConnection(Socket s) throws IOException {
         clientSocket = s;
         inputStream = s.getInputStream();
-        reader = new BufferedReader(new InputStreamReader(inputStream));
+        reader = new BufferedInputLineReader(new BufferedInputStream(inputStream));
         outputStream = s.getOutputStream();
-        writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+        writer = new BufferedOutputStream(outputStream);
     }
 }

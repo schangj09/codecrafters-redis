@@ -83,10 +83,12 @@ public class EventLoop {
                 }
 
                 try {
-                    while (conn.reader.ready()) {
-                        String line = conn.reader.readLine();
+                    while (conn.reader.available() > 0) {
+                        RedisCommand command = RedisCommand.parseCommand(conn.reader);
                         didProcess = true;
-                        process(conn, line);
+                        if (command != null) {
+                            process(conn, command);
+                        }
                     }
                 } catch (IOException e) {
                     System.out.println("IOException: " + e.getMessage());
@@ -100,21 +102,23 @@ public class EventLoop {
         }
     }
 
-    void process(ClientConnection conn, String line) throws IOException {
-        System.out.println(String.format("Received line: %s", line));
-        switch (line) {
-            case PING -> {
-                conn.writer.write(PONG);
-                conn.writer.flush();
-            }
-            case EOF -> {
+    void process(ClientConnection conn, RedisCommand command) throws IOException {
+        System.out.println(String.format("Received line: %s", command));
+
+        byte[] response = command.getResponse();
+        if (response != null) {
+            conn.writer.write(response);
+            conn.writer.flush();
+        }
+        switch (command) {
+            case EofCommand c -> {
                 conn.clientSocket.close();
             }
-            case TERMINATE -> {
+            case TerminateCommand c -> {
                 terminate();
             }
             default -> {
-                // ignore unknown command line
+                // no action for other command types
             }
         }
     }
