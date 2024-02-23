@@ -30,7 +30,7 @@ public class Main {
         System.out.println(String.format("Received line: %s", line));
         switch (line) {
           case "ping" -> {
-            writer.write("+POMG\r\n");
+            writer.write("+PONG\r\n");
             writer.flush();
           }
           case "EOF" -> {
