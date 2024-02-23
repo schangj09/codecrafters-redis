@@ -17,13 +17,12 @@ public class Main {
       System.out.println("Server started. Listening on Port " + PORT);
       EventLoop loop = new EventLoop(serverSocket);
       loop.processLoop();
+      System.out.println(String.format("Event loop terminated"));
 
     } catch (IOException e) {
       System.out.println("IOException: " + e.getMessage());
     } catch (InterruptedException e) {
       System.out.println("InterruptedException: " + e.getMessage());
-    } finally {
-      System.out.println(String.format("All connections closed"));
     }
   }
 }

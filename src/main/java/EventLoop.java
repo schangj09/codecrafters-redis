@@ -8,37 +8,68 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class EventLoop {
+    private static final String TERMINATE = "terminate";
+    private static final String EOF = "EOF";
     private static final String PONG = "+PONG\r\n";
     private static final String PING = "ping";
 
     // keep a list of socket connections and continue checking for new connections
-    final ServerSocket serverSocket;
-    Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
-    boolean done = false;
-    ExecutorService executor;
+    private final ServerSocket serverSocket;
+    private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
+    private final ExecutorService executor;
+    private volatile boolean done = false;
 
     public EventLoop(ServerSocket socket) {
         serverSocket = socket;
-        executor = Executors.newFixedThreadPool(10); // Adjust thread count as needed
+        executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new connections
 
+        // create the thread for accepting new connections
         executor.execute(() -> {
-            while (true) {
+            while (!done) {
                 Socket clientSocket = null;
                 try {
                     clientSocket = serverSocket.accept();
                     ClientConnection conn = new ClientConnection(clientSocket);
                     clientSockets.add(conn);
+                    System.out.println(
+                            String.format("Connection: %s, opened: %s", clientSocket, !clientSocket.isClosed()));
+                } catch (IOException e) {
+                    System.out.println("IOException on accept: " + e.getMessage());
+                }
+            }
+
+            // loop was terminated so close any open connections
+            for (ClientConnection conn : clientSockets) {
+                try {
+                    System.out.println(
+                            String.format(
+                                    "Closing connection: %s, opened: %s",
+                                    conn.clientSocket,
+                                    !conn.clientSocket.isClosed()));
+                    if (!conn.clientSocket.isClosed()) {
+                        conn.clientSocket.close();
+                    }
                 } catch (IOException e) {
                     System.out.println("IOException: " + e.getMessage());
-                } finally {
-                    System.out.println(String.format("Connection: %s, opened: %s", 
-                    clientSocket, clientSocket == null ? null : !clientSocket.isClosed()));
                 }
             }
         });
     }
 
-    void processLoop() throws InterruptedException {
+    public void terminate() {
+        System.out.println(String.format("Terminate invoked. Closing %d connections.", clientSockets.size()));
+        done = true;
+        // stop accepting new connections and shut down the accept connections thread
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            System.out.println("IOException on socket close: " + e.getMessage());
+        }
+        // executor close - waits for thread to finish closing all open connections
+        executor.close();
+    }
+
+    public void processLoop() throws InterruptedException {
         while (!done) {
             // check for bytes on next socket and process
             boolean didProcess = false;
@@ -63,7 +94,7 @@ public class EventLoop {
             }
             // sleep a bit if there were no lines processed
             if (!didProcess) {
-                System.out.println("sleep 1s");
+                // System.out.println("sleep 1s");
                 Thread.sleep(1000L);
             }
         }
@@ -76,11 +107,14 @@ public class EventLoop {
                 conn.writer.write(PONG);
                 conn.writer.flush();
             }
-            case "EOF" -> {
+            case EOF -> {
                 conn.clientSocket.close();
             }
+            case TERMINATE -> {
+                terminate();
+            }
             default -> {
-                // ignore command line
+                // ignore unknown command line
             }
         }
     }
