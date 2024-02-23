@@ -52,7 +52,7 @@ public class EventLoop {
                 }
 
                 try {
-                    while (conn.inputStream.available() > 0 && !conn.clientSocket.isClosed()) {
+                    while (conn.reader.ready()) {
                         String line = conn.reader.readLine();
                         didProcess = true;
                         process(conn, line);
@@ -63,7 +63,7 @@ public class EventLoop {
             }
             // sleep a bit if there were no lines processed
             if (!didProcess) {
-                //System.out.println("sleep 1s");
+                System.out.println("sleep 1s");
                 Thread.sleep(1000L);
             }
         }
