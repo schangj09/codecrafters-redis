@@ -7,7 +7,7 @@ public class TerminateCommand extends RedisCommand {
 
     @Override
     public byte[] getResponse() {
-        throw new UnsupportedOperationException("Unimplemented method 'getResponse'");
+        return null;
     }
 
     @Override
