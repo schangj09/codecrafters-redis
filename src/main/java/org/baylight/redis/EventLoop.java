@@ -93,8 +93,8 @@ public class EventLoop {
                             process(conn, command);
                         }
                     }
-                } catch (IOException e) {
-                    System.out.println("IOException: " + e.getMessage());
+                } catch (Exception e) {
+                    System.out.println(String.format("Exception: %s \"%s\"", e.getClass().getSimpleName(), e.getMessage()));
                 }
             }
             // sleep a bit if there were no lines processed

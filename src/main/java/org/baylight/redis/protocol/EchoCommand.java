@@ -1,9 +1,5 @@
 package org.baylight.redis.protocol;
 
-import java.io.IOException;
-
-import org.baylight.redis.io.BufferedInputLineReader;
-
 public class EchoCommand extends RedisCommand {
 
     RespBulkString bulkStringArg;
@@ -33,20 +29,6 @@ public class EchoCommand extends RedisCommand {
     @Override
     public byte[] getResponse() {
         return bulkStringArg != null ? bulkStringArg.asResponse() : new byte[] {};
-    }
-
-    public static EchoCommand parse(BufferedInputLineReader reader) throws IOException {
-        String line = reader.readLine();
-
-        // parse line as an Integer
-        int size = Integer.parseInt(line);
-        // read the bulk string
-        byte[] arg = new byte[size];
-        int n = reader.read(arg, 0, size);
-        if (n != size) {
-            throw new RuntimeException(String.format("Error reading bulk string: expected %d bytes, got %d bytes"));
-        }
-        return new EchoCommand(new RespBulkString(arg));
     }
 
     @Override
