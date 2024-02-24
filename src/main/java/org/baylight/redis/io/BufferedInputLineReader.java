@@ -1,3 +1,4 @@
+package org.baylight.redis.io;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.IOException;

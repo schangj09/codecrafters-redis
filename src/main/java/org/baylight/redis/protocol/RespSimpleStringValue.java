@@ -1,4 +1,7 @@
+package org.baylight.redis.protocol;
 import java.io.IOException;
+
+import org.baylight.redis.io.BufferedInputLineReader;
 
 public class RespSimpleStringValue implements RespValue {
 
@@ -15,6 +18,21 @@ public class RespSimpleStringValue implements RespValue {
     @Override
     public RespType getType() {
         return RespType.SIMPLE_STRING;
+    }
+
+    @Override
+    public byte[] asResponse() {
+        return ("+" + s + "\r\n").getBytes();
+    }
+
+    @Override
+    public String getValueAsString() {
+        return s;
+    }
+
+    @Override
+    public String toString() {
+        return "RespSimpleStringValue [s=" + s + "]";
     }
 
 }

@@ -1,5 +1,8 @@
+package org.baylight.redis.protocol;
 import java.io.IOException;
 import java.util.Arrays;
+
+import org.baylight.redis.io.BufferedInputLineReader;
 
 public class RespArrayValue implements RespValue {
     RespValue[] values;

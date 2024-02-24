@@ -1,4 +1,7 @@
+package org.baylight.redis.protocol;
 import java.io.IOException;
+
+import org.baylight.redis.io.BufferedInputLineReader;
 
 public class RespBulkString implements RespValue {
     private final byte[] value;

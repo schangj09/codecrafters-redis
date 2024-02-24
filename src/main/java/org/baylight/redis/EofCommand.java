@@ -1,3 +1,5 @@
+package org.baylight.redis;
+import org.baylight.redis.protocol.RedisCommand;
 
 public class EofCommand extends RedisCommand {
 

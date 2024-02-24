@@ -1,3 +1,4 @@
+package org.baylight.redis;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -6,6 +7,8 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.baylight.redis.protocol.RedisCommand;
 
 public class EventLoop {
     private static final String TERMINATE = "terminate";

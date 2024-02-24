@@ -1,4 +1,10 @@
+package org.baylight.redis.protocol;
+
 import java.io.IOException;
+
+import org.baylight.redis.EofCommand;
+import org.baylight.redis.TerminateCommand;
+import org.baylight.redis.io.BufferedInputLineReader;
 
 public abstract class RedisCommand {
     public static RedisCommand parseCommand(BufferedInputLineReader reader) throws IOException {
@@ -21,10 +27,6 @@ public abstract class RedisCommand {
             }
         }
         return null;
-    }
-
-    protected void setArgs(RespValue[] values) {
-        // ignore by default
     }
 
     private static RedisCommand getCommand(RespBulkString bulkString) {
@@ -59,6 +61,10 @@ public abstract class RedisCommand {
 
     public RedisCommand(Type type) {
         this.type = type;
+    }
+
+    protected void setArgs(RespValue[] values) {
+        // ignore by default
     }
 
     public abstract byte[] getResponse();

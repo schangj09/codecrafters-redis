@@ -1,9 +1,12 @@
+package org.baylight.redis;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+
+import org.baylight.redis.io.BufferedInputLineReader;
 
 public class ClientConnection {
     Socket clientSocket;

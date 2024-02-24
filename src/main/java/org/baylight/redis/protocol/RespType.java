@@ -1,3 +1,4 @@
+package org.baylight.redis.protocol;
 public enum RespType {
     SIMPLE_STRING('+'),
     SIMPLE_ERROR('-'),

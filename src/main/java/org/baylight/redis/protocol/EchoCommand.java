@@ -1,8 +1,9 @@
+package org.baylight.redis.protocol;
 import java.io.IOException;
 
-public class EchoCommand extends RedisCommand {
+import org.baylight.redis.io.BufferedInputLineReader;
 
-    public static String NAME = "echo";
+public class EchoCommand extends RedisCommand {
 
     RespBulkString bulkStringArg;
 
