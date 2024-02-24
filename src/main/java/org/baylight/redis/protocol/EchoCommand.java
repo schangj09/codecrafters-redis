@@ -1,4 +1,5 @@
 package org.baylight.redis.protocol;
+
 import java.io.IOException;
 
 import org.baylight.redis.io.BufferedInputLineReader;
@@ -21,15 +22,17 @@ public class EchoCommand extends RedisCommand {
         if (values.length != 2) {
             throw new RuntimeException(String.format("EchoCommand: Invalid number of arguments: %d", values.length));
         }
-        if (!values[1].isBulkString()) {
+        if (!values[1].isBulkString() && !values[1].isSimpleString()) {
             throw new RuntimeException(String.format("EchoCommand: Invalid argument: %s", values[1]));
         }
-        this.bulkStringArg = (RespBulkString) values[1];
+        this.bulkStringArg = values[1].isBulkString()
+                ? (RespBulkString) values[1]
+                : new RespBulkString(values[1].getValueAsString().getBytes());
     }
 
     @Override
     public byte[] getResponse() {
-        return bulkStringArg != null ? bulkStringArg.asResponse() : new byte[]{};
+        return bulkStringArg != null ? bulkStringArg.asResponse() : new byte[] {};
     }
 
     public static EchoCommand parse(BufferedInputLineReader reader) throws IOException {

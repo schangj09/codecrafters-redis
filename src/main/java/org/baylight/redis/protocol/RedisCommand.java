@@ -12,49 +12,47 @@ public abstract class RedisCommand {
         if (value == null) {
             return null;
         }
-        if (value.isBulkString()) {
-            RespBulkString bulkString = (RespBulkString) value;
-            return getCommand(bulkString);
-        } else if (value.getType() == RespType.ARRAY) {
+        if (value.getType() == RespType.ARRAY) {
             RespArrayValue array = (RespArrayValue) value;
             if (array.getSize() >= 1) {
-                RespBulkString bulkString = (RespBulkString) array.getValues()[0];
-                RedisCommand command = getCommand(bulkString);
+                RedisCommand command = getCommand(array.getValues()[0]);
                 if (command != null) {
                     command.setArgs(array.getValues());
                     return command;
                 }
             }
         }
-        return null;
+        return getCommand(value);
     }
 
-    private static RedisCommand getCommand(RespBulkString bulkString) {
-        String command = bulkString.getValueAsString().toUpperCase();
-
-        try {
-            RedisCommand.Type commandType = RedisCommand.Type.valueOf(command);
-            return switch (commandType) {
-                case PING -> new PingCommand();
-                case TERMINATE -> new TerminateCommand();
-                case EOF -> new EofCommand();
-                case ECHO -> new EchoCommand();
-                case null, default -> {
-                    System.out.println("Unknown command: " + command);
-                    yield null;
-                }
-            };
-        } catch (Exception e) {
-            System.out.println("Unknown command: " + command);
-            return null;
-        }
+    private static RedisCommand getCommand(RespValue value) {
+        String command = value.getValueAsString().toUpperCase();
+        RedisCommand.Type commandType = RedisCommand.Type.of(command);
+        return switch (commandType) {
+            case PING -> new PingCommand();
+            case TERMINATE -> new TerminateCommand();
+            case EOF -> new EofCommand();
+            case ECHO -> new EchoCommand();
+            case null, default -> {
+                System.out.println("Unknown command: " + command);
+                yield null;
+            }
+        };
     }
 
     public enum Type {
         PING,
         ECHO,
         TERMINATE,
-        EOF
+        EOF;
+
+        static Type of(String command) {
+            try {
+                return Type.valueOf(command);
+            } catch (Exception e) {
+                return null;
+            }
+        }
     }
 
     private final Type type;
