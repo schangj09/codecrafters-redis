@@ -4,13 +4,13 @@ import java.io.IOException;
 import org.baylight.redis.io.BufferedInputLineReader;
 
 public class RespInteger implements RespValue {
-    private final int value;
+    private final long value;
 
     public RespInteger(BufferedInputLineReader reader) throws NumberFormatException, IOException {
         this(reader.readInt());
     }
 
-    public RespInteger(int value) {
+    public RespInteger(long value) {
         this.value = value;
     }
 
@@ -20,13 +20,13 @@ public class RespInteger implements RespValue {
     }
 
     @Override
-    public Integer getValueAsInteger() {
+    public Long getValueAsLong() {
         return value;
     }
 
     @Override
     public String getValueAsString() {
-        return Integer.toString(value);
+        return Long.toString(value);
     }
 
     @Override

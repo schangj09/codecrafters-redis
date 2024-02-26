@@ -13,7 +13,7 @@ public interface RespValue {
         return toString();
     }
 
-    default Integer getValueAsInteger() {
+    default Long getValueAsLong() {
         return null;
     }
 

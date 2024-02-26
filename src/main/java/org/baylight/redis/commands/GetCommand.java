@@ -1,6 +1,7 @@
 package org.baylight.redis.commands;
 
 import org.baylight.redis.RedisService;
+import org.baylight.redis.StoredData;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
@@ -26,10 +27,15 @@ public class GetCommand extends RedisCommand {
 
     @Override
     public byte[] execute(RedisService service) {
-        if (service.containsKey(key.getValueAsString()))
-            return new RespBulkString(service.get(key.getValueAsString())).asResponse();
-        else
-            return RespConstants.NULL;
+        if (service.containsKey(key.getValueAsString())) {
+            StoredData storedData = service.get(key.getValueAsString());
+            if (service.isExpired(storedData)) {
+                service.delete(key.getValueAsString());
+                return RespConstants.NULL;
+            }
+            return new RespBulkString(storedData.getValue()).asResponse();
+        }
+        return RespConstants.NULL;
     }
 
     @Override

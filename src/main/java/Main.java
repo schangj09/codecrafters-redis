@@ -1,12 +1,12 @@
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.time.Clock;
 
 import org.baylight.redis.EventLoop;
 import org.baylight.redis.RedisService;
 
 public class Main {
   public static void main(String[] args) {
-    RedisService service = new RedisService();
+    RedisService service = new RedisService(Clock.systemUTC());
     try {
       service.start();
       

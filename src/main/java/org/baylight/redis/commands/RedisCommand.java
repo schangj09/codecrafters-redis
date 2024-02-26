@@ -1,6 +1,9 @@
 package org.baylight.redis.commands;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.baylight.redis.EofCommand;
@@ -86,9 +89,26 @@ public abstract class RedisCommand {
     protected void validateArgIsString(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (!arg.isBulkString() && !arg.isSimpleString()) {
-            throw new RuntimeException(String.format("%s: Invalid argument %d: %s", type.name(), index, arg));
+            throw new RuntimeException(String.format("%s: Invalid arg, expected string. %d: %s", type.name(), index, arg));
         }
     }
+
+    public void validateArgIsInteger(RespValue[] args, int index) {
+        RespValue arg = args[index];
+        if (arg.getValueAsLong() == null) {
+            throw new RuntimeException(String.format("%s: Invalid arg, expected integer %d: %s", type.name(), index, arg));
+        }
+    }
+
+    public void validateArgForStateTransition(
+        RespValue[] args, int i, int state, int nextState, Map<Integer, List<Integer>> transitions
+    ) {
+        if (nextState == -1 || !transitions.get(state).contains(nextState)) {
+            throw new IllegalArgumentException(
+                String.format("%s: Invalid or missing argument at index. %d ", type, i, Arrays.toString(args)));
+        }
+    }
+
 
     public abstract byte[] execute(RedisService service);
 

@@ -2,6 +2,7 @@ package org.baylight.redis;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,9 +11,11 @@ import org.baylight.redis.commands.RedisCommand;
 public class RedisService {
     private static final int PORT = 6379;
     private ServerSocket serverSocket;
-    private final Map<String, byte[]> dataStoreMap = new ConcurrentHashMap<>();
+    private final Clock clock;
+    private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
 
-    public RedisService() { 
+    public RedisService(Clock clock) {
+        this.clock = clock; 
     }
 
     public void start() throws IOException {
@@ -32,12 +35,17 @@ public class RedisService {
         return dataStoreMap.containsKey(key);
     }
 
-    public byte[] get(String key) { 
+    public boolean containsUnexpiredKey(String key) {
+        StoredData storedData = dataStoreMap.getOrDefault(key, null);
+        return storedData != null && !isExpired(storedData);
+    }
+
+    public StoredData get(String key) { 
         return dataStoreMap.get(key);
     }
 
-    public byte[] set(String key, byte[] value) {
-        return dataStoreMap.put(key, value);
+    public StoredData set(String key, StoredData storedData) {
+        return dataStoreMap.put(key, storedData);
     }
 
     public void delete(String key) {
@@ -48,12 +56,21 @@ public class RedisService {
         return serverSocket;
     }
 
-    public Map<String, byte[]> getDataStoreMap() {
+    public Map<String, StoredData> getDataStoreMap() {
         return dataStoreMap;
     }
 
     public byte[] execute(RedisCommand command) {
         return command.execute(this);
+    }
+
+    public boolean isExpired(StoredData storedData) {
+        long now = clock.millis();
+        return storedData.isExpired(now);
+    }
+
+    public long getCurrentTime() {
+        return clock.millis();
     }
 
 }
