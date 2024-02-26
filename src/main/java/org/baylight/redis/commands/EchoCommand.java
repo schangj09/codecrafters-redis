@@ -1,7 +1,5 @@
 package org.baylight.redis.commands;
 
-import java.util.function.Function;
-
 import org.baylight.redis.RedisService;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;

@@ -36,7 +36,7 @@ public abstract class RedisCommand {
         RedisCommand.Type commandType = RedisCommand.Type.of(command);
         return switch (commandType) {
             case ECHO -> new EchoCommand();
-            //case GET -> new GetCommand();
+            case GET -> new GetCommand();
             case PING -> new PingCommand();
             case SET -> new SetCommand();
             // special non-standard commands

@@ -11,11 +11,11 @@ public class SetCommand extends RedisCommand {
     RespBulkString value;
 
     public SetCommand() {
-        super(Type.ECHO);
+        super(Type.SET);
     }
 
     public SetCommand(RespBulkString key, RespBulkString value) {
-        super(Type.ECHO);
+        super(Type.SET);
         this.key = key;
         this.value = value;
     }

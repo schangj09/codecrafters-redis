@@ -28,12 +28,18 @@ public class RedisService {
     public void shutdown() {
     }
 
+    public boolean containsKey(String key) {
+        return dataStoreMap.containsKey(key);
+    }
+
     public byte[] get(String key) { 
         return dataStoreMap.get(key);
     }
+
     public byte[] set(String key, byte[] value) {
         return dataStoreMap.put(key, value);
     }
+
     public void delete(String key) {
         dataStoreMap.remove(key);
     }
