@@ -1,4 +1,4 @@
-package org.baylight.redis.protocol;
+package org.baylight.redis.commands;
 public class PingCommand extends RedisCommand {
 
     public PingCommand() {

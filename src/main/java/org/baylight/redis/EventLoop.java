@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.baylight.redis.protocol.RedisCommand;
+import org.baylight.redis.commands.RedisCommand;
 
 public class EventLoop {
     private static final String TERMINATE = "terminate";

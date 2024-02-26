@@ -1,10 +1,14 @@
-package org.baylight.redis.protocol;
+package org.baylight.redis.commands;
 
 import java.io.IOException;
 
 import org.baylight.redis.EofCommand;
 import org.baylight.redis.TerminateCommand;
 import org.baylight.redis.io.BufferedInputLineReader;
+import org.baylight.redis.protocol.RespArrayValue;
+import org.baylight.redis.protocol.RespType;
+import org.baylight.redis.protocol.RespTypeParser;
+import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisCommand {
     public static RedisCommand parseCommand(BufferedInputLineReader reader) throws IOException {

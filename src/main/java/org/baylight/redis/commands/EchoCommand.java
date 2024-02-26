@@ -1,4 +1,7 @@
-package org.baylight.redis.protocol;
+package org.baylight.redis.commands;
+
+import org.baylight.redis.protocol.RespBulkString;
+import org.baylight.redis.protocol.RespValue;
 
 public class EchoCommand extends RedisCommand {
 

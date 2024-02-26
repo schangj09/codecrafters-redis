@@ -14,7 +14,7 @@ public class RespArrayValue implements RespValue {
         }
     }
 
-    int getSize() {
+    public int getSize() {
         return values.length;
     }
 

@@ -1,5 +1,5 @@
 package org.baylight.redis;
-import org.baylight.redis.protocol.RedisCommand;
+import org.baylight.redis.commands.RedisCommand;
 
 public class TerminateCommand extends RedisCommand {
 
