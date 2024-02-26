@@ -35,7 +35,15 @@ public class RespBulkString implements RespValue {
 
     @Override
     public String toString() {
-        return "BulkString [length=" + value.length + "]";
+        return "BulkString [length=" + value.length + ", value=" + truncValueString(15) + "]";
+    }
+
+    private String truncValueString(int trunclen) {
+         StringBuilder sb = new StringBuilder(new String(value, 0, trunclen));
+         if (value.length > trunclen) {
+             sb.append("...");
+         }
+         return sb.toString();
     }
 
     public byte[] getValue() {
@@ -45,4 +53,5 @@ public class RespBulkString implements RespValue {
     public String getValueAsString() {
         return new String(value);
     }
+
 }

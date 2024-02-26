@@ -14,7 +14,11 @@ public interface RespValue {
     }
 
     default Long getValueAsLong() {
-        return null;
+        try {
+            return Long.parseLong(getValueAsString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     default boolean isSimpleString() {
