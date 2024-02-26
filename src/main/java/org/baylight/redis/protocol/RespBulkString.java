@@ -39,6 +39,7 @@ public class RespBulkString implements RespValue {
     }
 
     private String truncValueString(int trunclen) {
+        trunclen = Math.min(value.length, trunclen);
          StringBuilder sb = new StringBuilder(new String(value, 0, trunclen));
          if (value.length > trunclen) {
              sb.append("...");

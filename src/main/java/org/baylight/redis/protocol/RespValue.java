@@ -30,7 +30,7 @@ public interface RespValue {
     }
 
     default boolean isInteger() {
-        return getType() == RespType.INTEGER;
+        return getType() == RespType.INTEGER || getValueAsLong() != null;
     }
 
     default RespBulkString asBulkString() {
