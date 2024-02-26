@@ -89,14 +89,16 @@ public abstract class RedisCommand {
     protected void validateArgIsString(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (!arg.isBulkString() && !arg.isSimpleString()) {
-            throw new RuntimeException(String.format("%s: Invalid arg, expected string. %d: %s", type.name(), index, arg));
+            throw new RuntimeException(
+                String.format("%s: Invalid arg, expected string. %d: %s", type.name(), index, arg));
         }
     }
 
     public void validateArgIsInteger(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (arg.getValueAsLong() == null) {
-            throw new RuntimeException(String.format("%s: Invalid arg, expected integer %d: %s", type.name(), index, arg));
+            throw new RuntimeException(
+                String.format("%s: Invalid arg, expected integer %d: %s", type.name(), index, arg));
         }
     }
 
@@ -105,7 +107,8 @@ public abstract class RedisCommand {
     ) {
         if (nextState == -1 || !transitions.get(state).contains(nextState)) {
             throw new IllegalArgumentException(
-                String.format("%s: Invalid or missing argument at index. %d ", type, i, Arrays.toString(args)));
+                String.format("%s: Invalid or missing argument at index. %d, %s", 
+                        type.name(), i, Arrays.toString(args)));
         }
     }
 

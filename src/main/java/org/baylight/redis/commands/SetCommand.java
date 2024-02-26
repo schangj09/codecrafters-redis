@@ -116,7 +116,7 @@ public class SetCommand extends RedisCommand {
         boolean doKeepTtl = optionsMap.containsKey("keepttl");
         boolean doGet = optionsMap.containsKey("get");
 
-        Long ttl = ttlValue;
+        Long ttl = getTtl(now);
         StoredData prevData = null;
         if ((doGet || doKeepTtl) && service.containsKey(keyString)) {
             prevData = service.get(keyString);
@@ -127,6 +127,21 @@ public class SetCommand extends RedisCommand {
         return (doGet && prevData != null)
             ? new RespBulkString(prevData.getValue()).asResponse()
             : RespConstants.OK;
+    }
+
+    private Long getTtl(long now) {
+        if (ttlValue != null) {
+            if (optionsMap.containsKey("ex")) {
+                return ttlValue * 1000;
+            } else if (optionsMap.containsKey("px")) {
+                return ttlValue;
+            } else if (optionsMap.containsKey("exat")) {
+                return ttlValue * 1000 - now;
+            } else if (optionsMap.containsKey("pxatt")) {
+                return ttlValue - now;
+            }
+        }
+        return ttlValue;
     }
 
     @Override
