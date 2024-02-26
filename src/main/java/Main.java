@@ -2,17 +2,15 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 import org.baylight.redis.EventLoop;
+import org.baylight.redis.RedisService;
 
 public class Main {
-  private static final int PORT = 6379;
-
   public static void main(String[] args) {
-    ServerSocket serverSocket = null;
+    RedisService service = new RedisService();
     try {
-      serverSocket = new ServerSocket(PORT);
-      serverSocket.setReuseAddress(true);
-      System.out.println("Server started. Listening on Port " + PORT);
-      EventLoop loop = new EventLoop(serverSocket);
+      service.start();
+      
+      EventLoop loop = new EventLoop(service);
       loop.processLoop();
       System.out.println(String.format("Event loop terminated"));
 
@@ -20,6 +18,8 @@ public class Main {
       System.out.println("IOException: " + e.getMessage());
     } catch (InterruptedException e) {
       System.out.println("InterruptedException: " + e.getMessage());
+    } finally {
+      service.shutdown();
     }
   }
 }

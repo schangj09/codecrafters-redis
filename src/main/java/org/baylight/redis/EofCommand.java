@@ -8,7 +8,7 @@ public class EofCommand extends RedisCommand {
     }
 
     @Override
-    public byte[] getResponse() {
+    public byte[] execute(RedisService service) {
         return null;
     }
 

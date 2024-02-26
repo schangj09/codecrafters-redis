@@ -1,4 +1,7 @@
 package org.baylight.redis.commands;
+
+import org.baylight.redis.RedisService;
+
 public class PingCommand extends RedisCommand {
 
     public PingCommand() {
@@ -6,7 +9,7 @@ public class PingCommand extends RedisCommand {
     }
 
     @Override
-    public byte[] getResponse() {
+    public byte[] execute(RedisService service) {
         return "+PONG\r\n".getBytes();
     }
 

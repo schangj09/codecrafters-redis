@@ -1,6 +1,5 @@
 package org.baylight.redis;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Deque;
 import java.util.Iterator;
@@ -11,19 +10,14 @@ import java.util.concurrent.Executors;
 import org.baylight.redis.commands.RedisCommand;
 
 public class EventLoop {
-    private static final String TERMINATE = "terminate";
-    private static final String EOF = "EOF";
-    private static final String PONG = "+PONG\r\n";
-    private static final String PING = "ping";
-
     // keep a list of socket connections and continue checking for new connections
-    private final ServerSocket serverSocket;
-    private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
+    private final RedisService service;
+private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
     private final ExecutorService executor;
     private volatile boolean done = false;
-
-    public EventLoop(ServerSocket socket) {
-        serverSocket = socket;
+    
+    public EventLoop(RedisService service) {
+        this.service = service;
         executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new connections
 
         // create the thread for accepting new connections
@@ -31,7 +25,7 @@ public class EventLoop {
             while (!done) {
                 Socket clientSocket = null;
                 try {
-                    clientSocket = serverSocket.accept();
+                    clientSocket = service.getServerSocket().accept();
                     ClientConnection conn = new ClientConnection(clientSocket);
                     clientSockets.add(conn);
                     System.out.println(
@@ -64,7 +58,7 @@ public class EventLoop {
         done = true;
         // stop accepting new connections and shut down the accept connections thread
         try {
-            serverSocket.close();
+            service.closeSocket();
         } catch (IOException e) {
             System.out.println("IOException on socket close: " + e.getMessage());
         }
@@ -108,7 +102,7 @@ public class EventLoop {
     void process(ClientConnection conn, RedisCommand command) throws IOException {
         System.out.println(String.format("Received line: %s", command));
 
-        byte[] response = command.getResponse();
+        byte[] response = service.execute(command);
         if (response != null) {
             conn.writer.write(response);
             conn.writer.flush();

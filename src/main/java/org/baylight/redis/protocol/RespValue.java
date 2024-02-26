@@ -28,4 +28,10 @@ public interface RespValue {
     default boolean isInteger() {
         return getType() == RespType.INTEGER;
     }
+
+    default RespBulkString asBulkString() {
+        return isBulkString()
+                ? (RespBulkString) this
+                : new RespBulkString(getValueAsString().getBytes());
+    }
 }

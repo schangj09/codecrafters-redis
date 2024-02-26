@@ -1,5 +1,8 @@
 package org.baylight.redis.commands;
 
+import java.util.function.Function;
+
+import org.baylight.redis.RedisService;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
 
@@ -17,20 +20,15 @@ public class EchoCommand extends RedisCommand {
     }
 
     @Override
-    public void setArgs(RespValue[] values) {
-        if (values.length != 2) {
-            throw new RuntimeException(String.format("EchoCommand: Invalid number of arguments: %d", values.length));
-        }
-        if (!values[1].isBulkString() && !values[1].isSimpleString()) {
-            throw new RuntimeException(String.format("EchoCommand: Invalid argument: %s", values[1]));
-        }
-        this.bulkStringArg = values[1].isBulkString()
-                ? (RespBulkString) values[1]
-                : new RespBulkString(values[1].getValueAsString().getBytes());
+    public void setArgs(RespValue[] args) {
+        validateNumArgs(args, len -> len == 2);
+        validateArgIsString(args, 1);
+
+        this.bulkStringArg = args[1].asBulkString();
     }
 
     @Override
-    public byte[] getResponse() {
+    public byte[] execute(RedisService service) {
         return bulkStringArg != null ? bulkStringArg.asResponse() : new byte[] {};
     }
 
