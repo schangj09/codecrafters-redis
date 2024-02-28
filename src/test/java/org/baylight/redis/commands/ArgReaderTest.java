@@ -62,5 +62,5 @@ class ArgReaderTest implements WithAssertions {
                         "2", new RespBulkString("mybulk\r\nvalue".getBytes()),
                         "nx", RespConstants.NULL_VALUE,
                         "px", new RespInteger(345)));
-}
+    }
 }
