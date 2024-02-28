@@ -7,7 +7,7 @@ public class RespInteger implements RespValue {
     private final long value;
 
     public RespInteger(BufferedInputLineReader reader) throws NumberFormatException, IOException {
-        this(reader.readInt());
+        this(reader.readLong());
     }
 
     public RespInteger(long value) {

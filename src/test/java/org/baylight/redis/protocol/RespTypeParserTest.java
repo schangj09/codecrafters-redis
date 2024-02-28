@@ -16,9 +16,9 @@ public class RespTypeParserTest implements WithAssertions {
 
     @Test
     void testParseIntValue() throws Exception {
-        String inpuString = ":-450000000\r\n";
+        String inpuString = ":-4500000005\r\n";
         BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));
-        assertThat(RespTypeParser.parse(reader)).isEqualTo(new RespInteger(-1 * 450000000L));
+        assertThat(RespTypeParser.parse(reader)).isEqualTo(new RespInteger(-1 * 4500000005L));
     }
 
     @Test
@@ -26,7 +26,7 @@ public class RespTypeParserTest implements WithAssertions {
         String value = "a\r\nb\r\ncd";
         String inpuString = "$" + value.length() + "\r\n" + value + "\r\n";
         BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));
-        assertThat(RespTypeParser.parse(reader).getValueAsString()).isEqualTo(value);
+        assertThat(RespTypeParser.parse(reader)).isEqualTo(new RespBulkString(value.getBytes()));
     }
 
     @Test

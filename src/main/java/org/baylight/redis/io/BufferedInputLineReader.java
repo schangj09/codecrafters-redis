@@ -29,6 +29,10 @@ public class BufferedInputLineReader extends BufferedInputStream {
         return Integer.parseInt(readLine());
     }
 
+    public long readLong() throws NumberFormatException, IOException {
+        return Long.parseLong(readLine());
+    }
+
     public void readCRLF() throws IOException {
         readLine();
     }
