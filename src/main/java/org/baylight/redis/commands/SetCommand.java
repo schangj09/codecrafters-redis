@@ -1,9 +1,7 @@
 package org.baylight.redis.commands;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.baylight.redis.RedisService;
 import org.baylight.redis.StoredData;
@@ -13,37 +11,17 @@ import org.baylight.redis.protocol.RespValue;
 
 public class SetCommand extends RedisCommand {
 
-    // args state machine
-    // 1 key
-    // 2 value
-    // 3 [NX | XX]
-    // 4 [GET]
-    // 5 [EX | PX | EXAT | PXATT]
-    // 6 [KEEPTTL]
-    // 7 [INT_VALUE]
-    // 8 term
-    private static final Map<Integer, List<String>> states = Map.of(
-            1, List.of("key"),
-            2, List.of("value"),
-            3, List.of("nx", "xx"),
-            4, List.of("get"),
-            5, List.of("ex", "px", "exat", "pxatt"),
-            6, List.of("keepttl"),
-            7, List.of("int_value"));
+    // Args reader specification for SET command
+    private ArgReader argReader = new ArgReader("SET", new String[] {
+            ":string", // command name
+            ":string", // key
+            ":string", // value
+            "[nx, xx]",
+            "[get]",
+            "[ex:int px:int exat:int pxatt:int keepttl]"
+    });
 
-    private static final Map<Integer, List<Integer>> transitions = Map.of(
-            1, List.of(2),
-            2, List.of(3, 4, 5, 6, 8),
-            3, List.of(4, 5, 6, 8),
-            4, List.of(5, 6, 8),
-            5, List.of(7),
-            6, List.of(8),
-            7, List.of(8));
-    private static final int TERMINAL = 8;
-    private static final int INT_VALUE = 7;
-
-    Map<String, Boolean> optionsMap = new HashMap<>();
-    Long ttlValue = null;
+    Map<String, RespValue> optionsMap = new HashMap<>();
 
     RespBulkString key;
     RespBulkString value;
@@ -60,40 +38,9 @@ public class SetCommand extends RedisCommand {
 
     @Override
     public void setArgs(RespValue[] args) {
-        validateNumArgs(args, len -> len >= 3);
-        validateArgIsString(args, 1);
-        validateArgIsString(args, 2);
-        this.key = args[1].asBulkString();
-        this.value = args[2].asBulkString();
-        int state = 2;
-        int i = 3;
-        while (i <= args.length && state < TERMINAL) {
-            int nextState = (i == args.length) ? TERMINAL : findState(args[i]);
-            validateArgForStateTransition(args, i, state, nextState, transitions);
-            if (nextState == INT_VALUE) {
-                validateArgIsInteger(args, i);
-                ttlValue = args[i].getValueAsLong();
-            } else if (nextState != TERMINAL) {
-                String option = args[i].getValueAsString().toLowerCase();
-                optionsMap.put(option, true);
-            }
-            i++;
-            state = nextState;
-        }
-    }
-
-    private int findState(RespValue arg) {
-        return findStateForArg(arg, (a) -> a.isInteger() ? "int_value" : a.getValueAsString().toLowerCase(), states);
-    }
-
-    int findStateForArg(RespValue arg, Function<RespValue, String> argNameMapper, Map<Integer, List<String>> states) {
-        String argValue = argNameMapper.apply(arg);
-        for (Integer state : states.keySet()) {
-            if (states.get(state).contains(argValue)) {
-                return state;
-            }
-        }
-        return -1;
+        optionsMap = argReader.readArgs(args);
+        key = optionsMap.get("1").asBulkString();
+        value = optionsMap.get("2").asBulkString();
     }
 
     @Override
@@ -125,23 +72,21 @@ public class SetCommand extends RedisCommand {
         StoredData storedData = new StoredData(value.getValue(), now, ttl);
         service.set(keyString, storedData);
         return (doGet && prevData != null)
-            ? new RespBulkString(prevData.getValue()).asResponse()
-            : RespConstants.OK;
+                ? new RespBulkString(prevData.getValue()).asResponse()
+                : RespConstants.OK;
     }
 
     private Long getTtl(long now) {
-        if (ttlValue != null) {
-            if (optionsMap.containsKey("ex")) {
-                return ttlValue * 1000;
-            } else if (optionsMap.containsKey("px")) {
-                return ttlValue;
-            } else if (optionsMap.containsKey("exat")) {
-                return ttlValue * 1000 - now;
-            } else if (optionsMap.containsKey("pxatt")) {
-                return ttlValue - now;
-            }
+        if (optionsMap.containsKey("ex")) {
+            return optionsMap.get("ex").getValueAsLong() * 1000;
+        } else if (optionsMap.containsKey("px")) {
+            return optionsMap.get("px").getValueAsLong();
+        } else if (optionsMap.containsKey("exat")) {
+            return optionsMap.get("exat").getValueAsLong() * 1000 - now;
+        } else if (optionsMap.containsKey("pxatt")) {
+            return optionsMap.get("pxatt").getValueAsLong() - now;
         }
-        return ttlValue;
+        return null;
     }
 
     @Override
