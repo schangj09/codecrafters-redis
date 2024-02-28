@@ -34,4 +34,21 @@ public class RespInteger implements RespValue {
         return "RespInteger [value=" + value + "]";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RespInteger other = (RespInteger) obj;
+        return value == other.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(value);
+    }
+
 }

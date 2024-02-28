@@ -7,6 +7,10 @@ import org.baylight.redis.io.BufferedInputLineReader;
 public class RespArrayValue implements RespValue {
     RespValue[] values;
 
+    public RespArrayValue(RespValue[] values) {
+        this.values = values;
+    }
+
     public RespArrayValue(BufferedInputLineReader reader) throws IOException {
         values = new RespValue[reader.readInt()];
         for (int i = 0; i < values.length; i++) {
@@ -31,4 +35,23 @@ public class RespArrayValue implements RespValue {
     public String toString() {
         return "RespArrayValue [values=" + Arrays.toString(values) + "]";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        RespArrayValue other = (RespArrayValue) obj;
+        return Arrays.equals(values, other.values);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(values);
+    }
+
 }

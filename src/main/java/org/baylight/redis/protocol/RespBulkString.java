@@ -1,5 +1,7 @@
 package org.baylight.redis.protocol;
+
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 
@@ -40,11 +42,11 @@ public class RespBulkString implements RespValue {
 
     private String truncValueString(int trunclen) {
         trunclen = Math.min(value.length, trunclen);
-         StringBuilder sb = new StringBuilder(new String(value, 0, trunclen));
-         if (value.length > trunclen) {
-             sb.append("...");
-         }
-         return sb.toString();
+        StringBuilder sb = new StringBuilder(new String(value, 0, trunclen));
+        if (value.length > trunclen) {
+            sb.append("...");
+        }
+        return sb.toString();
     }
 
     public byte[] getValue() {
@@ -53,6 +55,24 @@ public class RespBulkString implements RespValue {
 
     public String getValueAsString() {
         return new String(value);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        RespBulkString other = (RespBulkString) obj;
+        return Arrays.equals(value, other.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(value);
     }
 
 }

@@ -3,7 +3,14 @@ package org.baylight.redis.protocol;
 public interface RespValue {
     RespType getType();
 
+    @Override
     String toString();
+
+    @Override
+    boolean equals(Object obj);
+
+    @Override
+    int hashCode();
 
     default byte[] asResponse() {
         return new byte[] {};
