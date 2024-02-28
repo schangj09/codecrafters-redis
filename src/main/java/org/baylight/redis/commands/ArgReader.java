@@ -27,6 +27,14 @@ public class ArgReader {
         public Arg(String name, String type) {
             this.name = name;
             this.type = type;
+            switch (type) {
+                case "int":
+                case "string":
+                case null:
+                    break;
+                default:
+                    throw new IllegalStateException("Invalid type in arg spec: " + type);
+            }
         }
 
         boolean hasName() {
@@ -103,7 +111,7 @@ public class ArgReader {
             GroupArg arg = findGroupArg(next);
             if (arg == null) {
                 throw new IllegalArgumentException(
-                        String.format("%s: unrecognized option at index %d, %s",
+                        String.format("%s: unrecognized arg at index %d, %s",
                                 commandName, i, next));
             }
 
@@ -112,15 +120,19 @@ public class ArgReader {
 
             // it's ok so now add the option value
             i = readArg(args, commandName, optionMap, i, i, arg);
+
+            // succeeded to add it, so store as the group value
+            foundGroupOptions.put(arg.group, next);
         }
         return optionMap;
     }
 
     private GroupArg findGroupArg(RespValue next) {
+        String nextArgName = next.getValueAsString();
         for (Set<GroupArg> group : optionGroups.values()) {
-            for (GroupArg arg : group) {
-                if (arg.name.equals(next.getValueAsString())) {
-                    return arg;
+            for (GroupArg groupArg : group) {
+                if (groupArg.hasName() && groupArg.name.equals(nextArgName)) {
+                    return groupArg;
                 }
             }
         }
@@ -130,7 +142,7 @@ public class ArgReader {
     private int readArg(RespValue[] args, String commandName, HashMap<String, RespValue> optionMap, int i, int j,
             Arg arg) {
         if (!arg.hasName()) {
-            validateArgIsString(args, i, String.valueOf(j));
+            validateArgType(args, i, arg);
             optionMap.put(String.valueOf(j), args[i]);
         } else {
             validateArgEquals(args, i, arg.name);
@@ -138,7 +150,7 @@ public class ArgReader {
                 i++;
                 if (i >= args.length) {
                     throw new IllegalArgumentException(
-                            String.format("%s: missing value for arg %s at index %d",
+                            String.format("%s: Missing value for arg '%s' at index %d",
                                     commandName, arg.name, i));
                 }
                 validateArgType(args, i, arg);
@@ -156,12 +168,12 @@ public class ArgReader {
         }
         RespValue arg = args[index];
         if (argSpec.type.equals("int")) {
-            validateArgIsInteger(args, index, "int");
+            validateArgIsInteger(args, index);
         } else if (argSpec.type.equals("string")) {
-            validateArgIsString(args, index, "string");
+            validateArgIsString(args, index);
         } else {
             throw new IllegalArgumentException(
-                    String.format("%s: Invalid arg %s expected type %s at index %d: %s",
+                    String.format("%s: Invalid value for arg '%s' expected type %s at index %d: %s",
                             commandName, argSpec.name, argSpec.type, index, arg));
         }
         return;
@@ -171,26 +183,26 @@ public class ArgReader {
         RespValue arg = args[index];
         if (!arg.getValueAsString().equals(expectedValue)) {
             throw new IllegalArgumentException(
-                    String.format("%s: Invalid arg, expected %s at index %d: %s",
+                    String.format("%s: Invalid arg, expected '%s' at index %d: %s",
                             commandName, expectedValue, index, arg));
         }
     }
 
-    protected void validateArgIsString(RespValue[] args, int index, String argName) {
+    protected void validateArgIsString(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (!arg.isBulkString() && !arg.isSimpleString()) {
             throw new IllegalArgumentException(
-                    String.format("%s: Invalid arg %s, expected string at index %d: %s",
-                            commandName, argName, index, arg));
+                    String.format("%s: Invalid arg type, expected string at index %d: %s",
+                            commandName, index, arg));
         }
     }
 
-    public void validateArgIsInteger(RespValue[] args, int index, String argName) {
+    public void validateArgIsInteger(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (arg.getValueAsLong() == null) {
             throw new IllegalArgumentException(
-                    String.format("%s: Invalid arg %s, expected integer at index %d: %s",
-                            commandName, argName, index, arg));
+                    String.format("%s: Invalid arg type, expected integer at index %d: %s",
+                            commandName, index, arg));
         }
     }
 
