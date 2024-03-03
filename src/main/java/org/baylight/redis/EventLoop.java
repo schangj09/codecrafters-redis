@@ -94,7 +94,7 @@ private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<
             // sleep a bit if there were no lines processed
             if (!didProcess) {
                 // System.out.println("sleep 1s");
-                Thread.sleep(1000L);
+                Thread.sleep(80L);
             }
         }
     }
