@@ -31,6 +31,14 @@ public class RespArrayValue implements RespValue {
         return RespType.ARRAY;
     }
 
+    /**
+     * The array value does not have a sring representation. It always returns null.
+     */
+    @Override
+    public String getValueAsString() {
+        return null;
+    }
+
     @Override
     public String toString() {
         return "RespArrayValue [values=" + Arrays.toString(values) + "]";

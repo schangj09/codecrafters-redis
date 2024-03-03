@@ -35,7 +35,7 @@ public abstract class RedisCommand {
     }
 
     private static RedisCommand getCommand(RespValue value) {
-        String command = value.getValueAsString().toUpperCase();
+        String command = getCommandName(value);
         RedisCommand.Type commandType = RedisCommand.Type.of(command);
         return switch (commandType) {
             case ECHO -> new EchoCommand();
@@ -50,6 +50,11 @@ public abstract class RedisCommand {
                 yield null;
             }
         };
+    }
+
+    private static String getCommandName(RespValue value) {
+        String name = value.getValueAsString();
+        return name != null ? name.toUpperCase() : null;
     }
 
     public enum Type {

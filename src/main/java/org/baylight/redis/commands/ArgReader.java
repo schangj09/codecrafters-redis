@@ -181,7 +181,7 @@ public class ArgReader {
 
     protected void validateArgEquals(RespValue[] args, int index, String expectedValue) {
         RespValue arg = args[index];
-        if (!arg.getValueAsString().equals(expectedValue)) {
+        if (!expectedValue.equals(arg.getValueAsString())) {
             throw new IllegalArgumentException(
                     String.format("%s: Invalid arg, expected '%s' at index %d: %s",
                             commandName, expectedValue, index, arg));

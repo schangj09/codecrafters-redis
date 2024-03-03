@@ -4,6 +4,9 @@ import java.io.IOException;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 
+/**
+ * A RESP simple string value.
+ **/
 public class RespSimpleStringValue implements RespValue {
 
     private String s;

@@ -1,5 +1,9 @@
 package org.baylight.redis.protocol;
 
+/**
+ * Class RespNullValue represents the RESP bulk string null value.
+ * This is a singleton and not instantiated directly.
+ **/
 public class RespNullValue extends RespBulkString {
 
     public static RespNullValue INSTANCE = new RespNullValue();
