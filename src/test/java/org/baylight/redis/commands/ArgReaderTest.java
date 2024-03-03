@@ -48,6 +48,20 @@ class ArgReaderTest implements WithAssertions {
     }
 
     @Test
+    public void testReadArgsMissingRequiredPositional() {
+        String[] argSpec = { ":int", ":string" };
+        ArgReader reader = new ArgReader("mycmd", argSpec);
+        RespValue[] args = {
+                new RespSimpleStringValue("123")
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> reader.readArgs(args))
+                .withMessage(
+                        "mycmd: Missing required arg '' at index 1");
+    }
+
+    @Test
     public void testReadArgsMissingRequired() {
         String[] argSpec = { ":int", "c1:string", "c2" };
         ArgReader reader = new ArgReader("mycmd", argSpec);

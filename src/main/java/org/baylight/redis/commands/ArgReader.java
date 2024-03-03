@@ -102,6 +102,11 @@ public class ArgReader {
         int i = 0;
         for (int j = 0; j < requiredArgs.size(); j++) {
             Arg arg = requiredArgs.get(j);
+            if (i >= args.length) {
+                throw new IllegalArgumentException(
+                        String.format("%s: Missing required arg '%s' at index %d",
+                                commandName, arg.name, i));
+            }
             i = readArg(args, commandName, optionMap, i, j, arg);
         }
         Map<Integer, RespValue> foundGroupOptions = new HashMap<>();
