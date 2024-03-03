@@ -9,19 +9,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.baylight.redis.commands.RedisCommand;
 
 public class RedisService {
-    private static final int PORT = 6379;
+    
     private ServerSocket serverSocket;
+    private final int port;
     private final Clock clock;
     private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
 
-    public RedisService(Clock clock) {
+    public RedisService(int port, Clock clock) {
+        this.port = port;
         this.clock = clock; 
     }
 
     public void start() throws IOException {
-        serverSocket = new ServerSocket(PORT);
+        serverSocket = new ServerSocket(port);
         serverSocket.setReuseAddress(true);
-        System.out.println("Server started. Listening on Port " + PORT);
+        System.out.println("Server started. Listening on Port " + port);
     }
 
     public void closeSocket() throws IOException {
