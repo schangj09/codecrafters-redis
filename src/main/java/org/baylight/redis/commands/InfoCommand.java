@@ -5,11 +5,13 @@ import java.util.Map;
 
 import org.baylight.redis.RedisService;
 import org.baylight.redis.protocol.RespBulkString;
+import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 
 public class InfoCommand extends RedisCommand {
 
-    private Map<String, RespValue> optionsMap = new HashMap<>();
+    private Map<String, RespValue> optionsMap = Map.of(
+        "0", new RespSimpleStringValue(Type.INFO.name()));
 
     public InfoCommand() {
         super(Type.INFO);

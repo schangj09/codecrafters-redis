@@ -11,6 +11,8 @@ import org.apache.commons.cli.ParseException;
 public class RedisServiceOptions {
     private int port = RedisConstants.DEFAULT_PORT;
     private String role = RedisConstants.LEADER;
+    private String replicaof = null;
+    private int replicaofPort = RedisConstants.DEFAULT_PORT;
 
     public boolean parseArgs(String[] args) {
         // Define the options
@@ -24,6 +26,14 @@ public class RedisServiceOptions {
                 .type(Number.class)
                 .build();
         options.addOption(portOption);
+
+        Option replicaofOption = Option.builder()
+                .longOpt("replicaof")
+                .numberOfArgs(2)
+                .desc("The host and port of the replica")
+                .required(false) // Make this option optional
+                .build();
+        options.addOption(replicaofOption);
 
         // Create a parser and parse the command line arguments
         CommandLineParser parser = new DefaultParser();
@@ -40,6 +50,19 @@ public class RedisServiceOptions {
             } else {
                 System.out.println("No port specified, using default.");
             }
+
+            if (cmd.hasOption("replicaof")) {
+                String[] replicaofStrings = cmd.getOptionValues("replicaof");
+                replicaof = replicaofStrings[0];
+                replicaofPort = Integer.parseInt(replicaofStrings[1]);
+                System.out.println("Replicaof specified: " + getReplicaof() + " " + getReplicaofPort());
+                if (replicaofPort <= 0 || replicaofPort > 65535) {
+                    throw new ParseException("Port must be less than or equal to 65535: " + replicaofPort);
+                }
+
+                role = RedisConstants.FOLLOWER;
+            }
+
         } catch (ParseException e) {
             System.err.println("Parsing failed. Reason: " + e.getMessage());
 
@@ -58,5 +81,13 @@ public class RedisServiceOptions {
 
     public String getRole() {
         return role;
+    }
+
+    public String getReplicaof() {
+        return replicaof;
+    }
+
+    public int getReplicaofPort() {
+        return replicaofPort;
     }
 }
