@@ -7,10 +7,10 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.baylight.redis.protocol.RespConstants;
 
 public class RedisServiceOptions {
-    private int port = RespConstants.DEFAULT_PORT;
+    private int port = RedisConstants.DEFAULT_PORT;
+    private String role = RedisConstants.LEADER;
 
     public boolean parseArgs(String[] args) {
         // Define the options
@@ -54,5 +54,9 @@ public class RedisServiceOptions {
     public int getPort() {
         return port;
 
+    }
+
+    public String getRole() {
+        return role;
     }
 }

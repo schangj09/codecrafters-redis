@@ -40,6 +40,7 @@ public abstract class RedisCommand {
         return switch (commandType) {
             case ECHO -> new EchoCommand();
             case GET -> new GetCommand();
+            case INFO -> new InfoCommand();
             case PING -> new PingCommand();
             case SET -> new SetCommand();
             // special non-standard commands
@@ -60,6 +61,7 @@ public abstract class RedisCommand {
     public enum Type {
         GET,
         ECHO,
+        INFO,
         PING,
         SET,
         // Folling are non-standard commands for baylight
@@ -75,7 +77,7 @@ public abstract class RedisCommand {
         }
     }
 
-    private final Type type;
+    protected final Type type;
 
     public RedisCommand(Type type) {
         this.type = type;

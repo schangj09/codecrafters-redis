@@ -4,20 +4,25 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Clock;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.baylight.redis.commands.RedisCommand;
+import org.baylight.redis.protocol.RespValue;
 
 public class RedisService {
-    
+
+    private static final Set<String> DEFAULT_SECTIONS = Set.of("replication", "stats", "replication-graph");
     private ServerSocket serverSocket;
     private final int port;
+    private final String role;
     private final Clock clock;
     private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
 
     public RedisService(RedisServiceOptions options, Clock clock) {
         this.port = options.getPort();
-        this.clock = clock; 
+        this.role = options.getRole();
+        this.clock = clock;
     }
 
     public void start() throws IOException {
@@ -42,7 +47,7 @@ public class RedisService {
         return storedData != null && !isExpired(storedData);
     }
 
-    public StoredData get(String key) { 
+    public StoredData get(String key) {
         return dataStoreMap.get(key);
     }
 
@@ -75,4 +80,32 @@ public class RedisService {
         return clock.millis();
     }
 
+    public String info(Map<String, RespValue> optionsMap) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("# Redis server info\n");
+        sb.append("redis_version:").append("3.2.0-org-baylight").append("\n");
+
+        // replication section
+        if (infoSection(optionsMap, "replication")) {
+            sb.append("# Replication\n");
+            sb.append("role:").append(role).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private boolean infoSection(Map<String, RespValue> optionsMap, String section) {
+        return optionsMap.containsKey("all")
+        || optionsMap.containsKey("everything")
+        || (optionsMap.size() == 1 && isDefault(section))
+        || (optionsMap.containsKey("default") && isDefault(section))
+        // || (optionsMap.containsKey("server") && isServer(section))
+        // || (optionsMap.containsKey("clients") && isClients(section))
+        // || (optionsMap.containsKey("memory") && isMemory(section))
+        || optionsMap.containsKey(section);
+    }
+
+    private boolean isDefault(String section) {
+        return DEFAULT_SECTIONS.contains(section);
+    }
 }

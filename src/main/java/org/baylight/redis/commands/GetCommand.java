@@ -5,6 +5,7 @@ import org.baylight.redis.StoredData;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
+import java.util.Map;
 
 public class GetCommand extends RedisCommand {
     private RespBulkString key;
@@ -20,9 +21,12 @@ public class GetCommand extends RedisCommand {
 
     @Override
     public void setArgs(RespValue[] args) {
-        validateNumArgs(args, len -> len >= 2);
-        validateArgIsString(args, 1);
-        this.key = args[1].asBulkString();
+        ArgReader argReader = new ArgReader(type.name(), new String[] {
+                ":string", // command name
+                ":string" // key
+        });
+        Map<String, RespValue> optionsMap = argReader.readArgs(args);
+        this.key = optionsMap.get("1").asBulkString();
     }
 
     @Override

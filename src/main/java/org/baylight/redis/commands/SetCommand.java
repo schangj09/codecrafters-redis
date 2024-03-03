@@ -12,7 +12,7 @@ import org.baylight.redis.protocol.RespValue;
 public class SetCommand extends RedisCommand {
 
     // Args reader specification for SET command
-    private ArgReader argReader = new ArgReader("SET", new String[] {
+    private ArgReader argReader = new ArgReader(type.name(), new String[] {
             ":string", // command name
             ":string", // key
             ":string", // value
