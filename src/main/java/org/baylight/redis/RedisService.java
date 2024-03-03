@@ -12,7 +12,11 @@ import org.baylight.redis.protocol.RespValue;
 
 public class RedisService {
 
-    private static final Set<String> DEFAULT_SECTIONS = Set.of("replication", "stats", "replication-graph");
+    private static final Set<String> DEFAULT_SECTIONS = Set.of(
+            "server",
+            "replication",
+            "stats",
+            "replication-graph");
     private ServerSocket serverSocket;
     private final int port;
     private final String role;
@@ -83,8 +87,10 @@ public class RedisService {
     public String info(Map<String, RespValue> optionsMap) {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("# Redis server info\n");
-        sb.append("redis_version:").append("3.2.0-org-baylight").append("\n");
+        if (infoSection(optionsMap, "server")) {
+            sb.append("# Redis server info\n");
+            sb.append("redis_version:").append("3.2.0-org-baylight").append("\n");
+        }
 
         // replication section
         if (infoSection(optionsMap, "replication")) {
@@ -96,13 +102,13 @@ public class RedisService {
 
     private boolean infoSection(Map<String, RespValue> optionsMap, String section) {
         return optionsMap.containsKey("all")
-        || optionsMap.containsKey("everything")
-        || (optionsMap.size() == 1 && isDefault(section))
-        || (optionsMap.containsKey("default") && isDefault(section))
-        // || (optionsMap.containsKey("server") && isServer(section))
-        // || (optionsMap.containsKey("clients") && isClients(section))
-        // || (optionsMap.containsKey("memory") && isMemory(section))
-        || optionsMap.containsKey(section);
+                || optionsMap.containsKey("everything")
+                || (optionsMap.size() == 1 && isDefault(section))
+                || (optionsMap.containsKey("default") && isDefault(section))
+                // || (optionsMap.containsKey("server") && isServer(section))
+                // || (optionsMap.containsKey("clients") && isClients(section))
+                // || (optionsMap.containsKey("memory") && isMemory(section))
+                || optionsMap.containsKey(section);
     }
 
     private boolean isDefault(String section) {
