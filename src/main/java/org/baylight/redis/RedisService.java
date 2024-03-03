@@ -15,8 +15,8 @@ public class RedisService {
     private final Clock clock;
     private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
 
-    public RedisService(int port, Clock clock) {
-        this.port = port;
+    public RedisService(RedisServiceOptions options, Clock clock) {
+        this.port = options.getPort();
         this.clock = clock; 
     }
 

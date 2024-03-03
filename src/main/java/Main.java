@@ -3,24 +3,18 @@ import java.time.Clock;
 
 import org.baylight.redis.EventLoop;
 import org.baylight.redis.RedisService;
-import org.baylight.redis.protocol.RespConstants;
+import org.baylight.redis.RedisServiceOptions;
 
 public class Main {
   public static void main(String[] args) {
 
-    int port = RespConstants.DEFAULT_PORT;
-    if (args.length > 1 && "--port".equals(args[0])) {
-      try {
-        port = Integer.parseInt(args[1]);
-        if (port <= 0 || port > 65535) {
-          throw new IllegalArgumentException("Value must be less than or equal to 65535: " + port);
-        }
-      } catch (Exception e) {
-        System.out.println("Invalid value for --port: " + e.getMessage());
-        throw e;
-      }
+    RedisServiceOptions options = new RedisServiceOptions();
+    if (!options.parseArgs(args)) {
+      System.out.println("Invalid arguments");
+      return;
     }
-    RedisService service = new RedisService(port, Clock.systemUTC());
+
+    RedisService service = new RedisService(options, Clock.systemUTC());
     try {
       service.start();
 
