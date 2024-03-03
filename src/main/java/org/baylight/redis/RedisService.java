@@ -22,10 +22,21 @@ public class RedisService {
     private final String role;
     private final Clock clock;
     private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
+    LeaderReplication leaderReplication = null;
+    FollowerReplication followerReplication = null;
 
     public RedisService(RedisServiceOptions options, Clock clock) {
         this.port = options.getPort();
         this.role = options.getRole();
+        switch (role) {
+            case RedisConstants.FOLLOWER:
+                followerReplication = new FollowerReplication();
+                break;
+            default:
+            case RedisConstants.LEADER:
+                leaderReplication = new LeaderReplication();
+                break;
+        }
         this.clock = clock;
     }
 
@@ -96,6 +107,12 @@ public class RedisService {
         if (infoSection(optionsMap, "replication")) {
             sb.append("# Replication\n");
             sb.append("role:").append(role).append("\n");
+            if (leaderReplication != null) {
+                leaderReplication.getReplcationInfo(sb);
+            }
+            if (followerReplication != null) {
+                followerReplication.getReplcationInfo(sb);
+            }
         }
         return sb.toString();
     }
