@@ -3,7 +3,7 @@ package org.baylight.redis.commands;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.baylight.redis.RedisService;
+import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.StoredData;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
@@ -44,7 +44,7 @@ public class SetCommand extends RedisCommand {
     }
 
     @Override
-    public byte[] execute(RedisService service) {
+    public byte[] execute(RedisServiceBase service) {
         long now = service.getCurrentTime();
         String keyString = key.getValueAsString();
 

@@ -1,9 +1,8 @@
 package org.baylight.redis.commands;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import org.baylight.redis.RedisService;
+import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
@@ -43,7 +42,7 @@ public class InfoCommand extends RedisCommand {
     }
 
     @Override
-    public byte[] execute(RedisService service) {
+    public byte[] execute(RedisServiceBase service) {
         return new RespBulkString(service.info(optionsMap).getBytes()).asResponse();
     }
 

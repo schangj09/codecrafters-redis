@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.baylight.redis.EofCommand;
-import org.baylight.redis.RedisService;
+import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.TerminateCommand;
 import org.baylight.redis.io.BufferedInputLineReader;
 import org.baylight.redis.protocol.RespArrayValue;
@@ -120,7 +120,7 @@ public abstract class RedisCommand {
     }
 
 
-    public abstract byte[] execute(RedisService service);
+    public abstract byte[] execute(RedisServiceBase service);
 
     public abstract String toString();
 }

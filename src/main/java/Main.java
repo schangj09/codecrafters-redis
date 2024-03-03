@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.time.Clock;
 
 import org.baylight.redis.EventLoop;
-import org.baylight.redis.RedisService;
+import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.RedisServiceOptions;
 
 public class Main {
@@ -14,7 +14,7 @@ public class Main {
       return;
     }
 
-    RedisService service = new RedisService(options, Clock.systemUTC());
+    RedisServiceBase service = RedisServiceBase.newInstance(options, Clock.systemUTC());
     try {
       service.start();
 

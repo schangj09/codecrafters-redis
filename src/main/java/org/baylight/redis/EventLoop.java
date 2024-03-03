@@ -11,12 +11,12 @@ import org.baylight.redis.commands.RedisCommand;
 
 public class EventLoop {
     // keep a list of socket connections and continue checking for new connections
-    private final RedisService service;
+    private final RedisServiceBase service;
 private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
     private final ExecutorService executor;
     private volatile boolean done = false;
     
-    public EventLoop(RedisService service) {
+    public EventLoop(RedisServiceBase service) {
         this.service = service;
         executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new connections
 

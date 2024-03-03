@@ -1,6 +1,6 @@
 package org.baylight.redis.commands;
 
-import org.baylight.redis.RedisService;
+import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
 
@@ -26,7 +26,7 @@ public class EchoCommand extends RedisCommand {
     }
 
     @Override
-    public byte[] execute(RedisService service) {
+    public byte[] execute(RedisServiceBase service) {
         return bulkStringArg != null ? bulkStringArg.asResponse() : new byte[] {};
     }
 
