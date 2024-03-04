@@ -83,9 +83,14 @@ public abstract class RedisCommand {
         this.type = type;
     }
 
+    public Type getType() {
+        return type;
+    }
+
     protected void setArgs(RespValue[] args) {
         // ignore by default
     }
+ 
     protected void validateNumArgs(RespValue[] args, Function<Integer, Boolean> validLengthCondition) {
         if (!validLengthCondition.apply(args.length)) {
             throw new RuntimeException(

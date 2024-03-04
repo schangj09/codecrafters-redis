@@ -1,6 +1,5 @@
-java_redis.jar
-target/*
+.DS_Store
 target/
 .idea/
 .vscode/
-META-INF/
+
