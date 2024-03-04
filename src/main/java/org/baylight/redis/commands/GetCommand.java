@@ -19,6 +19,10 @@ public class GetCommand extends RedisCommand {
         this.key = key;
     }
 
+	public RespBulkString getKey() {
+		return key;
+	}
+
     @Override
     public void setArgs(RespValue[] args) {
         ArgReader argReader = new ArgReader(type.name(), new String[] {
