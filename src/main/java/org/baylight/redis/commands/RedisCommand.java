@@ -91,7 +91,7 @@ public abstract class RedisCommand {
  
     protected void validateNumArgs(RespValue[] args, Function<Integer, Boolean> validLengthCondition) {
         if (!validLengthCondition.apply(args.length)) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                 String.format("%s: Invalid number of arguments: %d", type.name(), args.length));
         }
     }
@@ -99,7 +99,7 @@ public abstract class RedisCommand {
     protected void validateArgIsString(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (!arg.isBulkString() && !arg.isSimpleString()) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                 String.format("%s: Invalid arg, expected string. %d: %s", type.name(), index, arg));
         }
     }
@@ -107,7 +107,7 @@ public abstract class RedisCommand {
     public void validateArgIsInteger(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (arg.getValueAsLong() == null) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                 String.format("%s: Invalid arg, expected integer %d: %s", type.name(), index, arg));
         }
     }
