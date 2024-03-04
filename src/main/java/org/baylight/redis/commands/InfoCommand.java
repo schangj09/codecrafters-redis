@@ -9,6 +9,27 @@ import org.baylight.redis.protocol.RespValue;
 
 public class InfoCommand extends RedisCommand {
 
+    private static ArgReader ARG_READER = new ArgReader(Type.INFO.name(), new String[] {
+            ":string", // command name
+            "[server]",
+            "[clients]",
+            "[memory]",
+            "[persistence]",
+            "[stats]",
+            "[replication]",
+            "[cpu]",
+            "[commandstats]",
+            "[latencystats]",
+            "[sentinel]",
+            "[cluster]",
+            "[modules]",
+            "[keyspace]",
+            "[errorstats]",
+            "[all]",
+            "[default]",
+            "[everything]"
+    });
+
     private Map<String, RespValue> optionsMap = Map.of(
         "0", new RespSimpleStringValue(Type.INFO.name()));
 
@@ -18,27 +39,7 @@ public class InfoCommand extends RedisCommand {
 
     @Override
     protected void setArgs(RespValue[] args) {
-        ArgReader argReader = new ArgReader(type.name(), new String[] {
-                ":string", // command name
-                "[server]",
-                "[clients]",
-                "[memory]",
-                "[persistence]",
-                "[stats]",
-                "[replication]",
-                "[cpu]",
-                "[commandstats]",
-                "[latencystats]",
-                "[sentinel]",
-                "[cluster]",
-                "[modules]",
-                "[keyspace]",
-                "[errorstats]",
-                "[all]",
-                "[default]",
-                "[everything]"
-        });
-        optionsMap = argReader.readArgs(args);
+        optionsMap = ARG_READER.readArgs(args);
     }
 
     @Override
