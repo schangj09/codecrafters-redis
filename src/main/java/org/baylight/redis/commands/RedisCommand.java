@@ -22,22 +22,16 @@ public abstract class RedisCommand {
             return null;
         }
         if (value.getType() == RespType.ARRAY) {
-            RespArrayValue array = (RespArrayValue) value;
-            if (array.getSize() >= 1) {
-                RedisCommand command = getCommand(array.getValues()[0]);
-                if (command != null) {
-                    command.setArgs(array.getValues());
-                    return command;
-                }
-            }
+            return getCommand((RespArrayValue) value);
+        } else {
+            return getCommand(new RespArrayValue(new RespValue[] {value}));
         }
-        return getCommand(value);
     }
 
-    private static RedisCommand getCommand(RespValue value) {
-        String command = getCommandName(value);
+    private static RedisCommand getCommand(RespArrayValue array) {
+        String command = getCommandName(array.getValues()[0]);
         RedisCommand.Type commandType = RedisCommand.Type.of(command);
-        return switch (commandType) {
+        RedisCommand redisCommand = switch (commandType) {
             case ECHO -> new EchoCommand();
             case GET -> new GetCommand();
             case INFO -> new InfoCommand();
@@ -51,6 +45,10 @@ public abstract class RedisCommand {
                 yield null;
             }
         };
+        if (redisCommand != null) {
+            redisCommand.setArgs(array.getValues());
+        }
+        return redisCommand;
     }
 
     private static String getCommandName(RespValue value) {
