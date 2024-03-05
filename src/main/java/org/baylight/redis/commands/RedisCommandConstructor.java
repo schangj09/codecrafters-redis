@@ -4,17 +4,15 @@ import java.io.IOException;
 
 import org.baylight.redis.EofCommand;
 import org.baylight.redis.TerminateCommand;
-import org.baylight.redis.io.BufferedInputLineReader;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespType;
 import org.baylight.redis.protocol.RespValue;
-import org.baylight.redis.protocol.RespValueParser;
 
 /**
  * The RedisCommandParser class is responsible for parsing Redis commands from a
  * BufferedInputLineReader and returning the corresponding RedisCommand object.
  */
-public class RedisCommandParser {
+public class RedisCommandConstructor {
 
     /**
      * Parses a Redis command from the given BufferedInputLineReader and returns the corresponding
@@ -27,8 +25,7 @@ public class RedisCommandParser {
      * @return The RedisCommand object representing the parsed Redis command.
      * @throws IOException If an I/O error occurs while reading the input.
      */
-    public static RedisCommand parseCommand(BufferedInputLineReader reader) throws IOException {
-        RespValue value = RespValueParser.parse(reader);
+    public static RedisCommand newCommandFromValue(RespValue value) {
         if (value == null) {
             return null;
         }
@@ -48,7 +45,7 @@ public class RedisCommandParser {
      * @return The RedisCommand object representing the parsed Redis command.
      */
     static RedisCommand getCommand(RespArrayValue array) {
-        String command = RedisCommandParser.getCommandName(array.getValues()[0]);
+        String command = getCommandName(array.getValues()[0]);
         RedisCommand.Type commandType = RedisCommand.Type.of(command);
         RedisCommand redisCommand = switch (commandType) {
         case ECHO -> new EchoCommand();

@@ -8,7 +8,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.baylight.redis.commands.RedisCommand;
-import org.baylight.redis.commands.RedisCommandParser;
+import org.baylight.redis.commands.RedisCommandConstructor;
+import org.baylight.redis.protocol.RespValueParser;
 
 public class EventLoop {
     // keep a list of socket connections and continue checking for new connections
@@ -82,7 +83,7 @@ private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<
 
                 try {
                     while (conn.reader.available() > 0) {
-                        RedisCommand command = RedisCommandParser.parseCommand(conn.reader);
+                        RedisCommand command = RedisCommandConstructor.newCommandFromValue(RespValueParser.parse(conn.reader));
                         didProcess = true;
                         if (command != null) {
                             process(conn, command);

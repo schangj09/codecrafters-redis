@@ -6,7 +6,7 @@ import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.io.BufferedInputLineReader;
 import org.testng.annotations.Test;
 
-public class RespTypeParserTest implements WithAssertions {
+public class RespValueParserTest implements WithAssertions {
     @Test
     void testParseSimpleString() throws Exception {
         String inpuString = "+OK\r\n";
