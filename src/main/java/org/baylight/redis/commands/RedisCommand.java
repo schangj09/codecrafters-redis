@@ -1,61 +1,14 @@
 package org.baylight.redis.commands;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.baylight.redis.EofCommand;
 import org.baylight.redis.RedisServiceBase;
-import org.baylight.redis.TerminateCommand;
-import org.baylight.redis.io.BufferedInputLineReader;
-import org.baylight.redis.protocol.RespArrayValue;
-import org.baylight.redis.protocol.RespType;
-import org.baylight.redis.protocol.RespTypeParser;
 import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisCommand {
-    public static RedisCommand parseCommand(BufferedInputLineReader reader) throws IOException {
-        RespValue value = RespTypeParser.parse(reader);
-        if (value == null) {
-            return null;
-        }
-        if (value.getType() == RespType.ARRAY) {
-            return getCommand((RespArrayValue) value);
-        } else {
-            return getCommand(new RespArrayValue(new RespValue[] {value}));
-        }
-    }
-
-    private static RedisCommand getCommand(RespArrayValue array) {
-        String command = getCommandName(array.getValues()[0]);
-        RedisCommand.Type commandType = RedisCommand.Type.of(command);
-        RedisCommand redisCommand = switch (commandType) {
-            case ECHO -> new EchoCommand();
-            case GET -> new GetCommand();
-            case INFO -> new InfoCommand();
-            case PING -> new PingCommand();
-            case SET -> new SetCommand();
-            // special non-standard commands
-            case EOF -> new EofCommand();
-            case TERMINATE -> new TerminateCommand();
-            case null, default -> {
-                System.out.println("Unknown command: " + command);
-                yield null;
-            }
-        };
-        if (redisCommand != null) {
-            redisCommand.setArgs(array.getValues());
-        }
-        return redisCommand;
-    }
-
-    private static String getCommandName(RespValue value) {
-        String name = value.getValueAsString();
-        return name != null ? name.toUpperCase() : null;
-    }
-
     public enum Type {
         GET,
         ECHO,

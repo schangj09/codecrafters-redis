@@ -11,14 +11,14 @@ public class RespTypeParserTest implements WithAssertions {
     void testParseSimpleString() throws Exception {
         String inpuString = "+OK\r\n";
         BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));
-        assertThat(RespTypeParser.parse(reader)).isEqualTo(new RespSimpleStringValue("OK"));
+        assertThat(RespValueParser.parse(reader)).isEqualTo(new RespSimpleStringValue("OK"));
     }
 
     @Test
     void testParseIntValue() throws Exception {
         String inpuString = ":-4500000005\r\n";
         BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));
-        assertThat(RespTypeParser.parse(reader)).isEqualTo(new RespInteger(-1 * 4500000005L));
+        assertThat(RespValueParser.parse(reader)).isEqualTo(new RespInteger(-1 * 4500000005L));
     }
 
     @Test
@@ -26,7 +26,7 @@ public class RespTypeParserTest implements WithAssertions {
         String value = "a\r\nb\r\ncd";
         String inpuString = "$" + value.length() + "\r\n" + value + "\r\n";
         BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));
-        assertThat(RespTypeParser.parse(reader)).isEqualTo(new RespBulkString(value.getBytes()));
+        assertThat(RespValueParser.parse(reader)).isEqualTo(new RespBulkString(value.getBytes()));
     }
 
     @Test
@@ -40,7 +40,7 @@ public class RespTypeParserTest implements WithAssertions {
         sb.append("+yes\r\n");
         String inpuString = sb.toString();
         BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));
-        assertThat(RespTypeParser.parse(reader)).isEqualTo(
+        assertThat(RespValueParser.parse(reader)).isEqualTo(
                 new RespArrayValue(new RespValue[] {
                         new RespBulkString(bulkValue.getBytes()),
                         new RespInteger(22),

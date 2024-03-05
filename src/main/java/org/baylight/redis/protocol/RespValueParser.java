@@ -3,7 +3,7 @@ import java.io.IOException;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 
-public class RespTypeParser {
+public class RespValueParser {
 
     public static RespValue parse(BufferedInputLineReader reader) throws IOException {
         int type = reader.read();

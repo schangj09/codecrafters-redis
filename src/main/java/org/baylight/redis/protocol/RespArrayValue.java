@@ -14,7 +14,7 @@ public class RespArrayValue implements RespValue {
     public RespArrayValue(BufferedInputLineReader reader) throws IOException {
         values = new RespValue[reader.readInt()];
         for (int i = 0; i < values.length; i++) {
-            values[i] = RespTypeParser.parse(reader);
+            values[i] = RespValueParser.parse(reader);
         }
     }
 

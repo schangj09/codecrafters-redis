@@ -21,6 +21,12 @@
 num_desired_tests = 8
 
 
+plan_instructions = """
+Use JUnit test framework.
+Use Java assertJ for test assertions. The test class implements WithAssertions.
+Use mockito for mock objects. Add verify statements on all mock objects and end with verifyNoMoreInteractions.
+"""
+
 ## A multiline string, delimited with triple-quotes (""") serving as an example test that represents
 ## what you would like the generated tests to look like in terms of style, setup, etc.
 reference_test = """
