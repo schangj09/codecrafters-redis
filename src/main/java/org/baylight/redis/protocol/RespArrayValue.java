@@ -1,4 +1,6 @@
 package org.baylight.redis.protocol;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -11,7 +13,8 @@ public class RespArrayValue implements RespValue {
         this.values = values;
     }
 
-    public RespArrayValue(BufferedInputLineReader reader, RespValueParser valueParser) throws IOException {
+    public RespArrayValue(BufferedInputLineReader reader, RespValueParser valueParser)
+            throws IOException {
         values = new RespValue[reader.readInt()];
         for (int i = 0; i < values.length; i++) {
             values[i] = valueParser.parse(reader);
@@ -29,6 +32,24 @@ public class RespArrayValue implements RespValue {
     @Override
     public RespType getType() {
         return RespType.ARRAY;
+    }
+
+    @Override
+    public byte[] asResponse() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            out.write(("*" + getSize()).getBytes());
+            out.write(RespConstants.CRLF);
+            out.write(Integer.toString(values.length).getBytes());
+            out.write(RespConstants.CRLF);
+            for (RespValue value : values) {
+                out.write(value.asResponse());
+            }
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return out.toByteArray();
     }
 
     /**
