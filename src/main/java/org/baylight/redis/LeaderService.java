@@ -4,6 +4,10 @@ import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.baylight.redis.protocol.RespConstants;
+import org.baylight.redis.protocol.RespSimpleStringValue;
+import org.baylight.redis.protocol.RespValue;
+
 public class LeaderService extends RedisServiceBase {
     String replicationId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
     long totalReplicationOffset = 0L;
@@ -31,4 +35,14 @@ public class LeaderService extends RedisServiceBase {
         sb.append("master_repl_offset:").append(totalReplicationOffset).append("\n");
     }
 
+    @Override
+    public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {
+        return RespConstants.OK;
+    }
+
+    @Override
+	public byte[] psync(Map<String, RespValue> optionsMap) {
+        String response = String.format("FULLRESYNC %s 0", replicationId);
+		return new RespSimpleStringValue(response).asResponse();
+	}
 }

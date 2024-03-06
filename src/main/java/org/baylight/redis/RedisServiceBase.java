@@ -134,6 +134,12 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     }
 
     public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {
+        // TODO make this abstract once leader and follower both override this method
         return RespConstants.OK;
     }
+
+	public byte[] psync(Map<String, RespValue> optionsMap) {
+        // TODO make this abstract once leader and follower both override this method
+        return RespConstants.OK;
+	}
 }

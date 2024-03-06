@@ -14,6 +14,7 @@ public abstract class RedisCommand {
         ECHO,
         INFO,
         PING,
+        PSYNC,
         REPLCONF,        
         SET,
         // Folling are non-standard commands for baylight

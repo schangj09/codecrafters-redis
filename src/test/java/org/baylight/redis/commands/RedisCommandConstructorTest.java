@@ -71,6 +71,23 @@ public class RedisCommandConstructorTest implements WithAssertions {
         assertThat(actualCommand).asInstanceOf(type(InfoCommand.class));
     }
 
+    // Constructs a default Psync command.
+    @Test
+    public void test_newCommandFromValue_returnsPsyncCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] {
+                new RespSimpleStringValue("psync"),
+                new RespSimpleStringValue("?"),
+                new RespInteger(-1L) });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        String expectedResponse = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
+        assertThat(actualCommand).asInstanceOf(type(PsyncCommand.class));
+        assertThat(actualCommand.asCommand()).isEqualTo(expectedResponse.getBytes());
+    }
     // Constructs a default ReplConf command.
     @Test
     public void test_newCommandFromValue_returnsReplConfCommand() {

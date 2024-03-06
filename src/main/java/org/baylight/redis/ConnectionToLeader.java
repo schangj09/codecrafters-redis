@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 import org.baylight.redis.commands.PingCommand;
+import org.baylight.redis.commands.PsyncCommand;
 import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.commands.ReplConfCommand;
 import org.baylight.redis.protocol.RespValue;
@@ -63,8 +64,11 @@ public class ConnectionToLeader {
             sendCommand(conf1, (conf1Cmd, response2) -> {
                 ReplConfCommand conf2 = new ReplConfCommand(ReplConfCommand.Option.CAPA, "psync2");
                 sendCommand(conf2, (conf2Cmd, response3) -> {
-                    System.out.println(String.format("Handshake completed"));
-                    handshakeComplete = true;
+                    PsyncCommand psync = new PsyncCommand("?", Long.valueOf(-1L));
+                    sendCommand(psync, (psyncCmd, response4) -> {
+                        System.out.println(String.format("Handshake completed"));
+                        handshakeComplete = true;
+                    });
                 });
             });
         });
