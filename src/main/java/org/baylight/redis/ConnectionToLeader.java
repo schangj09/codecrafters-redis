@@ -61,8 +61,11 @@ public class ConnectionToLeader {
             ReplConfCommand conf1 = new ReplConfCommand(ReplConfCommand.Option.LISTENING_PORT,
                     String.valueOf(service.getPort()));
             sendCommand(conf1, (conf1Cmd, response2) -> {
-                System.out.println(String.format("Handshake completed"));
-                handshakeComplete = true;
+                ReplConfCommand conf2 = new ReplConfCommand(ReplConfCommand.Option.CAPA, "psync2");
+                sendCommand(conf2, (conf2Cmd, response3) -> {
+                    System.out.println(String.format("Handshake completed"));
+                    handshakeComplete = true;
+                });
             });
         });
     }
