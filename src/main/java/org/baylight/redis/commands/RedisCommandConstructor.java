@@ -52,6 +52,7 @@ public class RedisCommandConstructor {
         case GET -> new GetCommand();
         case INFO -> new InfoCommand();
         case PING -> new PingCommand();
+        case REPLCONF -> new ReplConfCommand();
         case SET -> new SetCommand();
         // special non-standard commands
         case EOF -> new EofCommand();

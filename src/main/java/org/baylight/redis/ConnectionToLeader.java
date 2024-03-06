@@ -9,6 +9,7 @@ import java.util.function.BiConsumer;
 
 import org.baylight.redis.commands.PingCommand;
 import org.baylight.redis.commands.RedisCommand;
+import org.baylight.redis.commands.ReplConfCommand;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.protocol.RespValueParser;
 
@@ -45,7 +46,9 @@ public class ConnectionToLeader {
     public boolean isHandshakeComplete() {
         return handshakeComplete;
     }
-    public void sendLeaderCommand(RedisCommand command, BiConsumer<RedisCommand, RespValue> responseConsumer) {
+
+    public void sendLeaderCommand(RedisCommand command,
+            BiConsumer<RedisCommand, RespValue> responseConsumer) {
         if (!isHandshakeComplete()) {
             throw new RuntimeException("Handshake not complete. Cannot send command to leader.");
         }
@@ -53,13 +56,19 @@ public class ConnectionToLeader {
     }
 
     public void startHandshake() {
+        System.out.println(String.format("Staring handshake with leader"));
         sendCommand(new PingCommand(), (cmd, response) -> {
-            System.out.println(String.format("Handshake with leader complete: %s", response));
-            handshakeComplete = true;
+            ReplConfCommand conf1 = new ReplConfCommand(ReplConfCommand.Option.LISTENING_PORT,
+                    String.valueOf(service.getPort()));
+            sendCommand(conf1, (conf1Cmd, response2) -> {
+                System.out.println(String.format("Handshake completed"));
+                handshakeComplete = true;
+            });
         });
     }
 
-    private void sendCommand(RedisCommand command, BiConsumer<RedisCommand, RespValue> responseConsumer) {
+    private void sendCommand(RedisCommand command,
+            BiConsumer<RedisCommand, RespValue> responseConsumer) {
         CommandAndResponseConsumer cmd = new CommandAndResponseConsumer(command, responseConsumer);
         // add the command to the queue
         commandsToLeader.offerLast(cmd);

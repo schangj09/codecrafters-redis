@@ -71,6 +71,24 @@ public class RedisCommandConstructorTest implements WithAssertions {
         assertThat(actualCommand).asInstanceOf(type(InfoCommand.class));
     }
 
+    // Constructs a default ReplConf command.
+    @Test
+    public void test_newCommandFromValue_returnsReplConfCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] {
+                new RespSimpleStringValue("replconf"),
+                new RespSimpleStringValue("listening-port"),
+                new RespInteger(123L) });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        String expectedResponse = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$3\r\n123\r\n";
+        assertThat(actualCommand).asInstanceOf(type(ReplConfCommand.class));
+        assertThat(actualCommand.asCommand()).isEqualTo(expectedResponse.getBytes());
+    }
+
     // Constructs a Get command.
     @Test
     public void test_newCommandFromValue_returnsGetCommand() {

@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.baylight.redis.commands.RedisCommand;
+import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisServiceBase implements ReplicationServiceInfoProvider {
@@ -49,6 +50,10 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
     public void closeSocket() throws IOException {
         serverSocket.close();
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public void shutdown() {
@@ -126,5 +131,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
     private boolean isDefault(String section) {
         return DEFAULT_SECTIONS.contains(section);
+    }
+
+    public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {
+        return RespConstants.OK;
     }
 }
