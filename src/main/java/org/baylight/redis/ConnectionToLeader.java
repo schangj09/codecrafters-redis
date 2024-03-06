@@ -97,7 +97,7 @@ public class ConnectionToLeader {
 
     public void processLoop() throws InterruptedException {
         while (!done) {
-            // check for bytes on next socket and process
+            // check for commands waiting to be sent
             boolean didProcess = false;
 
             if (leaderConnection.clientSocket.isClosed()) {
@@ -130,29 +130,8 @@ public class ConnectionToLeader {
             // sleep a bit if there were no lines processed
             if (!didProcess) {
                 // System.out.println("sleep 1s");
-                Thread.sleep(80L);
+                Thread.sleep(500L);
             }
-        }
-    }
-
-    void process(ClientConnection conn, RedisCommand command) throws IOException {
-        System.out.println(String.format("Received line: %s", command));
-
-        byte[] response = service.execute(command);
-        if (response != null) {
-            conn.writer.write(response);
-            conn.writer.flush();
-        }
-        switch (command) {
-        case EofCommand c -> {
-            conn.clientSocket.close();
-        }
-        case TerminateCommand c -> {
-            terminate();
-        }
-        default -> {
-            // no action for other command types
-        }
         }
     }
 
