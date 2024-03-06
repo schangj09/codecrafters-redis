@@ -42,7 +42,7 @@ public class LeaderService extends RedisServiceBase {
 
     @Override
 	public byte[] psync(Map<String, RespValue> optionsMap) {
-        String response = String.format("FULLRESYNC %s 0", replicationId);
+        String response = String.format("FULLRESYNC %s %d", replicationId, totalReplicationOffset);
 		return new RespSimpleStringValue(response).asResponse();
 	}
 }
