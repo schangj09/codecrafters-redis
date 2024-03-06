@@ -61,16 +61,49 @@ public class RedisCommandConstructorTest implements WithAssertions {
     // Constructs a default Info command.
     @Test
     public void test_newCommandFromValue_returnsInfoCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] { new RespSimpleStringValue("info") });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(InfoCommand.class));
     }
 
     // Constructs a Get command.
     @Test
     public void test_newCommandFromValue_returnsGetCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] { new RespSimpleStringValue("get"),
+                new RespSimpleStringValue("happy") });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(GetCommand.class)).matches(
+                cmd -> cmd.getKey().equals(new RespBulkString("happy".getBytes())),
+                "Unexpected key for command: " + actualCommand);
+        ;
     }
 
-    // Constructs a Get command.
+    // Constructs a Set command.
     @Test
     public void test_newCommandFromValue_returnsSetCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] { new RespSimpleStringValue("SET"),
+                new RespSimpleStringValue("happy"), new RespBulkString("face".getBytes()) });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(SetCommand.class))
+                .matches(cmd -> cmd.getKey().equals(new RespBulkString("happy".getBytes())),
+                        "Unexpected key for command: " + actualCommand)
+                .matches(cmd -> cmd.getValue().equals(new RespBulkString("face".getBytes())),
+                        "Unexpected value for command: " + actualCommand);
     }
 
     // Returns null if the command type is null.

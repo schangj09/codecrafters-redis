@@ -36,6 +36,30 @@ public class SetCommand extends RedisCommand {
         this.value = value;
     }
 
+    /**
+     * Get the options for the command.
+     * @return the optionsMap
+     */
+    Map<String, RespValue> getOptionsMap() {
+        return optionsMap;
+    }
+
+    /**
+     * Get the key to set.
+     * @return the key
+     */
+    public RespBulkString getKey() {
+        return key;
+    }
+
+    /**
+     * Ge the value to set for the key.
+     * @return the value
+     */
+    public RespBulkString getValue() {
+        return value;
+    }
+
     @Override
     public void setArgs(RespValue[] args) {
         optionsMap = ARG_READER.readArgs(args);
@@ -76,7 +100,7 @@ public class SetCommand extends RedisCommand {
                 : RespConstants.OK;
     }
 
-    private Long getTtl(long now) {
+    Long getTtl(long now) {
         if (optionsMap.containsKey("ex")) {
             return optionsMap.get("ex").getValueAsLong() * 1000;
         } else if (optionsMap.containsKey("px")) {
@@ -93,4 +117,5 @@ public class SetCommand extends RedisCommand {
     public String toString() {
         return "SetCommand [key=" + key + ", value=" + value + "]";
     }
+
 }
