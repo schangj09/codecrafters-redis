@@ -40,8 +40,6 @@ public class RespArrayValue implements RespValue {
         try {
             out.write(("*" + getSize()).getBytes());
             out.write(RespConstants.CRLF);
-            out.write(Integer.toString(values.length).getBytes());
-            out.write(RespConstants.CRLF);
             for (RespValue value : values) {
                 out.write(value.asResponse());
             }
