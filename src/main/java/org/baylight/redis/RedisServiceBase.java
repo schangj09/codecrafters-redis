@@ -22,8 +22,6 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     private final String role;
     private final Clock clock;
     private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
-    LeaderService leaderReplication = null;
-    FollowerService followerReplication = null;
 
     public static RedisServiceBase newInstance(RedisServiceOptions options, Clock clock) {
         String role = options.getRole();
