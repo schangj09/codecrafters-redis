@@ -79,4 +79,9 @@ public abstract class RedisCommand {
     public abstract byte[] execute(RedisServiceBase service);
 
     public abstract String toString();
+
+    public byte[] asCommand() {
+        // must be overridden by subclass in order to send the command to the leader or follower
+        throw new UnsupportedOperationException("Unimplemented method 'asCommand'");
+    }
 }
