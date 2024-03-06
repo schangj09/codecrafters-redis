@@ -15,6 +15,7 @@ public class EchoCommand extends RedisCommand {
 
     /**
      * Return the echo value.
+     * 
      * @return the value to be echoed
      */
     public RespBulkString getEchoValue() {

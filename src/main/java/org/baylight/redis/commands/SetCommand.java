@@ -42,6 +42,7 @@ public class SetCommand extends RedisCommand {
 
     /**
      * Get the options for the command.
+     * 
      * @return the optionsMap
      */
     Map<String, RespValue> getOptionsMap() {
@@ -50,6 +51,7 @@ public class SetCommand extends RedisCommand {
 
     /**
      * Get the key to set.
+     * 
      * @return the key
      */
     public RespBulkString getKey() {
@@ -58,6 +60,7 @@ public class SetCommand extends RedisCommand {
 
     /**
      * Ge the value to set for the key.
+     * 
      * @return the value
      */
     public RespBulkString getValue() {

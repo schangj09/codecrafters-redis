@@ -1,15 +1,16 @@
 package org.baylight.redis.commands;
 
+import java.util.Map;
+
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.StoredData;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
-import java.util.Map;
 
 /**
- * Represents a GET command in a Redis server.
- * This class is a subclass of RedisCommand and is responsible for setting the command arguments and executing the command.
+ * Represents a GET command in a Redis server. This class is a subclass of RedisCommand and is
+ * responsible for setting the command arguments and executing the command.
  */
 public class GetCommand extends RedisCommand {
     private RespBulkString key;
@@ -23,6 +24,7 @@ public class GetCommand extends RedisCommand {
 
     /**
      * Constructs a new GetCommand object with the GET command type and the specified key.
+     * 
      * @param key the key for the GET command
      */
     public GetCommand(RespBulkString key) {
@@ -32,6 +34,7 @@ public class GetCommand extends RedisCommand {
 
     /**
      * Gets the key for the GET command.
+     * 
      * @return the key for the GET command
      */
     public RespBulkString getKey() {
@@ -39,14 +42,14 @@ public class GetCommand extends RedisCommand {
     }
 
     /**
-     * Sets the command arguments by parsing the provided RespValue array.
-     * The arguments should contain the key as the first element.
+     * Sets the command arguments by parsing the provided RespValue array. The arguments should
+     * contain the key as the first element.
+     * 
      * @param args the command arguments
      */
     @Override
     public void setArgs(RespValue[] args) {
-        ArgReader argReader = new ArgReader(type.name(), new String[] {
-                ":string", // command name
+        ArgReader argReader = new ArgReader(type.name(), new String[] { ":string", // command name
                 ":string" // key
         });
         Map<String, RespValue> optionsMap = argReader.readArgs(args);
@@ -54,9 +57,10 @@ public class GetCommand extends RedisCommand {
     }
 
     /**
-     * Executes the GET command by retrieving the value associated with the specified key from the Redis service.
-     * If the key exists and is not expired, the value is returned as a byte array.
+     * Executes the GET command by retrieving the value associated with the specified key from the
+     * Redis service. If the key exists and is not expired, the value is returned as a byte array.
      * If the key does not exist or is expired, null is returned.
+     * 
      * @param service the Redis service to execute the command on
      * @return the value associated with the key, or null if the key does not exist or is expired
      */
@@ -75,6 +79,7 @@ public class GetCommand extends RedisCommand {
 
     /**
      * Returns a string representation of the GetCommand object.
+     * 
      * @return a string representation of the GetCommand object
      */
     @Override
