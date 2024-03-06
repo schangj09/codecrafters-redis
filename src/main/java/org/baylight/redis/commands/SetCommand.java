@@ -9,6 +9,10 @@ import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
 
+/**
+ * Represents a SET command in a Redis server.
+ * This class is a subclass of RedisCommand and is responsible for setting the command arguments and executing the command.
+ */
 public class SetCommand extends RedisCommand {
 
     // Args reader specification for SET command
@@ -60,6 +64,13 @@ public class SetCommand extends RedisCommand {
         return value;
     }
 
+    /**
+     * Sets the arguments for the SET command.
+     * 
+     * This method reads the arguments from the given RespValue array and sets the optionsMap, key, and value variables accordingly.
+     * 
+     * @param args the RespValue array containing the arguments for the SET command
+     */
     @Override
     public void setArgs(RespValue[] args) {
         optionsMap = ARG_READER.readArgs(args);
@@ -67,6 +78,25 @@ public class SetCommand extends RedisCommand {
         value = optionsMap.get("2").asBulkString();
     }
 
+    /**
+     * Executes the SET command in a Redis server.
+     * This method sets the specified key-value pair in the Redis service according to the options specified in the.
+     * 
+     * If the "xx" option is present, the key is updated only if it already exists.
+     * If the "nx" option is present, the key is updated only if it does not already exist.
+     * If the "ex" option is present, the key is set to expire after the specified number of seconds.
+     * If the "px" option is present, the key is set to expire after the specified number of milliseconds.
+     * If the "exat" option is present, the key is set to expire at the specified Unix timestamp.
+     * If the "pxat" option is present, the key is set to expire at the specified Unix timestamp.
+     * If the "keepttl" option is present, the value is updated, but the expireation time is not changed.
+     * 
+     * @param service the Redis service to execute the command on
+     * @return the response as a byte array:
+     *         If the key is not already stored and the "nx" option is present, null is returned as a bulk string response.
+     *         If the key is already stored and the "xx" option is present, null is returned as a bulk string response.
+     *         If the "get" option is present and there is an existing value, then the previous value is returned as a bulk string response.
+     *         Otherwise, OK is returned as a simple string response.
+     */
     @Override
     public byte[] execute(RedisServiceBase service) {
         long now = service.getCurrentTime();
@@ -100,6 +130,12 @@ public class SetCommand extends RedisCommand {
                 : RespConstants.OK;
     }
 
+    /**
+     * Calculates the time-to-live (TTL) value for a Redis key based on the options map.
+     * 
+     * @param now the current time in milliseconds
+     * @return the TTL value in milliseconds, or null if no TTL option is present
+     */
     Long getTtl(long now) {
         if (optionsMap.containsKey("ex")) {
             return optionsMap.get("ex").getValueAsLong() * 1000;
