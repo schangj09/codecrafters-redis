@@ -8,7 +8,7 @@ import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespInteger;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
 class ArgReaderTest implements WithAssertions {
     private static final String[] ARG_SPEC = new String[] {

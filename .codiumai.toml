@@ -63,6 +63,6 @@ public void testReadArgsRequired() {
 ## containing import declarations that will be added at the beginning to each test file. 
 overrideImports = """
 import org.assertj.core.api.WithAssertions;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 """
 

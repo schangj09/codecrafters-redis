@@ -10,7 +10,7 @@ import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespInteger;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
 public class RedisCommandConstructorTest implements WithAssertions {
 

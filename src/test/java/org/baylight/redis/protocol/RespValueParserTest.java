@@ -4,7 +4,7 @@ import java.io.ByteArrayInputStream;
 
 import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.io.BufferedInputLineReader;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
 public class RespValueParserTest implements WithAssertions {
     @Test
