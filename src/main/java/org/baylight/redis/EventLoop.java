@@ -14,14 +14,16 @@ import org.baylight.redis.protocol.RespValueParser;
 public class EventLoop {
     // keep a list of socket connections and continue checking for new connections
     private final RedisServiceBase service;
-private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
+    private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
     private final ExecutorService executor;
+    private final RedisCommandConstructor commandConstructor;
     private final RespValueParser valueParser;
     private volatile boolean done = false;
     
-    public EventLoop(RedisServiceBase service, RespValueParser valueParser) {
+    public EventLoop(RedisServiceBase service, RedisCommandConstructor commandConstructor, RespValueParser valueParser) {
         this.service = service;
         executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new connections
+        this.commandConstructor = commandConstructor;
         this.valueParser = valueParser;
 
         // create the thread for accepting new connections
@@ -85,7 +87,7 @@ private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<
 
                 try {
                     while (conn.reader.available() > 0) {
-                        RedisCommand command = RedisCommandConstructor.newCommandFromValue(valueParser.parse(conn.reader));
+                        RedisCommand command = commandConstructor.newCommandFromValue(valueParser.parse(conn.reader));
                         didProcess = true;
                         if (command != null) {
                             process(conn, command);

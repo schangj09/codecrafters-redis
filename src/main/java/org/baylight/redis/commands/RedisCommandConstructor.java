@@ -25,7 +25,7 @@ public class RedisCommandConstructor {
      * @return The RedisCommand object representing the parsed Redis command.
      * @throws IOException If an I/O error occurs while reading the input.
      */
-    public static RedisCommand newCommandFromValue(RespValue value) {
+    public RedisCommand newCommandFromValue(RespValue value) {
         if (value == null) {
             return null;
         }
@@ -44,7 +44,7 @@ public class RedisCommandConstructor {
      * @param array The RespArrayValue containing the parsed Redis command.
      * @return The RedisCommand object representing the parsed Redis command.
      */
-    static RedisCommand getCommand(RespArrayValue array) {
+    RedisCommand getCommand(RespArrayValue array) {
         String command = getCommandName(array.getValues()[0]);
         RedisCommand.Type commandType = RedisCommand.Type.of(command);
         RedisCommand redisCommand = switch (commandType) {
@@ -73,7 +73,7 @@ public class RedisCommandConstructor {
      * @param value The RespValue object containing the Redis command name.
      * @return The name of the Redis command as a string.
      */
-    static String getCommandName(RespValue value) {
+    String getCommandName(RespValue value) {
         String name = value.getValueAsString();
         return name != null ? name.toUpperCase() : null;
     }

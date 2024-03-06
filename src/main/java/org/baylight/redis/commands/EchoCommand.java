@@ -14,6 +14,14 @@ public class EchoCommand extends RedisCommand {
     RespBulkString bulkStringArg;
 
     /**
+     * Return the echo value.
+     * @return the value to be echoed
+     */
+    public RespBulkString getEchoValue() {
+        return bulkStringArg;
+    }
+
+    /**
      * Creates an instance of `EchoCommand` with no arguments.
      */
     public EchoCommand() {
