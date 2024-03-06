@@ -5,7 +5,7 @@ import org.baylight.redis.io.BufferedInputLineReader;
 
 public class RespValueParser {
 
-    public static RespValue parse(BufferedInputLineReader reader) throws IOException {
+    public RespValue parse(BufferedInputLineReader reader) throws IOException {
         int type = reader.read();
 
         RespType respType = RespType.of((char)type);
@@ -14,7 +14,7 @@ public class RespValueParser {
             //case SIMPLE_ERROR -> new SimpleErrorRespValue(reader);
             case INTEGER -> new RespInteger(reader);
             case BULK_STRING -> new RespBulkString(reader);
-            case ARRAY -> new RespArrayValue(reader);
+            case ARRAY -> new RespArrayValue(reader, this);
             case null, default -> {
                 System.out.println("Unknown type: " + type);
                 yield null;

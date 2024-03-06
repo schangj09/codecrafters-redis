@@ -16,11 +16,13 @@ public class EventLoop {
     private final RedisServiceBase service;
 private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
     private final ExecutorService executor;
+    private final RespValueParser valueParser;
     private volatile boolean done = false;
     
-    public EventLoop(RedisServiceBase service) {
+    public EventLoop(RedisServiceBase service, RespValueParser valueParser) {
         this.service = service;
         executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new connections
+        this.valueParser = valueParser;
 
         // create the thread for accepting new connections
         executor.execute(() -> {
@@ -83,7 +85,7 @@ private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<
 
                 try {
                     while (conn.reader.available() > 0) {
-                        RedisCommand command = RedisCommandConstructor.newCommandFromValue(RespValueParser.parse(conn.reader));
+                        RedisCommand command = RedisCommandConstructor.newCommandFromValue(valueParser.parse(conn.reader));
                         didProcess = true;
                         if (command != null) {
                             process(conn, command);

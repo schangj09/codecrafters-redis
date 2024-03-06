@@ -4,6 +4,7 @@ import java.time.Clock;
 import org.baylight.redis.EventLoop;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.RedisServiceOptions;
+import org.baylight.redis.protocol.RespValueParser;
 
 public class Main {
   public static void main(String[] args) {
@@ -18,7 +19,7 @@ public class Main {
     try {
       service.start();
 
-      EventLoop loop = new EventLoop(service);
+      EventLoop loop = new EventLoop(service, new RespValueParser());
       loop.processLoop();
       System.out.println(String.format("Event loop terminated"));
 

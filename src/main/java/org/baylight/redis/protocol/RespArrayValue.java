@@ -11,10 +11,10 @@ public class RespArrayValue implements RespValue {
         this.values = values;
     }
 
-    public RespArrayValue(BufferedInputLineReader reader) throws IOException {
+    public RespArrayValue(BufferedInputLineReader reader, RespValueParser valueParser) throws IOException {
         values = new RespValue[reader.readInt()];
         for (int i = 0; i < values.length; i++) {
-            values[i] = RespValueParser.parse(reader);
+            values[i] = valueParser.parse(reader);
         }
     }
 
