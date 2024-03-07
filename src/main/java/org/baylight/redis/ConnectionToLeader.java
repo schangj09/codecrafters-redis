@@ -164,6 +164,7 @@ public class ConnectionToLeader {
                         }
                         response = new RespBulkString(rdb);
                         System.out.println(String.format("Received leader RDB: %s", response));
+                        cmd.responseConsumer.apply(cmd.command, response);
                     } 
 
                     didProcess = true;
