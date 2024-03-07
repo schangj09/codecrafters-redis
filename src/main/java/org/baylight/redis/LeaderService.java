@@ -42,7 +42,10 @@ public class LeaderService extends RedisServiceBase {
     @Override
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
         // for the leader, return the command response and replicate to the followers
-        conn.writeFlush(command.execute(this));
+        byte[] response = command.execute(this);
+        if (response != null && response.length > 0) {
+            conn.writeFlush(response);
+        }
 
         // check if it is a new follower
         String connectionString = conn.getConnectionString();

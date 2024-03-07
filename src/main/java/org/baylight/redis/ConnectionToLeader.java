@@ -39,7 +39,7 @@ public class ConnectionToLeader {
         System.out.println(String.format("Connection: %s, isOpened: %s",
                 leaderConnection.clientSocket, !leaderConnection.clientSocket.isClosed()));
 
-        // create the thread for sending commands to the leader
+        // create the thread for sending commands to the leader and receiving replication commands
         executor.execute(() -> {
             try {
                 processLoop();
