@@ -6,16 +6,19 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.baylight.redis.RedisServiceBase;
+import org.baylight.redis.protocol.RespBulkString;
+import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisCommand {
     public enum Type {
-        GET,
+        DEL,
         ECHO,
+        GET,
         INFO,
         PING,
         PSYNC,
-        REPLCONF,        
+        REPLCONF,
         SET,
         // Folling are non-standard commands for baylight
         EOF, // close a client connection
@@ -38,6 +41,10 @@ public abstract class RedisCommand {
 
     public Type getType() {
         return type;
+    }
+
+    public boolean isReplicatedCommand() {
+        return type == Type.SET || type == Type.DEL;
     }
 
     protected void setArgs(RespValue[] args) {

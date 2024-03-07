@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.time.Clock;
 
+import org.baylight.redis.commands.RedisCommand;
+
 public class FollowerService extends RedisServiceBase {
     private ConnectionToLeader leaderConnection;
     private final String leaderHost;
@@ -68,6 +70,12 @@ public class FollowerService extends RedisServiceBase {
      */
     public Socket getLeaderClientSocket() {
         return leaderClientSocket;
+    }
+
+    @Override
+    public void execute(RedisCommand command, ClientConnection conn) throws IOException {
+        // for the follower, execute the replicated command, but don't return the response
+        command.execute(this);
     }
 
 }

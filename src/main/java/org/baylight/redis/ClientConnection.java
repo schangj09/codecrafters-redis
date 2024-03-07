@@ -22,4 +22,17 @@ public class ClientConnection {
         outputStream = s.getOutputStream();
         writer = new BufferedOutputStream(outputStream);
     }
+
+    String getConnectionString() {
+        return clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort();
+    }
+
+    public void writeFlush(byte[] bytes) throws IOException {
+        writer.write(bytes);
+        writer.flush();
+    }
+
+    public boolean isClosed() {
+        return clientSocket.isClosed();
+    }
 }

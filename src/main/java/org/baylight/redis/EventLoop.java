@@ -79,7 +79,7 @@ public class EventLoop {
             Iterator<ClientConnection> iter = clientSockets.iterator();
             for (; iter.hasNext();) {
                 ClientConnection conn = iter.next();
-                if (conn.clientSocket.isClosed()) {
+                if (conn.isClosed()) {
                     System.out.println(String.format("Connection closed: %s", conn.clientSocket));
                     iter.remove();
                     continue;
@@ -108,7 +108,7 @@ public class EventLoop {
     void process(ClientConnection conn, RedisCommand command) throws IOException {
         System.out.println(String.format("Received line: %s", command));
 
-        service.execute(command, conn.writer);
+        service.execute(command, conn);
         switch (command) {
             case EofCommand c -> {
                 conn.clientSocket.close();
