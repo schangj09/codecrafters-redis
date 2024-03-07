@@ -1,11 +1,14 @@
 package org.baylight.redis.commands;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
+import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 
@@ -55,19 +58,22 @@ public class ReplConfCommand extends RedisCommand {
 
     @Override
     public byte[] asCommand() {
-        RespValue[] cmdValues;
-        if (optionsMap.containsKey(LISTENING_PORT_NAME)) {
-            cmdValues = new RespValue[] { new RespBulkString(getType().name().getBytes()),
-                    new RespBulkString(LISTENING_PORT_NAME.getBytes()), new RespBulkString(
-                            optionsMap.get(LISTENING_PORT_NAME).getValueAsString().getBytes()) };
-        } else if (optionsMap.containsKey(CAPA_NAME)) {
-            cmdValues = new RespValue[] { new RespBulkString(getType().name().getBytes()),
-                    new RespBulkString(CAPA_NAME.getBytes()),
-                    new RespBulkString(optionsMap.get(CAPA_NAME).getValueAsString().getBytes()) };
-        } else {
-            cmdValues = new RespValue[] { new RespBulkString(getType().name().getBytes()) };
+        List<RespValue> cmdValues = new ArrayList<>();
+        cmdValues.add(new RespBulkString(getType().name().getBytes()));
+
+        addCommandOption(cmdValues, LISTENING_PORT_NAME);
+        addCommandOption(cmdValues, CAPA_NAME);
+        return new RespArrayValue(cmdValues.toArray(new RespValue[]{})).asResponse();
+    }
+
+    protected void addCommandOption(List<RespValue> cmdValues, String option) {
+        if (optionsMap.containsKey(option)) {
+            cmdValues.add(new RespBulkString(option.getBytes()));
+            if (optionsMap.get(option) != RespConstants.NULL_VALUE) {
+                cmdValues.add(
+                        new RespBulkString(optionsMap.get(option).getValueAsString().getBytes()));
+            }
         }
-        return new RespArrayValue(cmdValues).asResponse();
     }
 
     @Override

@@ -1,10 +1,13 @@
 package org.baylight.redis.commands;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.StoredData;
+import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
@@ -79,6 +82,34 @@ public class SetCommand extends RedisCommand {
         optionsMap = ARG_READER.readArgs(args);
         key = optionsMap.get("1").asBulkString();
         value = optionsMap.get("2").asBulkString();
+    }
+
+    @Override
+    public byte[] asCommand() {
+        List<RespValue> cmdValues = new ArrayList<>();
+        cmdValues.add(new RespBulkString(getType().name().getBytes()));
+        cmdValues.add(key);
+        cmdValues.add(value);
+
+        addCommandOption(cmdValues, "nx");
+        addCommandOption(cmdValues, "xx");
+        addCommandOption(cmdValues, "get");
+        addCommandOption(cmdValues, "ex");
+        addCommandOption(cmdValues, "px");
+        addCommandOption(cmdValues, "exat");
+        addCommandOption(cmdValues, "pxatt");
+        addCommandOption(cmdValues, "keppttl");
+        return new RespArrayValue(cmdValues.toArray(new RespValue[] {})).asResponse();
+    }
+
+    protected void addCommandOption(List<RespValue> cmdValues, String option) {
+        if (optionsMap.containsKey(option)) {
+            cmdValues.add(new RespBulkString(option.getBytes()));
+            if (optionsMap.get(option) != RespConstants.NULL_VALUE) {
+                cmdValues.add(
+                        new RespBulkString(optionsMap.get(option).getValueAsString().getBytes()));
+            }
+        }
     }
 
     /**

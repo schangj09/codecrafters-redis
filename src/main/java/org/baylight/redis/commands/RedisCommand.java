@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.baylight.redis.RedisServiceBase;
-import org.baylight.redis.protocol.RespBulkString;
-import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisCommand {
