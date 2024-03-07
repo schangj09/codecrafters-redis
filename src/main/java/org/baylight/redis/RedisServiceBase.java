@@ -142,4 +142,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         // TODO make this abstract once leader and follower both override this method
         return RespConstants.OK;
 	}
+
+    public byte[] psyncRdb(Map<String, RespValue> optionsMap) {
+        // TODO make this abstract once leader and follower both override this method
+        throw new UnsupportedOperationException("no psync rdb implementation for the service");
+	}
 }

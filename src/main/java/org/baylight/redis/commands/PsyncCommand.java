@@ -38,7 +38,12 @@ public class PsyncCommand extends RedisCommand {
 
     @Override
     public byte[] execute(RedisServiceBase service) {
-        return service.psync(optionsMap);
+        byte[] psync = service.psync(optionsMap);
+        byte[] rdb = service.psyncRdb(optionsMap);
+        byte[] response = new byte[psync.length + rdb.length];
+        System.arraycopy(psync, 0, response, 0, psync.length);
+        System.arraycopy(rdb, 0, response, psync.length, rdb.length);
+        return response;
     }
 
     @Override
