@@ -1,6 +1,7 @@
 package org.baylight.redis;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.time.Clock;
 import java.util.Map;
@@ -88,8 +89,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap;
     }
 
-    public byte[] execute(RedisCommand command) {
-        return command.execute(this);
+    public void execute(RedisCommand command, OutputStream out) throws IOException {
+        out.write(command.execute(this));
     }
 
     public boolean isExpired(StoredData storedData) {
