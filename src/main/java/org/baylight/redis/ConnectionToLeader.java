@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import org.baylight.redis.commands.PingCommand;
 import org.baylight.redis.commands.PsyncCommand;
 import org.baylight.redis.commands.RedisCommand;
+import org.baylight.redis.commands.RedisCommandConstructor;
 import org.baylight.redis.commands.ReplConfCommand;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
@@ -21,6 +22,8 @@ public class ConnectionToLeader {
     private final ClientConnection leaderConnection;
     private final Deque<CommandAndResponseConsumer> commandsToLeader = new ConcurrentLinkedDeque<>();
     private final ExecutorService executor;
+    private final RedisCommandConstructor commandConstructor;
+    private final RespValueParser valueParser;
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
     private RespBulkString fullResyncRdb;
@@ -29,6 +32,8 @@ public class ConnectionToLeader {
         this.service = service;
         executor = Executors.newFixedThreadPool(1); // We need just one thread for sending commands
                                                     // to the leader
+        commandConstructor = new RedisCommandConstructor();
+        valueParser = new RespValueParser();
 
         leaderConnection = new ClientConnection(service.getLeaderClientSocket());
         System.out.println(String.format("Connection: %s, isOpened: %s",
@@ -68,12 +73,15 @@ public class ConnectionToLeader {
                 sendCommand(conf2, (conf2Cmd, response3) -> {
                     PsyncCommand psync = new PsyncCommand("?", Long.valueOf(-1L));
                     sendCommand(psync, (psyncCmd, response4) -> {
-                        if (response4.isSimpleString() && response4.getValueAsString().toUpperCase().startsWith("FULLRESYNC")) {
-                            System.out.println(String.format("Full resync - looking for rdb response"));
+                        if (response4.isSimpleString() && response4.getValueAsString().toUpperCase()
+                                .startsWith("FULLRESYNC")) {
+                            System.out.println(
+                                    String.format("Full resync - looking for rdb response"));
                             return true;
                         }
                         if (!response4.isBulkString()) {
-                            throw new RuntimeException(String.format("Unexpected response: %s", response4));
+                            throw new RuntimeException(
+                                    String.format("Unexpected response: %s", response4));
                         }
                         setFullResyncRdb((RespBulkString) response4);
                         System.out.println(String.format("Handshake completed"));
@@ -91,9 +99,11 @@ public class ConnectionToLeader {
     private void setFullResyncRdb(RespBulkString fullResyncRdb) {
         this.fullResyncRdb = fullResyncRdb;
     }
+
     public byte[] getFullResyncRdb() {
         return fullResyncRdb.getValue();
     }
+
     private void sendCommand(RedisCommand command,
             BiFunction<RedisCommand, RespValue, Boolean> responseConsumer) {
         CommandAndResponseConsumer cmd = new CommandAndResponseConsumer(command, responseConsumer);
@@ -146,6 +156,17 @@ public class ConnectionToLeader {
 
                     didProcess = true;
                 }
+                // if handshake is completed then read replicated commands from the leader
+                if (isHandshakeComplete()) {
+                    while (leaderConnection.reader.available() > 0) {
+                        RedisCommand command = commandConstructor
+                                .newCommandFromValue(valueParser.parse(leaderConnection.reader));
+                        didProcess = true;
+                        if (command != null) {
+                            process(leaderConnection, command);
+                        }
+                    }
+                }
             } catch (Exception e) {
                 System.out.println(String.format("Exception: %s \"%s\"",
                         e.getClass().getSimpleName(), e.getMessage()));
@@ -156,6 +177,12 @@ public class ConnectionToLeader {
                 Thread.sleep(500L);
             }
         }
+    }
+
+    void process(ClientConnection conn, RedisCommand command) throws IOException {
+        System.out.println(String.format("Received replicated command: %s", command));
+
+        service.execute(command, conn);
     }
 
     private static class CommandAndResponseConsumer {
