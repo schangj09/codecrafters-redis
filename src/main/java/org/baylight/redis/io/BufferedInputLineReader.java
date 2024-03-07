@@ -34,7 +34,18 @@ public class BufferedInputLineReader extends BufferedInputStream {
     }
 
     public void readCRLF() throws IOException {
-        readLine();
+        if (read() != '\r' || read() != '\n') {
+            throw new IOException("Expected CRLF");
+        }
+    }
+
+    public boolean readOptionalCRLF() throws IOException {
+        if (available() == 0) {
+            return false;
+        } else {
+            readCRLF();
+            return true;
+        }
     }
 
 }

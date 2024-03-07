@@ -1,6 +1,7 @@
 package org.baylight.redis.protocol;
 
 import java.io.IOException;
+import java.lang.Math;
 import java.util.Arrays;
 
 import org.baylight.redis.io.BufferedInputLineReader;
@@ -14,19 +15,28 @@ public class RespBulkString implements RespValue {
 
     public RespBulkString(BufferedInputLineReader reader) throws IOException {
         value = reader.readNBytes(reader.readInt());
-        reader.readCRLF();
+        reader.readOptionalCRLF();
     }
 
     public byte[] asResponse() {
+        return asResponse(true);
+    }
+
+    public byte[] asResponse(boolean trailingCRLF) {
         StringBuilder builder = new StringBuilder("$").append(value.length).append("\r\n");
         byte[] prefixBytes = builder.toString().getBytes();
-        int n = prefixBytes.length + value.length + 2;
+        int n = prefixBytes.length + value.length;
+        if (trailingCRLF) {
+            n += 2;
+        }
 
         byte[] result = new byte[n];
         System.arraycopy(prefixBytes, 0, result, 0, prefixBytes.length);
         System.arraycopy(value, 0, result, prefixBytes.length, value.length);
-        result[n - 2] = '\r';
-        result[n - 1] = '\n';
+        if (trailingCRLF) {
+            result[n - 2] = '\r';
+            result[n - 1] = '\n';
+        }
         return result;
     }
 
