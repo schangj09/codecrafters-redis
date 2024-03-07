@@ -5,12 +5,13 @@ import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import org.baylight.redis.commands.PingCommand;
 import org.baylight.redis.commands.PsyncCommand;
 import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.commands.ReplConfCommand;
+import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.protocol.RespValueParser;
 
@@ -22,6 +23,7 @@ public class ConnectionToLeader {
     private final ExecutorService executor;
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
+    private RespBulkString fullResyncRdb;
 
     public ConnectionToLeader(FollowerService service) throws IOException {
         this.service = service;
@@ -49,7 +51,7 @@ public class ConnectionToLeader {
     }
 
     public void sendLeaderCommand(RedisCommand command,
-            BiConsumer<RedisCommand, RespValue> responseConsumer) {
+            BiFunction<RedisCommand, RespValue, Boolean> responseConsumer) {
         if (!isHandshakeComplete()) {
             throw new RuntimeException("Handshake not complete. Cannot send command to leader.");
         }
@@ -66,16 +68,34 @@ public class ConnectionToLeader {
                 sendCommand(conf2, (conf2Cmd, response3) -> {
                     PsyncCommand psync = new PsyncCommand("?", Long.valueOf(-1L));
                     sendCommand(psync, (psyncCmd, response4) -> {
+                        if (response4.isSimpleString() && response4.getValueAsString().toUpperCase().startsWith("FULLRESYNC")) {
+                            System.out.println(String.format("Full resync - looking for rdb response"));
+                            return true;
+                        }
+                        if (!response4.isBulkString()) {
+                            throw new RuntimeException(String.format("Unexpected response: %s", response4));
+                        }
+                        setFullResyncRdb((RespBulkString) response4);
                         System.out.println(String.format("Handshake completed"));
                         handshakeComplete = true;
+                        return false;
                     });
+                    return false;
                 });
+                return false;
             });
+            return false;
         });
     }
 
+    private void setFullResyncRdb(RespBulkString fullResyncRdb) {
+        this.fullResyncRdb = fullResyncRdb;
+    }
+    public byte[] getFullResyncRdb() {
+        return fullResyncRdb.getValue();
+    }
     private void sendCommand(RedisCommand command,
-            BiConsumer<RedisCommand, RespValue> responseConsumer) {
+            BiFunction<RedisCommand, RespValue, Boolean> responseConsumer) {
         CommandAndResponseConsumer cmd = new CommandAndResponseConsumer(command, responseConsumer);
         // add the command to the queue
         commandsToLeader.offerLast(cmd);
@@ -117,9 +137,12 @@ public class ConnectionToLeader {
 
                     // read the response - will wait on the stream until the whole value is parsed
                     RespValueParser respValueParser = new RespValueParser();
-                    RespValue response = respValueParser.parse(leaderConnection.reader);
-                    System.out.println(String.format("Received leader response: %s", response));
-                    cmd.responseConsumer.accept(cmd.command, response);
+                    RespValue response;
+                    // responseConsumer returns True if we expect another value from the command
+                    do {
+                        response = respValueParser.parse(leaderConnection.reader);
+                        System.out.println(String.format("Received leader response: %s", response));
+                    } while (cmd.responseConsumer.apply(cmd.command, response));
 
                     didProcess = true;
                 }
@@ -137,10 +160,10 @@ public class ConnectionToLeader {
 
     private static class CommandAndResponseConsumer {
         private final RedisCommand command;
-        private final BiConsumer<RedisCommand, RespValue> responseConsumer;
+        private final BiFunction<RedisCommand, RespValue, Boolean> responseConsumer;
 
         public CommandAndResponseConsumer(RedisCommand command,
-                BiConsumer<RedisCommand, RespValue> responseConsumer) {
+                BiFunction<RedisCommand, RespValue, Boolean> responseConsumer) {
             this.command = command;
             this.responseConsumer = responseConsumer;
         }
