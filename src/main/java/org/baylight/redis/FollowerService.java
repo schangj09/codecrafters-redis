@@ -75,7 +75,10 @@ public class FollowerService extends RedisServiceBase {
     @Override
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
         // for the follower, just execute the command
-        conn.writeFlush(command.execute(this));
+        byte[] response = command.execute(this);
+        if (response != null && response.length > 0) {
+            conn.writeFlush(response);
+        }
     }
 
 }

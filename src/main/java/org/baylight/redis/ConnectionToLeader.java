@@ -148,11 +148,23 @@ public class ConnectionToLeader {
                     // read the response - will wait on the stream until the whole value is parsed
                     RespValueParser respValueParser = new RespValueParser();
                     RespValue response;
-                    // responseConsumer returns True if we expect another value from the command
-                    do {
-                        response = respValueParser.parse(leaderConnection.reader);
-                        System.out.println(String.format("Received leader response: %s", response));
-                    } while (cmd.responseConsumer.apply(cmd.command, response));
+                    response = respValueParser.parse(leaderConnection.reader);
+                    System.out.println(String.format("Received leader response: %s", response));
+                    // responseConsumer returns True if we expect the RDB value from the command
+                    if (cmd.responseConsumer.apply(cmd.command, response)) {
+                        int val = leaderConnection.reader.read();
+                        if (val != '$') {
+                            throw new IllegalArgumentException("Expected RDB from leader, got char " + val);
+                        }
+                        long len = leaderConnection.reader.readLong();
+                        // TODO: refactor the RDB processing with a stream instead of byte array
+                        byte[] rdb = new byte[(int)len];
+                        for (int i = 0;i < len; i++) {
+                            rdb[i] = (byte)leaderConnection.reader.read();
+                        }
+                        response = new RespBulkString(rdb);
+                        System.out.println(String.format("Received leader RDB: %s", response));
+                    } 
 
                     didProcess = true;
                 }
