@@ -55,6 +55,7 @@ public class ConnectionToLeader {
     public boolean isHandshakeComplete() {
         return handshakeComplete;
     }
+
     public boolean isReplicationPending() {
         return replicationPending;
     }
@@ -187,6 +188,9 @@ public class ConnectionToLeader {
                 }
                 // sleep a bit if there were no commands processed
                 // Note: handshake does not count so we will sleep after the handshake
+                System.out.println(
+                        String.format("ConnectionToLeader Loop: replPending %s, didProcess %s",
+                                replicationPending, didProcess));
                 if (!didProcess) {
                     // System.out.println("sleep 1s");
                     Thread.sleep(50L);
