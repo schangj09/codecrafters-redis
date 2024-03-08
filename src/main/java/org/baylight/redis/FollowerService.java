@@ -99,11 +99,6 @@ public class FollowerService extends RedisServiceBase {
         }
     }
 
-    private boolean shouldSendResponseToLeader(RedisCommand command) {
-        boolean isReplconfGetack = command instanceof ReplConfCommand && ((ReplConfCommand) command)
-                .getOptionsMap().containsKey(ReplConfCommand.GETACK_NAME);
-        return isReplconfGetack;
-    }
 
     @Override
     public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {

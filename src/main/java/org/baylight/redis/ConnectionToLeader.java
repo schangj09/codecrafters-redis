@@ -162,7 +162,8 @@ public class ConnectionToLeader {
                             process(leaderConnection, command);
                         }
                         int nextAvailableBytes = leaderConnection.reader.available();
-                        numBytesReceived.addAndGet(availableBytes - nextAvailableBytes);
+                        long prev = numBytesReceived.getAndAdd(availableBytes - nextAvailableBytes);
+                        System.out.println(String.format("DEBUG: Updated num bytes from %d to %d", prev, numBytesReceived.get()));
                         availableBytes = nextAvailableBytes;
                     }
                 }
