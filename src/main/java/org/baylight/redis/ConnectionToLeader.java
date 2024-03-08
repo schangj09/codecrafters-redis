@@ -204,7 +204,11 @@ public class ConnectionToLeader {
     }
 
     void process(ClientConnection conn, RedisCommand command) throws IOException {
-        System.out.println(String.format("Received replicated command: %s", command));
+        if (command.isReplicatedCommand()) {
+            System.out.println(String.format("Received replicated command: %s", command));
+        } else {
+            System.out.println(String.format("Received command from leader: %s", command));
+        }
 
         service.execute(command, conn);
     }

@@ -3,8 +3,13 @@ package org.baylight.redis;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Clock;
+import java.util.Map;
 
 import org.baylight.redis.commands.RedisCommand;
+import org.baylight.redis.commands.ReplConfCommand;
+import org.baylight.redis.protocol.RespBulkString;
+import org.baylight.redis.protocol.RespConstants;
+import org.baylight.redis.protocol.RespValue;
 
 public class FollowerService extends RedisServiceBase {
     private ConnectionToLeader leaderConnection;
@@ -81,10 +86,26 @@ public class FollowerService extends RedisServiceBase {
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
         // for the follower, just execute the command
         byte[] response = command.execute(this);
-        System.out.println(String.format("Follower service command response: %s", new String(response)));
+        if (command.isReplicatedCommand()) {
+            System.out.println(
+                    String.format("Follower service do not send replicated %s response: %s",
+                            command.getType().name(), new String(response)));
+            return;
+        }
+        System.out.println(
+                String.format("Follower service command response: %s", new String(response)));
         if (response != null && response.length > 0) {
             conn.writeFlush(response);
         }
+    }
+
+    @Override
+    public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {
+        if (optionsMap.containsKey(ReplConfCommand.GETACK_NAME)) {
+            String response = String.format("REPLCONF ACK %d", 0);
+            return new RespBulkString(response.getBytes()).asResponse();
+        }
+        return RespConstants.OK;
     }
 
 }
