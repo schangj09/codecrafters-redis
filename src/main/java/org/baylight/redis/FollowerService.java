@@ -103,7 +103,7 @@ public class FollowerService extends RedisServiceBase {
     @Override
     public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {
         if (optionsMap.containsKey(ReplConfCommand.GETACK_NAME)) {
-            String responseValue = String.valueOf(0);
+            String responseValue = String.valueOf(leaderConnection.getNumBytesReceived());
             return new RespArrayValue(new RespValue[] {
                     new RespBulkString(RedisCommand.Type.REPLCONF.name().getBytes()),
                     new RespBulkString("ACK".getBytes()),

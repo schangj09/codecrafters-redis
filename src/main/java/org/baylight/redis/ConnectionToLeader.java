@@ -5,6 +5,7 @@ import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 
 import org.baylight.redis.commands.PingCommand;
@@ -27,6 +28,7 @@ public class ConnectionToLeader {
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
     private volatile boolean replicationPending = true;
+    private final AtomicLong numBytesReceived = new AtomicLong(0L);
     private RespBulkString fullResyncRdb;
 
     public ConnectionToLeader(FollowerService service) throws IOException {
@@ -58,6 +60,10 @@ public class ConnectionToLeader {
 
     public boolean isReplicationPending() {
         return replicationPending;
+    }
+
+    public long getNumBytesReceived() {
+        return numBytesReceived.get();
     }
 
     public void sendLeaderCommand(RedisCommand command,
@@ -144,9 +150,10 @@ public class ConnectionToLeader {
             }
 
             try {
-                // if handshake is completed then read replicated commands from the leader
+                // if handshake is completed then read replicated commands from the leader and track the total bytes read
                 if (isHandshakeComplete()) {
-                    while (leaderConnection.reader.available() > 0) {
+                    int availableBytes = leaderConnection.reader.available();
+                    while (availableBytes > 0) {
                         replicationPending = true;
                         RedisCommand command = commandConstructor
                                 .newCommandFromValue(valueParser.parse(leaderConnection.reader));
@@ -154,6 +161,9 @@ public class ConnectionToLeader {
                         if (command != null) {
                             process(leaderConnection, command);
                         }
+                        int nextAvailableBytes = leaderConnection.reader.available();
+                        numBytesReceived.addAndGet(availableBytes - nextAvailableBytes);
+                        availableBytes = nextAvailableBytes;
                     }
                 }
                 while (!commandsToLeader.isEmpty()) {
@@ -191,7 +201,8 @@ public class ConnectionToLeader {
                 if (!didProcess) {
                     // System.out.println("sleep 1s");
                     Thread.sleep(50L);
-                    // no more replication pending if there is nothing on the socket after the handshake
+                    // no more replication pending if there is nothing on the socket after the
+                    // handshake
                     if (handshakeComplete) {
                         replicationPending = leaderConnection.reader.available() > 0;
                     }
