@@ -33,7 +33,7 @@ public class ReplConfCommand extends RedisCommand {
 
     private static ArgReader ARG_READER = new ArgReader(Type.REPLCONF.name(),
             new String[] { ":string", // command name
-                    "[listening-port:int capa:string getack]" });
+                    "[listening-port:int capa:string getack:string]" });
 
     private Map<String, RespValue> optionsMap = new HashMap<>();
 

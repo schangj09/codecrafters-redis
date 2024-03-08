@@ -67,7 +67,7 @@ public class ReplConfCommandTest implements WithAssertions {
         // given
         RedisServiceBase service = mock(LeaderService.class);
         when(service.replicationConfirm(anyMap())).thenReturn(RespConstants.OK);
-        ReplConfCommand command = new ReplConfCommand(Option.GETACK, null);
+        ReplConfCommand command = new ReplConfCommand(Option.GETACK, "*");
 
         // when
         byte[] result = command.execute(service);
@@ -75,7 +75,7 @@ public class ReplConfCommandTest implements WithAssertions {
         // then
         assertThat(result).isEqualTo(RespConstants.OK);
         verify(service).replicationConfirm(eq(Map.of("0", new RespSimpleStringValue("REPLCONF"),
-                "getack", RespConstants.NULL_VALUE)));
+                "getack", new RespSimpleStringValue("*"))));
         verifyNoMoreInteractions(service);
     }
 
