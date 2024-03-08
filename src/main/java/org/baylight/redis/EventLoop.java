@@ -115,7 +115,7 @@ public class EventLoop {
     void process(ClientConnection conn, RedisCommand command) throws IOException {
         System.out.println(String.format("Received client command: %s", command));
 
-        service.execute(command, conn);
+        service.execute(command, conn, true);
         switch (command) {
         case EofCommand c -> {
             conn.clientSocket.close();
