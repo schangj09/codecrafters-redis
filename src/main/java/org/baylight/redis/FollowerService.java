@@ -84,14 +84,14 @@ public class FollowerService extends RedisServiceBase {
     }
 
     @Override
-    public void execute(RedisCommand command, ClientConnection conn) throws IOException {
+    public void execute(RedisCommand command, ClientConnection conn, boolean writeResponse) throws IOException {
         // for the follower, just execute the command
         byte[] response = command.execute(this);
-        if (shouldSendResponseToLeader(command)) {
+        if (writeResponse) {
             System.out.println(String.format("Follower service sending GETACK response: %s",
                     new String(response)));
             if (response != null && response.length > 0) {
-                conn.writeFlush(response);
+                conn.writer.writeFlush(response);
             }
         } else {
             System.out.println(String.format("Follower service do not send %s response: %s",

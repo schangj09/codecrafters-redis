@@ -42,7 +42,7 @@ public class LeaderService extends RedisServiceBase {
     }
 
     @Override
-    public void execute(RedisCommand command, ClientConnection conn) throws IOException {
+    public void execute(RedisCommand command, ClientConnection conn, boolean writeResponse) throws IOException {
         // for the leader, return the command response and replicate to the followers
         byte[] response = command.execute(this);
         // Note: first complete replication before sending the response
@@ -67,7 +67,7 @@ public class LeaderService extends RedisServiceBase {
                 }
                 if (clientConnection != conn) {
                     try {
-                        clientConnection.writeFlush(command.asCommand());
+                        clientConnection.writer.writeFlush(command.asCommand());
                     } catch (IOException e) {
                         System.out.println(String.format(
                                 "Follower exception during replication connection: %s, exception: %s",
@@ -76,8 +76,8 @@ public class LeaderService extends RedisServiceBase {
                 }
             }
         }
-        if (response != null && response.length > 0) {
-            conn.writeFlush(response);
+        if (response != null && response.length > 0 && writeResponse) {
+            conn.writer.writeFlush(response);
         }
     }
 

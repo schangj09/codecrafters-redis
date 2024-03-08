@@ -221,7 +221,14 @@ public class ConnectionToLeader {
             System.out.println(String.format("Received command from leader: %s", command));
         }
 
-        service.execute(command, conn);
+        boolean sendResponseToLeader = shouldSendResponseToLeader(command);
+        service.execute(command, conn, sendResponseToLeader);
+    }
+
+    private boolean shouldSendResponseToLeader(RedisCommand command) {
+        boolean isReplconfGetack = command instanceof ReplConfCommand && ((ReplConfCommand) command)
+                .getOptionsMap().containsKey(ReplConfCommand.GETACK_NAME);
+        return isReplconfGetack;
     }
 
     private static class CommandAndResponseConsumer {

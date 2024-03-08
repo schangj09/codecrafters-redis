@@ -88,7 +88,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap;
     }
 
-    public abstract void execute(RedisCommand command, ClientConnection conn) throws IOException;
+    public abstract void execute(RedisCommand command, ClientConnection conn, boolean writeResponse) throws IOException;
 
     public boolean isExpired(StoredData storedData) {
         long now = clock.millis();
