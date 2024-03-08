@@ -13,11 +13,12 @@ import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 
 public class ReplConfCommand extends RedisCommand {
-    private static final String LISTENING_PORT_NAME = "listening-port";
     private static final String CAPA_NAME = "capa";
+    private static final String GETACK_NAME = "getack";
+    private static final String LISTENING_PORT_NAME = "listening-port";
 
     public static enum Option {
-        LISTENING_PORT(LISTENING_PORT_NAME), CAPA(CAPA_NAME);
+        CAPA(CAPA_NAME), GETACK(GETACK_NAME), LISTENING_PORT(LISTENING_PORT_NAME);
 
         String name;
 
@@ -32,7 +33,7 @@ public class ReplConfCommand extends RedisCommand {
 
     private static ArgReader ARG_READER = new ArgReader(Type.REPLCONF.name(),
             new String[] { ":string", // command name
-                    "[listening-port:int capa:string]" });
+                    "[listening-port:int capa:string getack]" });
 
     private Map<String, RespValue> optionsMap = new HashMap<>();
 
@@ -43,7 +44,8 @@ public class ReplConfCommand extends RedisCommand {
     public ReplConfCommand(Option option, String optionValue) {
         super(Type.REPLCONF);
         optionsMap.put("0", new RespSimpleStringValue(Type.REPLCONF.name()));
-        optionsMap.put(option.getName(), new RespSimpleStringValue(optionValue));
+        optionsMap.put(option.getName(), optionValue == null ? RespConstants.NULL_VALUE
+                : new RespSimpleStringValue(optionValue));
     }
 
     @Override
@@ -61,9 +63,10 @@ public class ReplConfCommand extends RedisCommand {
         List<RespValue> cmdValues = new ArrayList<>();
         cmdValues.add(new RespBulkString(getType().name().getBytes()));
 
-        addCommandOption(cmdValues, LISTENING_PORT_NAME);
         addCommandOption(cmdValues, CAPA_NAME);
-        return new RespArrayValue(cmdValues.toArray(new RespValue[]{})).asResponse();
+        addCommandOption(cmdValues, GETACK_NAME);
+        addCommandOption(cmdValues, LISTENING_PORT_NAME);
+        return new RespArrayValue(cmdValues.toArray(new RespValue[] {})).asResponse();
     }
 
     protected void addCommandOption(List<RespValue> cmdValues, String option) {
