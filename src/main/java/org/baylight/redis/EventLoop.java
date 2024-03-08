@@ -1,4 +1,5 @@
 package org.baylight.redis;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Deque;
@@ -19,10 +20,12 @@ public class EventLoop {
     private final RedisCommandConstructor commandConstructor;
     private final RespValueParser valueParser;
     private volatile boolean done = false;
-    
-    public EventLoop(RedisServiceBase service, RedisCommandConstructor commandConstructor, RespValueParser valueParser) {
+
+    public EventLoop(RedisServiceBase service, RedisCommandConstructor commandConstructor,
+            RespValueParser valueParser) {
         this.service = service;
-        executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new connections
+        executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new
+                                                    // connections
         this.commandConstructor = commandConstructor;
         this.valueParser = valueParser;
 
@@ -35,7 +38,8 @@ public class EventLoop {
                     ClientConnection conn = new ClientConnection(clientSocket);
                     clientSockets.add(conn);
                     System.out.println(
-                            String.format("Connection: %s, opened: %s", clientSocket, !clientSocket.isClosed()));
+                            String.format("Connection accepted from client: %s, opened: %s",
+                                    clientSocket, !clientSocket.isClosed()));
                 } catch (IOException e) {
                     System.out.println("IOException on accept: " + e.getMessage());
                 }
@@ -44,11 +48,8 @@ public class EventLoop {
             // loop was terminated so close any open connections
             for (ClientConnection conn : clientSockets) {
                 try {
-                    System.out.println(
-                            String.format(
-                                    "Closing connection: %s, opened: %s",
-                                    conn.clientSocket,
-                                    !conn.clientSocket.isClosed()));
+                    System.out.println(String.format("Closing connection to client: %s, opened: %s",
+                            conn.clientSocket, !conn.clientSocket.isClosed()));
                     if (!conn.clientSocket.isClosed()) {
                         conn.clientSocket.close();
                     }
@@ -60,7 +61,8 @@ public class EventLoop {
     }
 
     public void terminate() {
-        System.out.println(String.format("Terminate invoked. Closing %d connections.", clientSockets.size()));
+        System.out.println(
+                String.format("Terminate invoked. Closing %d connections.", clientSockets.size()));
         done = true;
         // stop accepting new connections and shut down the accept connections thread
         try {
@@ -80,21 +82,23 @@ public class EventLoop {
             for (; iter.hasNext();) {
                 ClientConnection conn = iter.next();
                 if (conn.isClosed()) {
-                    System.out.println(String.format("Connection closed: %s", conn.clientSocket));
+                    System.out.println(String.format("Connection closed by client: %s", conn.clientSocket));
                     iter.remove();
                     continue;
                 }
 
                 try {
                     while (conn.reader.available() > 0) {
-                        RedisCommand command = commandConstructor.newCommandFromValue(valueParser.parse(conn.reader));
+                        RedisCommand command = commandConstructor
+                                .newCommandFromValue(valueParser.parse(conn.reader));
                         didProcess = true;
                         if (command != null) {
                             process(conn, command);
                         }
                     }
                 } catch (Exception e) {
-                    System.out.println(String.format("Exception: %s \"%s\"", e.getClass().getSimpleName(), e.getMessage()));
+                    System.out.println(String.format("EventLoop Exception: %s \"%s\"",
+                            e.getClass().getSimpleName(), e.getMessage()));
                 }
             }
             // sleep a bit if there were no lines processed
@@ -106,19 +110,19 @@ public class EventLoop {
     }
 
     void process(ClientConnection conn, RedisCommand command) throws IOException {
-        System.out.println(String.format("Received line: %s", command));
+        System.out.println(String.format("Received client command: %s", command));
 
         service.execute(command, conn);
         switch (command) {
-            case EofCommand c -> {
-                conn.clientSocket.close();
-            }
-            case TerminateCommand c -> {
-                terminate();
-            }
-            default -> {
-                // no action for other command types
-            }
+        case EofCommand c -> {
+            conn.clientSocket.close();
+        }
+        case TerminateCommand c -> {
+            terminate();
+        }
+        default -> {
+            // no action for other command types
+        }
         }
     }
 }

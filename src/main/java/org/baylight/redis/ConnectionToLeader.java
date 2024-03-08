@@ -36,7 +36,7 @@ public class ConnectionToLeader {
         valueParser = new RespValueParser();
 
         leaderConnection = new ClientConnection(service.getLeaderClientSocket());
-        System.out.println(String.format("Connection: %s, isOpened: %s",
+        System.out.println(String.format("Connection to leader: %s, isOpened: %s",
                 leaderConnection.clientSocket, !leaderConnection.clientSocket.isClosed()));
 
         // create the thread for sending commands to the leader and receiving replication commands
@@ -131,8 +131,9 @@ public class ConnectionToLeader {
             boolean didProcess = false;
 
             if (leaderConnection.clientSocket.isClosed()) {
-                System.out.println(
-                        String.format("Connection closed: %s", leaderConnection.clientSocket));
+                System.out.println(String.format(
+                        "Terminating process due to connection is closed by leader: %s",
+                        leaderConnection.clientSocket));
                 terminate();
                 continue;
             }
@@ -165,21 +166,22 @@ public class ConnectionToLeader {
                     if (cmd.responseConsumer.apply(cmd.command, response)) {
                         int val = leaderConnection.reader.read();
                         if (val != '$') {
-                            throw new IllegalArgumentException("Expected RDB from leader, got char " + val);
+                            throw new IllegalArgumentException(
+                                    "Expected RDB from leader, got char " + val);
                         }
                         long len = leaderConnection.reader.readLong();
                         // TODO: refactor the RDB processing with a stream instead of byte array
-                        byte[] rdb = new byte[(int)len];
-                        for (int i = 0;i < len; i++) {
-                            rdb[i] = (byte)leaderConnection.reader.read();
+                        byte[] rdb = new byte[(int) len];
+                        for (int i = 0; i < len; i++) {
+                            rdb[i] = (byte) leaderConnection.reader.read();
                         }
                         response = new RespBulkString(rdb);
                         System.out.println(String.format("Received leader RDB: %s", response));
                         cmd.responseConsumer.apply(cmd.command, response);
-                    } 
+                    }
                 }
             } catch (Exception e) {
-                System.out.println(String.format("Exception: %s \"%s\"",
+                System.out.println(String.format("ConnectionToLeader Loop Exception: %s \"%s\"",
                         e.getClass().getSimpleName(), e.getMessage()));
             }
             // sleep a bit if there were no commands processed
