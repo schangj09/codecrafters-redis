@@ -87,17 +87,22 @@ public class FollowerService extends RedisServiceBase {
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
         // for the follower, just execute the command
         byte[] response = command.execute(this);
-        if (command.isReplicatedCommand()) {
-            System.out.println(
-                    String.format("Follower service do not send replicated %s response: %s",
-                            command.getType().name(), new String(response)));
-            return;
+        if (shouldSendResponseToLeader(command)) {
+            System.out.println(String.format("Follower service sending GETACK response: %s",
+                    new String(response)));
+            if (response != null && response.length > 0) {
+                conn.writeFlush(response);
+            }
+        } else {
+            System.out.println(String.format("Follower service do not send %s response: %s",
+                    command.getType().name(), new String(response)));
         }
-        System.out.println(
-                String.format("Follower service command response: %s", new String(response)));
-        if (response != null && response.length > 0) {
-            conn.writeFlush(response);
-        }
+    }
+
+    private boolean shouldSendResponseToLeader(RedisCommand command) {
+        boolean isReplconfGetack = command instanceof ReplConfCommand && ((ReplConfCommand) command)
+                .getOptionsMap().containsKey(ReplConfCommand.GETACK_NAME);
+        return isReplconfGetack;
     }
 
     @Override
