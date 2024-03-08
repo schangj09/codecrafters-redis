@@ -26,6 +26,7 @@ public class ConnectionToLeader {
     private final RespValueParser valueParser;
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
+    private volatile boolean replicationPending = true;
     private RespBulkString fullResyncRdb;
 
     public ConnectionToLeader(FollowerService service) throws IOException {
@@ -53,6 +54,9 @@ public class ConnectionToLeader {
 
     public boolean isHandshakeComplete() {
         return handshakeComplete;
+    }
+    public boolean isReplicationPending() {
+        return replicationPending;
     }
 
     public void sendLeaderCommand(RedisCommand command,
@@ -142,6 +146,7 @@ public class ConnectionToLeader {
                 // if handshake is completed then read replicated commands from the leader
                 if (isHandshakeComplete()) {
                     while (leaderConnection.reader.available() > 0) {
+                        replicationPending = true;
                         RedisCommand command = commandConstructor
                                 .newCommandFromValue(valueParser.parse(leaderConnection.reader));
                         didProcess = true;
@@ -180,15 +185,17 @@ public class ConnectionToLeader {
                         cmd.responseConsumer.apply(cmd.command, response);
                     }
                 }
+                // sleep a bit if there were no commands processed
+                // Note: handshake does not count so we will sleep after the handshake
+                if (!didProcess) {
+                    // System.out.println("sleep 1s");
+                    Thread.sleep(50L);
+                    // no more replication pending if there is nothing on the socket
+                    replicationPending = leaderConnection.reader.available() > 0;
+                }
             } catch (Exception e) {
                 System.out.println(String.format("ConnectionToLeader Loop Exception: %s \"%s\"",
                         e.getClass().getSimpleName(), e.getMessage()));
-            }
-            // sleep a bit if there were no commands processed
-            // Note: handshake does not count so we will sleep after the handshake
-            if (!didProcess) {
-                // System.out.println("sleep 1s");
-                Thread.sleep(50L);
             }
         }
     }

@@ -145,4 +145,13 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         // TODO make this abstract once leader and follower both override this method
         throw new UnsupportedOperationException("no psync rdb implementation for the service");
 	}
+
+    /**
+     * For a follower service, this method returns true if replication is pending.
+     * For a leader service, this method returns false.
+     * @return
+     */
+    public boolean isReplicationFromLeaderPending() {
+        return false;
+    }
 }

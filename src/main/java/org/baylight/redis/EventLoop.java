@@ -79,26 +79,29 @@ public class EventLoop {
             // check for bytes on next socket and process
             boolean didProcess = false;
             Iterator<ClientConnection> iter = clientSockets.iterator();
-            for (; iter.hasNext();) {
-                ClientConnection conn = iter.next();
-                if (conn.isClosed()) {
-                    System.out.println(String.format("Connection closed by client: %s", conn.clientSocket));
-                    iter.remove();
-                    continue;
-                }
-
-                try {
-                    while (conn.reader.available() > 0) {
-                        RedisCommand command = commandConstructor
-                                .newCommandFromValue(valueParser.parse(conn.reader));
-                        didProcess = true;
-                        if (command != null) {
-                            process(conn, command);
-                        }
+            if (!service.isReplicationFromLeaderPending()) {
+                for (; iter.hasNext();) {
+                    ClientConnection conn = iter.next();
+                    if (conn.isClosed()) {
+                        System.out.println(String.format("Connection closed by client: %s",
+                                conn.clientSocket));
+                        iter.remove();
+                        continue;
                     }
-                } catch (Exception e) {
-                    System.out.println(String.format("EventLoop Exception: %s \"%s\"",
-                            e.getClass().getSimpleName(), e.getMessage()));
+
+                    try {
+                        while (conn.reader.available() > 0) {
+                            RedisCommand command = commandConstructor
+                                    .newCommandFromValue(valueParser.parse(conn.reader));
+                            didProcess = true;
+                            if (command != null) {
+                                process(conn, command);
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.out.println(String.format("EventLoop Exception: %s \"%s\"",
+                                e.getClass().getSimpleName(), e.getMessage()));
+                    }
                 }
             }
             // sleep a bit if there were no lines processed

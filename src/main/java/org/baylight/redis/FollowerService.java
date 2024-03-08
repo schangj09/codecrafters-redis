@@ -73,6 +73,11 @@ public class FollowerService extends RedisServiceBase {
     }
 
     @Override
+    public boolean isReplicationFromLeaderPending() {
+        return leaderConnection.isReplicationPending();
+    }
+
+    @Override
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
         // for the follower, just execute the command
         byte[] response = command.execute(this);
