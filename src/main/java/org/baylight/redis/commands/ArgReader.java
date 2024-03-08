@@ -28,12 +28,12 @@ public class ArgReader {
             this.name = name;
             this.type = type;
             switch (type) {
-                case "int":
-                case "string":
-                case null:
-                    break;
-                default:
-                    throw new IllegalStateException("Invalid type in arg spec: " + type);
+            case "int":
+            case "string":
+            case null:
+                break;
+            default:
+                throw new IllegalStateException("Invalid type in arg spec: " + type);
             }
         }
 
@@ -103,9 +103,8 @@ public class ArgReader {
         for (int j = 0; j < requiredArgs.size(); j++) {
             Arg arg = requiredArgs.get(j);
             if (i >= args.length) {
-                throw new IllegalArgumentException(
-                        String.format("%s: Missing required arg '%s' at index %d",
-                                commandName, arg.name, i));
+                throw new IllegalArgumentException(String.format(
+                        "%s: Missing required arg '%s' at index %d", commandName, arg.name, i));
             }
             i = readArg(args, commandName, optionMap, i, j, arg);
         }
@@ -115,9 +114,8 @@ public class ArgReader {
             // get option and group id
             GroupArg arg = findGroupArg(next);
             if (arg == null) {
-                throw new IllegalArgumentException(
-                        String.format("%s: unrecognized arg at index %d, %s",
-                                commandName, i, next));
+                throw new IllegalArgumentException(String
+                        .format("%s: unrecognized arg at index %d, %s", commandName, i, next));
             }
 
             // validate that we have not already seen the option group
@@ -133,7 +131,7 @@ public class ArgReader {
     }
 
     private GroupArg findGroupArg(RespValue next) {
-        String nextArgName = next.getValueAsString();
+        String nextArgName = next.getValueAsString().toLowerCase();
         for (Set<GroupArg> group : optionGroups.values()) {
             for (GroupArg groupArg : group) {
                 if (groupArg.hasName() && groupArg.name.equals(nextArgName)) {
@@ -144,8 +142,8 @@ public class ArgReader {
         return null;
     }
 
-    private int readArg(RespValue[] args, String commandName, HashMap<String, RespValue> optionMap, int i, int j,
-            Arg arg) {
+    private int readArg(RespValue[] args, String commandName, HashMap<String, RespValue> optionMap,
+            int i, int j, Arg arg) {
         if (!arg.hasName()) {
             validateArgType(args, i, arg);
             optionMap.put(String.valueOf(j), args[i]);
@@ -155,8 +153,8 @@ public class ArgReader {
                 i++;
                 if (i >= args.length) {
                     throw new IllegalArgumentException(
-                            String.format("%s: Missing value for arg '%s' at index %d",
-                                    commandName, arg.name, i));
+                            String.format("%s: Missing value for arg '%s' at index %d", commandName,
+                                    arg.name, i));
                 }
                 validateArgType(args, i, arg);
                 optionMap.put(arg.name, args[i]);
@@ -186,10 +184,10 @@ public class ArgReader {
 
     protected void validateArgEquals(RespValue[] args, int index, String expectedValue) {
         RespValue arg = args[index];
-        if (!expectedValue.equals(arg.getValueAsString())) {
+        if (!expectedValue.equals(arg.getValueAsString().toLowerCase())) {
             throw new IllegalArgumentException(
-                    String.format("%s: Invalid arg, expected '%s' at index %d: %s",
-                            commandName, expectedValue, index, arg));
+                    String.format("%s: Invalid arg, expected '%s' at index %d: %s", commandName,
+                            expectedValue, index, arg));
         }
     }
 
@@ -216,8 +214,8 @@ public class ArgReader {
         RespValue arg = args[index];
         if (foundGroupOptions.containsKey(optionGroup)) {
             throw new IllegalArgumentException(
-                    String.format("%s: Invalid arg at index %d: %s conflicts with %s",
-                            commandName, index, arg, foundGroupOptions.get(optionGroup)));
+                    String.format("%s: Invalid arg at index %d: %s conflicts with %s", commandName,
+                            index, arg, foundGroupOptions.get(optionGroup)));
         }
     }
 }
