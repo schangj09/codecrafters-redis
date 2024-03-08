@@ -79,8 +79,6 @@ public class EventLoop {
             // check for bytes on next socket and process
             boolean didProcess = false;
             Iterator<ClientConnection> iter = clientSockets.iterator();
-            System.out.println(String.format("Check pending replication: %s (%s)",
-                    service.isReplicationFromLeaderPending(), service.getClass().getSimpleName()));
             if (!service.isReplicationFromLeaderPending()) {
                 for (; iter.hasNext();) {
                     ClientConnection conn = iter.next();
