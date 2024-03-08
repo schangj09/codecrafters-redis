@@ -15,7 +15,7 @@ public class RespBulkString implements RespValue {
 
     public RespBulkString(BufferedInputLineReader reader) throws IOException {
         value = reader.readNBytes(reader.readInt());
-        reader.readOptionalCRLF();
+        reader.readCRLF();
     }
 
     public byte[] asResponse() {

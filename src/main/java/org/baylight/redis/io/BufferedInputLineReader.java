@@ -1,12 +1,38 @@
 package org.baylight.redis.io;
-import java.io.BufferedInputStream;
-import java.io.InputStream;
-import java.io.IOException;
 
-public class BufferedInputLineReader extends BufferedInputStream {
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+public class BufferedInputLineReader {
+    private final BufferedInputStream in;
+    long numBytesRead = 0;
 
     public BufferedInputLineReader(InputStream in) {
-        super(in);
+        this.in = (in instanceof BufferedInputStream) ? (BufferedInputStream) in
+                : new BufferedInputStream(in);
+    }
+
+    public long getNumBytesReceived() {
+        return numBytesRead;
+    }
+
+    public int available() throws IOException {
+        return in.available();
+    }
+
+    public int read() throws IOException {
+        int c = in.read();
+        if (c != -1) {
+            numBytesRead++;
+        }
+        return c;
+    }
+
+    public byte[] readNBytes(int n) throws IOException {
+        byte[] b = in.readNBytes(n);
+        numBytesRead += b.length;
+        return b;
     }
 
     public String readLine() throws IOException {
@@ -15,6 +41,7 @@ public class BufferedInputLineReader extends BufferedInputStream {
         int c;
 
         while ((c = read()) != -1) {
+            numBytesRead++;
             if (c == '\n') {
                 break;
             }
@@ -40,7 +67,7 @@ public class BufferedInputLineReader extends BufferedInputStream {
     }
 
     public boolean readOptionalCRLF() throws IOException {
-        if (available() == 0) {
+        if (in.available() == 0) {
             return false;
         } else {
             readCRLF();

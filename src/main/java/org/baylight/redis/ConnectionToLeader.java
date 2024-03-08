@@ -28,6 +28,7 @@ public class ConnectionToLeader {
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
     private volatile boolean replicationPending = true;
+    private long startBytesOffset = 0;
     private final AtomicLong numBytesReceived = new AtomicLong(0L);
     private RespBulkString fullResyncRdb;
 
@@ -96,6 +97,7 @@ public class ConnectionToLeader {
                         }
                         setFullResyncRdb((RespBulkString) response4);
                         System.out.println(String.format("Handshake completed"));
+                        startBytesOffset = leaderConnection.reader.getNumBytesReceived();
                         handshakeComplete = true;
                         return false;
                     });
@@ -150,10 +152,10 @@ public class ConnectionToLeader {
             }
 
             try {
-                // if handshake is completed then read replicated commands from the leader and track the total bytes read
+                // if handshake is completed then read replicated commands from the leader and track
+                // the total bytes read
                 if (isHandshakeComplete()) {
-                    int availableBytes = leaderConnection.reader.available();
-                    while (availableBytes > 0) {
+                    while (leaderConnection.reader.available() > 0) {
                         replicationPending = true;
                         RedisCommand command = commandConstructor
                                 .newCommandFromValue(valueParser.parse(leaderConnection.reader));
@@ -161,18 +163,17 @@ public class ConnectionToLeader {
                         if (command != null) {
                             process(leaderConnection, command);
                         }
-                        int nextAvailableBytes = leaderConnection.reader.available();
-                        long prev = numBytesReceived.getAndAdd(availableBytes - nextAvailableBytes);
-                        System.out.println(String.format("DEBUG: Updated num bytes from %d to %d", prev, numBytesReceived.get()));
-                        availableBytes = nextAvailableBytes;
+                        long prev = numBytesReceived.getAndSet(
+                                leaderConnection.reader.getNumBytesReceived() - startBytesOffset);
+                        System.out.println(String.format("DEBUG: Updated num bytes from %d to %d",
+                                prev, numBytesReceived.get()));
                     }
                 }
                 while (!commandsToLeader.isEmpty()) {
                     CommandAndResponseConsumer cmd = commandsToLeader.pollFirst();
                     // send the command to the leader
                     System.out.println(String.format("Sending leader command: %s", cmd.command));
-                    leaderConnection.writer.write(cmd.command.asCommand());
-                    leaderConnection.writer.flush();
+                    leaderConnection.writer.writeFlush(cmd.command.asCommand());
 
                     // read the response - will wait on the stream until the whole value is parsed
                     RespValueParser respValueParser = new RespValueParser();

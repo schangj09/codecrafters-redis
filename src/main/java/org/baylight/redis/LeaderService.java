@@ -27,7 +27,7 @@ public class LeaderService extends RedisServiceBase {
     long totalReplicationOffset = 0L;
     Map<String, Long> replicationOffsets = new HashMap<>();
     Map<String, ConnectionToFollower> replMap = new ConcurrentHashMap<>();
-    boolean isDebugMode = false;
+    boolean isDebugMode = true;
 
     public LeaderService(RedisServiceOptions options, Clock clock) {
         super(options, clock);
@@ -78,10 +78,8 @@ public class LeaderService extends RedisServiceBase {
                         if (isDebugMode && command instanceof SetCommand) {
                             PingCommand ping = new PingCommand();
                             clientConnection.writer.writeFlush(ping.asCommand());
-                            RespValue pingResponse = new RespValueParser()
-                                    .parse(clientConnection.reader);
-                            System.out.println(String.format("Debug ping call response: %s",
-                                    pingResponse.toString()));
+                            // leader does not respond to ping, but it will count the bytes for the ack response
+                            System.out.println(String.format("Debug ping call succeeded."));
 
                             ReplConfCommand ack = new ReplConfCommand(ReplConfCommand.Option.GETACK,
                                     "*");

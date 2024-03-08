@@ -1,25 +1,28 @@
 package org.baylight.redis;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
 import org.baylight.redis.io.BufferedInputLineReader;
-import org.baylight.redis.io.ResponseStreamWriter;
+import org.baylight.redis.io.BufferedResponseStreamWriter;
 
 public class ClientConnection {
     Socket clientSocket;
     InputStream inputStream;
     OutputStream outputStream;
     BufferedInputLineReader reader;
-    ResponseStreamWriter writer;
+    BufferedResponseStreamWriter writer;
 
     public ClientConnection(Socket s) throws IOException {
         clientSocket = s;
         inputStream = s.getInputStream();
-        reader = new BufferedInputLineReader(inputStream);
+        reader = new BufferedInputLineReader(new BufferedInputStream(inputStream));
         outputStream = s.getOutputStream();
-        writer = new ResponseStreamWriter(outputStream);
+        writer = new BufferedResponseStreamWriter(new BufferedOutputStream(outputStream));
     }
 
     String getConnectionString() {

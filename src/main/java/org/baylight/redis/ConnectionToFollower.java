@@ -7,9 +7,14 @@ public class ConnectionToFollower {
     private final ClientConnection followerConnection;
     private volatile boolean handshakeComplete = false;
 
-    public ConnectionToFollower(LeaderService service, ClientConnection followerConnection) throws IOException {
+    public ConnectionToFollower(LeaderService service, ClientConnection followerConnection)
+            throws IOException {
         this.service = service;
         this.followerConnection = followerConnection;
+    }
+
+    public long getTotalReplicationOffset() {
+        return service.getTotalReplicationOffset();
     }
 
     public boolean isHandshakeComplete() {
@@ -20,8 +25,8 @@ public class ConnectionToFollower {
         this.handshakeComplete = true;
     }
 
-	public ClientConnection getFollowerConnection() {
-		return followerConnection;
-	}
+    public ClientConnection getFollowerConnection() {
+        return followerConnection;
+    }
 
 }
