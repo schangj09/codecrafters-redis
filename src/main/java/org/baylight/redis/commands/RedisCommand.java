@@ -10,14 +10,7 @@ import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisCommand {
     public enum Type {
-        DEL,
-        ECHO,
-        GET,
-        INFO,
-        PING,
-        PSYNC,
-        REPLCONF,
-        SET,
+        DEL, ECHO, GET, INFO, PING, PSYNC, REPLCONF, SET,
         // Folling are non-standard commands for baylight
         EOF, // close a client connection
         TERMINATE; // close all connections and kill the server
@@ -48,40 +41,39 @@ public abstract class RedisCommand {
     protected void setArgs(RespValue[] args) {
         // ignore by default
     }
- 
-    protected void validateNumArgs(RespValue[] args, Function<Integer, Boolean> validLengthCondition) {
+
+    protected void validateNumArgs(RespValue[] args,
+            Function<Integer, Boolean> validLengthCondition) {
         if (!validLengthCondition.apply(args.length)) {
             throw new IllegalArgumentException(
-                String.format("%s: Invalid number of arguments: %d", type.name(), args.length));
+                    String.format("%s: Invalid number of arguments: %d", type.name(), args.length));
         }
     }
 
     protected void validateArgIsString(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (!arg.isBulkString() && !arg.isSimpleString()) {
-            throw new IllegalArgumentException(
-                String.format("%s: Invalid arg, expected string. %d: %s", type.name(), index, arg));
+            throw new IllegalArgumentException(String
+                    .format("%s: Invalid arg, expected string. %d: %s", type.name(), index, arg));
         }
     }
 
     public void validateArgIsInteger(RespValue[] args, int index) {
         RespValue arg = args[index];
         if (arg.getValueAsLong() == null) {
-            throw new IllegalArgumentException(
-                String.format("%s: Invalid arg, expected integer %d: %s", type.name(), index, arg));
+            throw new IllegalArgumentException(String
+                    .format("%s: Invalid arg, expected integer %d: %s", type.name(), index, arg));
         }
     }
 
-    public void validateArgForStateTransition(
-        RespValue[] args, int i, int state, int nextState, Map<Integer, List<Integer>> transitions
-    ) {
+    public void validateArgForStateTransition(RespValue[] args, int i, int state, int nextState,
+            Map<Integer, List<Integer>> transitions) {
         if (nextState == -1 || !transitions.get(state).contains(nextState)) {
             throw new IllegalArgumentException(
-                String.format("%s: Invalid or missing argument at index. %d, %s", 
-                        type.name(), i, Arrays.toString(args)));
+                    String.format("%s: Invalid or missing argument at index. %d, %s", type.name(),
+                            i, Arrays.toString(args)));
         }
     }
-
 
     public abstract byte[] execute(RedisServiceBase service);
 
