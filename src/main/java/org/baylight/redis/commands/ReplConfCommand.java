@@ -13,9 +13,9 @@ import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 
 public class ReplConfCommand extends RedisCommand {
-    private static final String CAPA_NAME = "capa";
-    private static final String GETACK_NAME = "getack";
-    private static final String LISTENING_PORT_NAME = "listening-port";
+    public static final String CAPA_NAME = "capa";
+    public static final String GETACK_NAME = "getack";
+    public static final String LISTENING_PORT_NAME = "listening-port";
 
     public static enum Option {
         CAPA(CAPA_NAME), GETACK(GETACK_NAME), LISTENING_PORT(LISTENING_PORT_NAME);
@@ -82,6 +82,10 @@ public class ReplConfCommand extends RedisCommand {
     @Override
     public String toString() {
         return "ReplConfCommand [optionsMap=" + optionsMap + "]";
+    }
+
+    public Map<String, RespValue> getOptionsMap() {
+        return optionsMap;
     }
 
 }

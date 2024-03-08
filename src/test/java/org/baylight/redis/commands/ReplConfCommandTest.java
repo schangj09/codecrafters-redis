@@ -13,6 +13,7 @@ import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.LeaderService;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.commands.ReplConfCommand.Option;
+import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
@@ -24,10 +25,12 @@ import org.junit.jupiter.api.Test;
 
 public class ReplConfCommandTest implements WithAssertions {
 
+    private static final RespSimpleStringValue V1 = new RespSimpleStringValue("REPLCONF");
+
     // When a valid key is provided, the execute method should return the value associated with the
     // key.
     @Test
-    public void test_validKeyProvided_executeMethodShouldReturnValue() {
+    public void test_listeningPortProvided_executeMethodShouldConfirmListeningPort() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
         when(service.replicationConfirm(anyMap())).thenReturn(RespConstants.OK);
@@ -38,14 +41,14 @@ public class ReplConfCommandTest implements WithAssertions {
 
         // then
         assertThat(result).isEqualTo(RespConstants.OK);
-        verify(service).replicationConfirm(eq(Map.of("0", new RespSimpleStringValue("REPLCONF"),
-                "listening-port", new RespSimpleStringValue("1111"))));
+        verify(service).replicationConfirm(
+                eq(Map.of("0", V1, "listening-port", new RespSimpleStringValue("1111"))));
         verifyNoMoreInteractions(service);
     }
 
     // When an expired key is provided, the execute method should delete the key and return NULL.
     @Test
-    public void test_expiredKeyProvided_executeMethodShouldDeleteExpiredKeyAndReturnNull() {
+    public void test_capaProvided_executeMethodShouldConfirmPsync2() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
         when(service.replicationConfirm(anyMap())).thenReturn(RespConstants.OK);
@@ -56,14 +59,14 @@ public class ReplConfCommandTest implements WithAssertions {
 
         // then
         assertThat(result).isEqualTo(RespConstants.OK);
-        verify(service).replicationConfirm(eq(Map.of("0", new RespSimpleStringValue("REPLCONF"),
-                "capa", new RespSimpleStringValue("psync2"))));
+        verify(service).replicationConfirm(
+                eq(Map.of("0", V1, "capa", new RespSimpleStringValue("psync2"))));
         verifyNoMoreInteractions(service);
     }
 
     // When a non-existent key is provided, the execute method should return NULL.
     @Test
-    public void test_nonExistentKeyProvided_executeMethodShouldReturnGetack() {
+    public void test_getackProvided_executeMethodShouldConfirmGetack() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
         when(service.replicationConfirm(anyMap())).thenReturn(RespConstants.OK);
@@ -74,9 +77,25 @@ public class ReplConfCommandTest implements WithAssertions {
 
         // then
         assertThat(result).isEqualTo(RespConstants.OK);
-        verify(service).replicationConfirm(eq(Map.of("0", new RespSimpleStringValue("REPLCONF"),
-                "getack", new RespSimpleStringValue("*"))));
+        verify(service)
+                .replicationConfirm(eq(Map.of("0", V1, "getack", new RespSimpleStringValue("*"))));
         verifyNoMoreInteractions(service);
+    }
+
+    // setArgs for GETACK
+    @Test
+    public void test_command_setArgsGetack() {
+        // given
+        ReplConfCommand command = new ReplConfCommand();
+        RespValue[] args = { V1, new RespBulkString("GETACK".getBytes()),
+                new RespBulkString("*".getBytes()) };
+
+        // when
+        command.setArgs(args);
+
+        // then
+        assertThat(command.getOptionsMap())
+                .isEqualTo(Map.of("0", V1, "getack", new RespBulkString("*".getBytes())));
     }
 
     // When setArgs is called with no arguments, an IllegalArgumentException should be thrown.
