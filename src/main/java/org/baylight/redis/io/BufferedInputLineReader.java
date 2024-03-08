@@ -6,7 +6,7 @@ import java.io.InputStream;
 
 public class BufferedInputLineReader {
     private final BufferedInputStream in;
-    long numBytesRead = 0;
+    private volatile long numBytesRead = 0;
 
     public BufferedInputLineReader(InputStream in) {
         this.in = (in instanceof BufferedInputStream) ? (BufferedInputStream) in
@@ -41,7 +41,6 @@ public class BufferedInputLineReader {
         int c;
 
         while ((c = read()) != -1) {
-            numBytesRead++;
             if (c == '\n') {
                 break;
             }
@@ -63,15 +62,6 @@ public class BufferedInputLineReader {
     public void readCRLF() throws IOException {
         if (read() != '\r' || read() != '\n') {
             throw new IOException("Expected CRLF");
-        }
-    }
-
-    public boolean readOptionalCRLF() throws IOException {
-        if (in.available() == 0) {
-            return false;
-        } else {
-            readCRLF();
-            return true;
         }
     }
 
