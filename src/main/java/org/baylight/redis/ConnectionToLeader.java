@@ -69,7 +69,7 @@ public class ConnectionToLeader {
     }
 
     public void startHandshake() {
-        System.out.println(String.format("Staring handshake with leader"));
+        System.out.println(String.format("Starting handshake with leader"));
         sendCommand(new PingCommand(), (cmd, response) -> {
             ReplConfCommand conf1 = new ReplConfCommand(ReplConfCommand.Option.LISTENING_PORT,
                     String.valueOf(service.getPort()));
@@ -194,8 +194,10 @@ public class ConnectionToLeader {
                 if (!didProcess) {
                     // System.out.println("sleep 1s");
                     Thread.sleep(50L);
-                    // no more replication pending if there is nothing on the socket
-                    replicationPending = leaderConnection.reader.available() > 0;
+                    // no more replication pending if there is nothing on the socket after the handshake
+                    if (handshakeComplete) {
+                        replicationPending = leaderConnection.reader.available() > 0;
+                    }
                 }
             } catch (Exception e) {
                 System.out.println(String.format("ConnectionToLeader Loop Exception: %s \"%s\"",
