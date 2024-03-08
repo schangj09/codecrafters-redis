@@ -9,8 +9,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.baylight.redis.commands.RedisCommand;
-import org.baylight.redis.commands.ReplConfCommand;
 import org.baylight.redis.commands.RedisCommand.Type;
+import org.baylight.redis.commands.ReplConfCommand;
+import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
@@ -89,8 +90,11 @@ public class LeaderService extends RedisServiceBase {
     @Override
     public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {
         if (optionsMap.containsKey(ReplConfCommand.GETACK_NAME)) {
-            String response = String.format("REPLCONF ACK %d", totalReplicationOffset);
-            return new RespBulkString(response.getBytes()).asResponse();
+            String responseValue = String.valueOf(totalReplicationOffset);
+            return new RespArrayValue(new RespValue[] {
+                    new RespBulkString(RedisCommand.Type.REPLCONF.name().getBytes()),
+                    new RespBulkString("ACK".getBytes()),
+                    new RespBulkString(responseValue.getBytes()) }).asResponse();
         }
         return RespConstants.OK;
     }
