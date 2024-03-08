@@ -27,7 +27,7 @@ public class LeaderService extends RedisServiceBase {
     long totalReplicationOffset = 0L;
     Map<String, Long> replicationOffsets = new HashMap<>();
     Map<String, ConnectionToFollower> replMap = new ConcurrentHashMap<>();
-    boolean isDebugMode = true;
+    boolean isDebugMode = false;
 
     public LeaderService(RedisServiceOptions options, Clock clock) {
         super(options, clock);
