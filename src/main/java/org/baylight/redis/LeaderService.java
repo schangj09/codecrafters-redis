@@ -43,9 +43,7 @@ public class LeaderService extends RedisServiceBase {
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
         // for the leader, return the command response and replicate to the followers
         byte[] response = command.execute(this);
-        if (response != null && response.length > 0) {
-            conn.writeFlush(response);
-        }
+        // Note: first complete replication before sending the response
 
         // check if it is a new follower
         String connectionString = conn.getConnectionString();
@@ -60,14 +58,24 @@ public class LeaderService extends RedisServiceBase {
                 ConnectionToFollower follower = iter.next();
                 ClientConnection clientConnection = follower.getFollowerConnection();
                 if (clientConnection.isClosed()) {
-                    System.out.println(String.format("Follower connection closed: %s", conn.clientSocket));
+                    System.out.println(
+                            String.format("Follower connection closed: %s", conn.clientSocket));
                     iter.remove();
                     continue;
                 }
                 if (clientConnection != conn) {
-                    clientConnection.writeFlush(command.asCommand());
+                    try {
+                        clientConnection.writeFlush(command.asCommand());
+                    } catch (IOException e) {
+                        System.out.println(String.format(
+                                "Follower exception during replication connection: %s, exception: %s",
+                                conn.clientSocket, e.getMessage()));
+                    }
                 }
             }
+        }
+        if (response != null && response.length > 0) {
+            conn.writeFlush(response);
         }
     }
 
