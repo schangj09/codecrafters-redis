@@ -122,7 +122,8 @@ public class LeaderService extends RedisServiceBase {
 
     @Override
     public int waitForReplicationServers(int numReplicas, long timeoutMillis) {
-        int count = Math.min(numReplicas, replMap.size());
+        // Note: should return all replicated services even if greater than requested number
+        int count = replMap.size();
         return count;
     }
 

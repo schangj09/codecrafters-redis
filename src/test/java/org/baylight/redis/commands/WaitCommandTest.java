@@ -64,14 +64,17 @@ public class WaitCommandTest implements WithAssertions {
     @Test
     public void test_execute_calls_service() {
         // given
-        int expectedCount = 2;
+        int serviceCount = 7;
+        int requestNum = 5;
+        int expectedCount = 7;
         RedisServiceBase service = mock(RedisServiceBase.class);
+        when(service.waitForReplicationServers(anyInt(), anyLong())).thenReturn(serviceCount);
+
         WaitCommand waitCommand = new WaitCommand();
         int num = 5;
         long timeout = 555L;
-        RespBulkString numString = new RespBulkString(String.valueOf(num).getBytes());
+        RespBulkString numString = new RespBulkString(String.valueOf(requestNum).getBytes());
         RespBulkString timeoutString = new RespBulkString(String.valueOf(timeout).getBytes());
-        when(service.waitForReplicationServers(anyInt(), anyLong())).thenReturn(expectedCount);
         waitCommand.setArgs(new RespValue[] { WAIT, numString, timeoutString });
 
         // when
