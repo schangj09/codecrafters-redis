@@ -27,6 +27,8 @@ public class WaitExecutor {
             for (ConnectionToFollower connection : followers) {
                 executorService.submit(() -> {
                     try {
+                        System.out.println(String.format("Sending replConfAck from %s",
+                                connection.toString()));
                         connection.sendAndWaitForReplConfAck();
                         numAcknowledged.incrementAndGet();
                         latch.countDown();
@@ -67,6 +69,7 @@ public class WaitExecutor {
             System.out.println(String.format("Time %d: after extended task wait, elapsed time: %d.",
                     after, after - before));
         } catch (Exception e) {
+            e.printStackTrace();
             System.out
                     .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
                             numToWaitFor, numAcknowledged.get()));
