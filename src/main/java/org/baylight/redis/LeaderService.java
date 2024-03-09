@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.baylight.redis.commands.PingCommand;
 import org.baylight.redis.commands.RedisCommand;
@@ -28,6 +30,8 @@ public class LeaderService extends RedisServiceBase {
     Map<String, Long> replicationOffsets = new HashMap<>();
     Map<String, ConnectionToFollower> replMap = new ConcurrentHashMap<>();
     boolean isDebugMode = false;
+
+    private ExecutorService executorService = Executors.newFixedThreadPool(12);
 
     public LeaderService(RedisServiceOptions options, Clock clock) {
         super(options, clock);
@@ -78,7 +82,8 @@ public class LeaderService extends RedisServiceBase {
                         if (isDebugMode && command instanceof SetCommand) {
                             PingCommand ping = new PingCommand();
                             clientConnection.writer.writeFlush(ping.asCommand());
-                            // leader does not respond to ping, but it will count the bytes for the ack response
+                            // leader does not respond to ping, but it will count the bytes for the
+                            // ack response
                             System.out.println(String.format("Debug ping call succeeded."));
 
                             ReplConfCommand ack = new ReplConfCommand(ReplConfCommand.Option.GETACK,
@@ -122,9 +127,10 @@ public class LeaderService extends RedisServiceBase {
 
     @Override
     public int waitForReplicationServers(int numReplicas, long timeoutMillis) {
-        // Note: should return all replicated services even if greater than requested number
-        int count = replMap.size();
-        return count;
+        // Note: the waitExecutor should return all replicated services that acknowledge, even if it
+        // is greater than requested number
+        WaitExecutor waitExecutor = new WaitExecutor(numReplicas, executorService);
+        return waitExecutor.wait(replMap.values(), timeoutMillis);
     }
 
     @Override
