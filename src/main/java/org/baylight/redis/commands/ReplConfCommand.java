@@ -61,7 +61,7 @@ public class ReplConfCommand extends RedisCommand {
     @Override
     public byte[] asCommand() {
         List<RespValue> cmdValues = new ArrayList<>();
-        cmdValues.add(new RespBulkString(getType().name().getBytes()));
+        cmdValues.add(new RespBulkString(getType().name().toLowerCase().getBytes()));
 
         addCommandOption(cmdValues, CAPA_NAME);
         addCommandOption(cmdValues, GETACK_NAME);

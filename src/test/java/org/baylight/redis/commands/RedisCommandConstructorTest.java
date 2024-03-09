@@ -102,7 +102,7 @@ public class RedisCommandConstructorTest implements WithAssertions {
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
 
         // then
-        String expectedResponse = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$3\r\n123\r\n";
+        String expectedResponse = "*3\r\n$8\r\nreplconf\r\n$14\r\nlistening-port\r\n$3\r\n123\r\n";
         assertThat(actualCommand).asInstanceOf(type(ReplConfCommand.class));
         assertThat(actualCommand.asCommand()).isEqualTo(expectedResponse.getBytes());
     }
