@@ -96,10 +96,15 @@ public class EventLoop {
                                 "EventLoop: no longer listening to commands from client after follower connection handshake complete: %s",
                                 conn.clientSocket));
                         iter.remove();
+                        continue;
                     }
 
                     try {
                         while (conn.reader.available() > 0) {
+                            System.out.println(String.format(
+                                "EventLoop: about to read from connection, available: %d %s",
+                                conn.reader.available(), conn.clientSocket));
+
                             RedisCommand command = commandConstructor
                                     .newCommandFromValue(valueParser.parse(conn.reader));
                             didProcess = true;
