@@ -53,9 +53,10 @@ public class RedisCommandConstructorTest implements WithAssertions {
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
 
         // then
-        assertThat(actualCommand).asInstanceOf(type(EchoCommand.class)).matches(
-                cmd -> cmd.getEchoValue().equals(new RespBulkString("command".getBytes())),
-                "Unexpected value for command: " + actualCommand);
+        assertThat(actualCommand).asInstanceOf(type(EchoCommand.class)).matches(cmd -> {
+                assertThat(cmd.getEchoValue()).isEqualTo(new RespBulkString("command".getBytes()));
+                return true;
+        });
     }
 
     // Constructs a default Info command.
@@ -117,9 +118,11 @@ public class RedisCommandConstructorTest implements WithAssertions {
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
 
         // then
-        assertThat(actualCommand).asInstanceOf(type(GetCommand.class)).matches(
-                cmd -> cmd.getKey().equals(new RespBulkString("happy".getBytes())),
-                "Unexpected key for command: " + actualCommand);
+        assertThat(actualCommand).asInstanceOf(type(GetCommand.class))
+                .matches(cmd -> {
+                        assertThat(cmd.getKey()).isEqualTo(new RespBulkString("happy".getBytes()));
+                        return true;
+                });
         ;
     }
 
@@ -135,12 +138,31 @@ public class RedisCommandConstructorTest implements WithAssertions {
 
         // then
         assertThat(actualCommand).asInstanceOf(type(SetCommand.class))
-                .matches(cmd -> cmd.getKey().equals(new RespBulkString("happy".getBytes())),
-                        "Unexpected key for command: " + actualCommand)
-                .matches(cmd -> cmd.getValue().equals(new RespBulkString("face".getBytes())),
-                        "Unexpected value for command: " + actualCommand);
+                .matches(cmd -> {
+                        assertThat(cmd.getKey()).isEqualTo(new RespBulkString("happy".getBytes()));
+                        assertThat(cmd.getValue()).isEqualTo(new RespBulkString("face".getBytes()));
+                        return true;
+                });
     }
 
+    // Constructs a Wait command.
+    @Test
+    public void test_newCommandFromValue_returnsWaitCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] { new RespSimpleStringValue("WAIT"),
+                new RespSimpleStringValue("3"), new RespBulkString("456".getBytes()) });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(WaitCommand.class))
+                .matches(cmd -> {
+                        assertThat(cmd.getNumReplicas()).isEqualTo(3);
+                        assertThat(cmd.getTimeoutMillis()).isEqualTo(456L);
+                        return true;
+                });
+    }
     // Returns null if the command type is null.
     @Test
     public void test_newCommandFromValueUnknownValue() throws IOException {

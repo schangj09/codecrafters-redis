@@ -55,6 +55,7 @@ public class RedisCommandConstructor {
         case PSYNC -> new PsyncCommand();
         case REPLCONF -> new ReplConfCommand();
         case SET -> new SetCommand();
+        case WAIT -> new WaitCommand();
         // special non-standard commands
         case EOF -> new EofCommand();
         case TERMINATE -> new TerminateCommand();
