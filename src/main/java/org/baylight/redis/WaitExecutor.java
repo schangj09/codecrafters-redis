@@ -30,7 +30,7 @@ public class WaitExecutor {
             for (ConnectionToFollower connection : followers) {
                 asyncSendRequest(() -> {
                     try {
-                        System.out.println(String.format("Sending replConfAck from %s",
+                        System.out.println(String.format("Sending replConfAck to %s",
                                 connection.toString()));
                         System.out.println(
                                 String.format("Time %d: before send on %s", System.currentTimeMillis(), connection));
