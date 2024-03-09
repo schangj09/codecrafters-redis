@@ -1,9 +1,12 @@
 package org.baylight.redis.commands;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.assertj.core.api.WithAssertions;
@@ -52,41 +55,27 @@ public class SetCommandTest implements WithAssertions {
         assertThat(setCommand.getValue()).isEqualTo(value);
     }
 
-    // SetCommand can set a key-value pair
+    // SetCommand execute calls the service to set a key-value pair with no options
     @Test
-    public void test_set_key_value_pair() {
+    public void test_execute_calls_service_set_no_options() {
         // given
         RedisServiceBase service = mock(RedisServiceBase.class);
-        SetCommand setCommand = new SetCommand();
-        RespBulkString key = new RespBulkString("mykey".getBytes());
+        long now = 999L;
+        when(service.getCurrentTime()).thenReturn(now);
         RespBulkString value = new RespBulkString("myvalue".getBytes());
-        setCommand.setArgs(new RespValue[] { SET, key, value });
+        StoredData storedData = new StoredData(value.getValue(), now, null);
+        when(service.set(anyString(), any(StoredData.class))).thenReturn(storedData);
+
+        SetCommand setCommand = new SetCommand(new RespBulkString("mykey".getBytes()), value);
 
         // when
         byte[] result = setCommand.execute(service);
 
         // then
-        verify(service).set(eq("mykey"), any(StoredData.class));
         assertThat(result).isEqualTo(RespConstants.OK);
-    }
-
-    // SetCommand can set a key-value pair and return OK
-    @Test
-    public void test_set_key_value_pair_and_return_ok() {
-        // given
-        RedisServiceBase service = mock(RedisServiceBase.class);
-        SetCommand setCommand = new SetCommand();
-        RespBulkString key = new RespBulkString("mykey".getBytes());
-        RespBulkString value = new RespBulkString("myvalue".getBytes());
-        setCommand.setArgs(new RespValue[] { SET, key, value });
-        when(service.containsKey("mykey")).thenReturn(false);
-
-        // when
-        byte[] result = setCommand.execute(service);
-
-        // then
-        verify(service).set(eq("mykey"), any(StoredData.class));
-        assertThat(result).isEqualTo(RespConstants.OK);
+        verify(service).getCurrentTime();
+        verify(service).set(eq("mykey"), refEq(storedData));
+        verifyNoMoreInteractions(service);
     }
 
     // SetCommand throws an IllegalArgumentException if a required argument is missing
@@ -95,14 +84,13 @@ public class SetCommandTest implements WithAssertions {
         // given
         SetCommand setCommand = new SetCommand();
         RespValue[] args = { SET, new RespBulkString("mykey".getBytes()) };
-    
+
         // when
         Throwable throwable = catchThrowable(() -> setCommand.setArgs(args));
 
         // then
         assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
-        assertThat(throwable.getMessage())
-                .isEqualTo("SET: Missing required arg '' at index 2");
+        assertThat(throwable.getMessage()).isEqualTo("SET: Missing required arg '' at index 2");
     }
 
     // SetCommand throws an IllegalArgumentException if an unrecognized argument is passed
@@ -120,6 +108,7 @@ public class SetCommandTest implements WithAssertions {
 
         // then
         assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
-        assertThat(throwable.getMessage()).isEqualTo("SET: unrecognized arg at index 3, BulkString [length=7, value=unknown]");
+        assertThat(throwable.getMessage()).isEqualTo(
+                "SET: unrecognized arg at index 3, BulkString [length=7, value=unknown]");
     }
 }
