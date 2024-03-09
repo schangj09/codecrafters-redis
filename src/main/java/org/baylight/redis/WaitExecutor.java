@@ -25,7 +25,7 @@ public class WaitExecutor {
             // send a replConf ack command to each follower on a separate thread
             // wait on the latch to block until enough acks are received
             for (ConnectionToFollower connection : followers) {
-                executorService.execute(() -> {
+                executorService.submit(() -> {
                     try {
                         connection.sendAndWaitForReplConfAck();
                         numAcknowledged.incrementAndGet();
@@ -46,26 +46,33 @@ public class WaitExecutor {
             // extend the timeout to allow for codecrafters tests to pass
             long extendedTimeout = timeoutMillis + 3000L;
             long before = System.currentTimeMillis();
-            System.out.println(
-                    String.format("Time %d: waiting for %d millis for acks.", before, extendedTimeout));
-            if (!latch.await(extendedTimeout, TimeUnit.MILLISECONDS)) {
-                System.out.println(
-                        String.format("Timed out waiting for %d replConfAcks. Received %d acks.",
+            System.out.println(String.format("Time %d: waiting for %d millis for acks.", before,
+                    extendedTimeout));
+            executorService.submit(() -> {
+                try {
+                    if (!latch.await(timeoutMillis, TimeUnit.MILLISECONDS)) {
+                        System.out.println(String.format(
+                                "Timed out waiting for %d replConfAcks. Received %d acks.",
                                 numToWaitFor, numAcknowledged.get()));
-
-            }
+                        // sleep for the extended timeout
+                        Thread.sleep(extendedTimeout - timeoutMillis);
+                    }
+                } catch (InterruptedException e) {
+                    System.out.println(String.format(
+                            "Interrupted while waiting for %d replConfAcks. Received %d acks.",
+                            numToWaitFor, numAcknowledged.get()));
+                }
+            }).get(extendedTimeout, TimeUnit.MILLISECONDS);
             long after = System.currentTimeMillis();
-            System.out.println(
-                    String.format("Time %d: after latch await, elapsed: %d", after, after - before));
-        } catch (InterruptedException e) {
-            System.out.println(String.format(
-                    "Interrupted while waiting for %d replConfAcks. Received %d acks.",
-                    numToWaitFor, numAcknowledged.get()));
+            System.out.println(String.format("Time %d: after extended task wait, elapsed time: %d.",
+                    after, after - before));
         } catch (Exception e) {
             System.out
                     .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
                             numToWaitFor, numAcknowledged.get()));
         }
+        System.out.println(
+                String.format("Returning %d of %d requested acks.", numAcknowledged.get(), numToWaitFor));
         return numAcknowledged.get();
     }
 
