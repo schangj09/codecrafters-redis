@@ -20,6 +20,11 @@ public class RespInteger implements RespValue {
     }
 
     @Override
+    public byte[] asResponse() {
+        return String.format(":%d\r\n", value).getBytes();
+    }
+
+    @Override
     public Long getValueAsLong() {
         return value;
     }
