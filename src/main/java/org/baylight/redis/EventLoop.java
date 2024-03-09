@@ -35,6 +35,10 @@ public class EventLoop {
                 Socket clientSocket = null;
                 try {
                     clientSocket = service.getServerSocket().accept();
+                    clientSocket.setTcpNoDelay(true);
+                    clientSocket.setKeepAlive(true);
+                    clientSocket.setSoTimeout(0); // infinite timeout
+                    
                     ClientConnection conn = new ClientConnection(clientSocket);
                     clientSockets.add(conn);
                     System.out.println(
