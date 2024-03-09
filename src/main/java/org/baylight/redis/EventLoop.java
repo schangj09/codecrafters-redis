@@ -87,6 +87,11 @@ public class EventLoop {
                                 conn.clientSocket));
                         iter.remove();
                         continue;
+                    } else if (conn.isFollowerHandshakeComplete()) {
+                        System.out.println(String.format(
+                                "EventLoop: no longer listening to commands from client after follower connection handshake complete: %s",
+                                conn.clientSocket));
+                        iter.remove();
                     }
 
                     try {

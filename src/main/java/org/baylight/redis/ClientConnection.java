@@ -16,6 +16,7 @@ public class ClientConnection {
     OutputStream outputStream;
     BufferedInputLineReader reader;
     BufferedResponseStreamWriter writer;
+    volatile boolean followerHandshakeComplete = false;
 
     public ClientConnection(Socket s) throws IOException {
         clientSocket = s;
@@ -31,5 +32,13 @@ public class ClientConnection {
 
     public boolean isClosed() {
         return clientSocket.isClosed();
+    }
+
+    public void setFollowerHandshakeComplete() {
+        followerHandshakeComplete = true;
+    }
+
+    public boolean isFollowerHandshakeComplete() {
+        return followerHandshakeComplete;
     }
 }
