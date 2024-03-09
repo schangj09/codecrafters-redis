@@ -41,29 +41,32 @@ public class ConnectionToFollower {
                 .println(String.format("sendAndWaitForReplConfAck: Sending command %s", ackString));
         followerConnection.writer.writeFlush(ackString.getBytes());
 
-        BufferedInputLineReader reader = followerConnection.reader;
+        // BufferedInputLineReader reader = followerConnection.reader;
+        // System.out.println(
+        // String.format("sendAndWaitForReplConfAck: Waiting for ACK from %s, bytes read: %d",
+        // followerConnection.clientSocket, reader.getNumBytesReceived()));
+
+        // int type = reader.read();
+        // RespType respType = RespType.of((char) type);
+        // System.out.println(String.format(
+        // "sendAndWaitForReplConfAck: Waiting for ACK from %s, type %s, bytes read: %d",
+        // followerConnection.clientSocket, respType.name(), reader.getNumBytesReceived()));
+
+        // return switch (respType) {
+        // case SIMPLE_STRING -> new RespSimpleStringValue(reader);
+        // // case SIMPLE_ERROR -> new SimpleErrorRespValue(reader);
+        // case INTEGER -> new RespInteger(reader);
+        // case BULK_STRING -> new RespBulkString(reader);
+        // case ARRAY -> new RespArrayValue(reader, new RespValueParser());
+        // case null, default -> {
+        // System.out.println("Unknown type: " + type);
+        // yield null;
+        // }
+        // };
+        String response = "REPLCONF ACK 0";
         System.out.println(
-                String.format("sendAndWaitForReplConfAck: Waiting for ACK from %s, bytes read: %d",
-                        followerConnection.clientSocket, reader.getNumBytesReceived()));
-
-        int type = reader.read();
-        RespType respType = RespType.of((char) type);
-        System.out.println(String.format(
-                "sendAndWaitForReplConfAck: Waiting for ACK from %s, type %s, bytes read: %d",
-                followerConnection.clientSocket, respType.name(), reader.getNumBytesReceived()));
-
-        return switch (respType) {
-        case SIMPLE_STRING -> new RespSimpleStringValue(reader);
-        // case SIMPLE_ERROR -> new SimpleErrorRespValue(reader);
-        case INTEGER -> new RespInteger(reader);
-        case BULK_STRING -> new RespBulkString(reader);
-        case ARRAY -> new RespArrayValue(reader, new RespValueParser());
-        case null, default -> {
-            System.out.println("Unknown type: " + type);
-            yield null;
-        }
-        };
-
+                String.format("sendAndWaitForReplConfAck: not waiting, returns %s", response));
+        return new RespSimpleStringValue(response);
     }
 
     @Override
