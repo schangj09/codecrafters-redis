@@ -43,7 +43,8 @@ public class WaitCommand extends RedisCommand {
 
     @Override
     public byte[] execute(RedisServiceBase service) {
-        return new RespInteger(numReplicas).asResponse();
+        int count = service.waitForReplicationServers(numReplicas, timeoutMillis);
+        return new RespInteger(count).asResponse();
     }
 
     @Override

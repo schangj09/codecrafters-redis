@@ -112,4 +112,8 @@ public class FollowerService extends RedisServiceBase {
         return RespConstants.OK;
     }
 
+    @Override
+    public int waitForReplicationServers(int numReplicas, long timeoutMillis) {
+        return 0;
+    }
 }

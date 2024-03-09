@@ -121,6 +121,12 @@ public class LeaderService extends RedisServiceBase {
     }
 
     @Override
+    public int waitForReplicationServers(int numReplicas, long timeoutMillis) {
+        int count = Math.min(numReplicas, replMap.size());
+        return count;
+    }
+
+    @Override
     public byte[] psync(Map<String, RespValue> optionsMap) {
         String response = String.format("FULLRESYNC %s %d", replicationId, totalReplicationOffset);
         return new RespSimpleStringValue(response).asResponse();

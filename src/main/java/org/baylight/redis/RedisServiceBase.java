@@ -13,10 +13,7 @@ import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisServiceBase implements ReplicationServiceInfoProvider {
 
-    private static final Set<String> DEFAULT_SECTIONS = Set.of(
-            "server",
-            "replication",
-            "stats",
+    private static final Set<String> DEFAULT_SECTIONS = Set.of("server", "replication", "stats",
             "replication-graph");
     private ServerSocket serverSocket;
     private final int port;
@@ -27,12 +24,10 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     public static RedisServiceBase newInstance(RedisServiceOptions options, Clock clock) {
         String role = options.getRole();
         return switch (role) {
-            case RedisConstants.FOLLOWER ->
-                new FollowerService(options, clock);
-            case RedisConstants.LEADER ->
-                new LeaderService(options, clock);
-            default ->
-                throw new UnsupportedOperationException("Unexpected role type for new Redis service: " + role);
+        case RedisConstants.FOLLOWER -> new FollowerService(options, clock);
+        case RedisConstants.LEADER -> new LeaderService(options, clock);
+        default -> throw new UnsupportedOperationException(
+                "Unexpected role type for new Redis service: " + role);
         };
     }
 
@@ -88,7 +83,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap;
     }
 
-    public abstract void execute(RedisCommand command, ClientConnection conn, boolean writeResponse) throws IOException;
+    public abstract void execute(RedisCommand command, ClientConnection conn, boolean writeResponse)
+            throws IOException;
 
     public boolean isExpired(StoredData storedData) {
         long now = clock.millis();
@@ -133,19 +129,35 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
     public abstract byte[] replicationConfirm(Map<String, RespValue> optionsMap);
 
-	public byte[] psync(Map<String, RespValue> optionsMap) {
+    /**
+     * Wait until replication has caught up for the given number of replicas. The service must block
+     * on this method until either the number of requested replicas has been reached or the timeout
+     * has been reached.
+     * 
+     * @param numReplicas the requested number of replicas
+     * @param timeoutMillis the timeout in milliseconds. If the timeout is reached, the method
+     *                      returns the number of replicas that have caught up. If the timeout is
+     *                      zero, the method returns immediately. If the timeout is negative, an
+     *                      {@link IllegalArgumentException}
+     * @return the number of replicas that have caught up. This may be less than the number of
+     *         replicas requested.
+     */
+    public abstract int waitForReplicationServers(int numReplicas, long timeoutMillis);
+
+    public byte[] psync(Map<String, RespValue> optionsMap) {
         // TODO make this abstract once leader and follower both override this method
         return RespConstants.OK;
-	}
+    }
 
     public byte[] psyncRdb(Map<String, RespValue> optionsMap) {
         // TODO make this abstract once leader and follower both override this method
         throw new UnsupportedOperationException("no psync rdb implementation for the service");
-	}
+    }
 
     /**
-     * For a follower service, this method returns true if replication is pending.
-     * For a leader service, this method returns false.
+     * For a follower service, this method returns true if replication is pending. For a leader
+     * service, this method returns false.
+     * 
      * @return
      */
     public boolean isReplicationFromLeaderPending() {
