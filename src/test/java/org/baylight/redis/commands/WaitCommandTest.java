@@ -1,6 +1,12 @@
 package org.baylight.redis.commands;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.RedisServiceBase;
@@ -54,24 +60,27 @@ public class WaitCommandTest implements WithAssertions {
         assertThat(waitCommand.getTimeoutMillis()).isEqualTo(timeout);
     }
 
-    // WaitCommand can wait a key-value pair
+    // WaitCommand calls the service to wait for replication
     @Test
-    public void test_wait_key_value_pair() {
+    public void test_execute_calls_service() {
         // given
+        int expectedCount = 2;
         RedisServiceBase service = mock(RedisServiceBase.class);
         WaitCommand waitCommand = new WaitCommand();
         int num = 5;
         long timeout = 555L;
         RespBulkString numString = new RespBulkString(String.valueOf(num).getBytes());
         RespBulkString timeoutString = new RespBulkString(String.valueOf(timeout).getBytes());
+        when(service.waitForReplicationServers(anyInt(), anyLong())).thenReturn(expectedCount);
         waitCommand.setArgs(new RespValue[] { WAIT, numString, timeoutString });
 
         // when
         byte[] result = waitCommand.execute(service);
 
         // then
-        // verify(service).wait(eq("mykey"), any(StoredData.class));
-        assertThat(result).isEqualTo(String.format(":%d\r\n", num).getBytes());
+        assertThat(result).isEqualTo(String.format(":%d\r\n", expectedCount).getBytes());
+        verify(service).waitForReplicationServers(eq(num), eq(timeout));
+        verifyNoMoreInteractions(service);
     }
 
     // WaitCommand throws an IllegalArgumentException if a required argument is missing
