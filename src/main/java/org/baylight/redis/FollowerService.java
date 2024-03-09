@@ -84,7 +84,8 @@ public class FollowerService extends RedisServiceBase {
     }
 
     @Override
-    public void execute(RedisCommand command, ClientConnection conn, boolean writeResponse) throws IOException {
+    public void execute(RedisCommand command, ClientConnection conn, boolean writeResponse)
+            throws IOException {
         // for the follower, just execute the command
         byte[] response = command.execute(this);
         if (writeResponse) {
@@ -95,10 +96,9 @@ public class FollowerService extends RedisServiceBase {
             }
         } else {
             System.out.println(String.format("Follower service do not send %s response: %s",
-                    command.getType().name(), new String(response)));
+                    command.getType().name(), response == null ? null : new String(response)));
         }
     }
-
 
     @Override
     public byte[] replicationConfirm(Map<String, RespValue> optionsMap) {

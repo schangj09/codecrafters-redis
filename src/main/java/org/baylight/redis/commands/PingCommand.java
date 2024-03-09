@@ -20,7 +20,6 @@ public class PingCommand extends RedisCommand {
     public byte[] asCommand() {
         return new RespArrayValue(
                 new RespValue[] { new RespBulkString(getType().name().getBytes()) }).asResponse();
-
     }
 
     @Override
