@@ -83,7 +83,7 @@ public class EventLoop {
                 for (; iter.hasNext();) {
                     ClientConnection conn = iter.next();
                     if (conn.isClosed()) {
-                        System.out.println(String.format("Connection closed by client: %s",
+                        System.out.println(String.format("Connection closed by the server: %s",
                                 conn.clientSocket));
                         iter.remove();
                         continue;
