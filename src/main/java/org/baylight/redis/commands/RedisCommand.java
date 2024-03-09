@@ -35,7 +35,7 @@ public abstract class RedisCommand {
     }
 
     public boolean isReplicatedCommand() {
-        return type == Type.SET || type == Type.DEL || type == Type.TERMINATE;
+        return type == Type.SET || type == Type.DEL;
     }
 
     protected void setArgs(RespValue[] args) {
