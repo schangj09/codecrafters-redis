@@ -21,8 +21,10 @@ public class WaitCommand extends RedisCommand {
         super(Type.WAIT);
     }
 
-    public WaitCommand(int timeout, int numReplicas) {
+    public WaitCommand(int numReplicas, long timeout) {
         super(Type.WAIT);
+        this.numReplicas = numReplicas;
+        this.timeoutMillis = timeout;
     }
 
     /**
