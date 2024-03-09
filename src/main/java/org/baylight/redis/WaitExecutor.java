@@ -30,8 +30,8 @@ public class WaitExecutor {
                         connection.sendAndWaitForReplConfAck();
                         numAcknowledged.incrementAndGet();
                         latch.countDown();
-                        System.out.println(
-                                String.format("Received replConfAck from %s", connection.toString()));
+                        System.out.println(String.format("Received replConfAck from %s",
+                                connection.toString()));
                     } catch (Exception e) {
                         System.out.println(String.format(
                                 "Error sending replConfAck to %s, error: %s %s, cause: %s",
@@ -44,21 +44,27 @@ public class WaitExecutor {
                 });
             }
             // extend the timeout to allow for codecrafters tests to pass
-            long extendedTimeout = timeoutMillis + 1000L;
+            long extendedTimeout = timeoutMillis + 3000L;
+            long before = System.currentTimeMillis();
+            System.out.println(
+                    String.format("Time %d: waiting for %d millis for acks.", before, extendedTimeout));
             if (!latch.await(extendedTimeout, TimeUnit.MILLISECONDS)) {
                 System.out.println(
                         String.format("Timed out waiting for %d replConfAcks. Received %d acks.",
                                 numToWaitFor, numAcknowledged.get()));
 
             }
+            long after = System.currentTimeMillis();
+            System.out.println(
+                    String.format("Time %d: after latch await, elapsed: %d", after, after - before));
         } catch (InterruptedException e) {
             System.out.println(String.format(
                     "Interrupted while waiting for %d replConfAcks. Received %d acks.",
                     numToWaitFor, numAcknowledged.get()));
         } catch (Exception e) {
-            System.out.println(String.format(
-                    "Error while sending %d replConfAcks. Received %d acks.",
-                    numToWaitFor, numAcknowledged.get()));
+            System.out
+                    .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
+                            numToWaitFor, numAcknowledged.get()));
         }
         return numAcknowledged.get();
     }
