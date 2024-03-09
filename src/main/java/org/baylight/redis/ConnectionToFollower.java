@@ -15,7 +15,6 @@ import org.baylight.redis.protocol.RespValueParser;
 public class ConnectionToFollower {
     private final LeaderService service;
     private final ClientConnection followerConnection;
-    private volatile boolean handshakeComplete = false;
 
     public ConnectionToFollower(LeaderService service, ClientConnection followerConnection)
             throws IOException {
@@ -28,11 +27,7 @@ public class ConnectionToFollower {
     }
 
     public boolean isHandshakeComplete() {
-        return handshakeComplete;
-    }
-
-    public void setHandshakeComplete() {
-        this.handshakeComplete = true;
+        return followerConnection.isFollowerHandshakeComplete();
     }
 
     public ClientConnection getFollowerConnection() {
@@ -41,9 +36,10 @@ public class ConnectionToFollower {
 
     public RespValue sendAndWaitForReplConfAck() throws IOException {
         ReplConfCommand ack = new ReplConfCommand(ReplConfCommand.Option.GETACK, "*");
-        System.out.println(String.format("sendAndWaitForReplConfAck: Sending command %s",
-                new String(ack.asCommand())));
-        followerConnection.writer.writeFlush(ack.asCommand());
+        String ackString = new String(ack.asCommand()).toUpperCase();
+        System.out
+                .println(String.format("sendAndWaitForReplConfAck: Sending command %s", ackString));
+        followerConnection.writer.writeFlush(ackString.getBytes());
 
         BufferedInputLineReader reader = followerConnection.reader;
         System.out.println(
