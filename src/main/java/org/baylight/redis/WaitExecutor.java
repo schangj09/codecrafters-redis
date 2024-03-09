@@ -64,12 +64,11 @@ public class WaitExecutor {
                             "Interrupted while waiting for %d replConfAcks. Received %d acks.",
                             numToWaitFor, numAcknowledged.get()));
                 }
-            }).get(extendedTimeout, TimeUnit.MILLISECONDS);
+            }).get();
             long after = System.currentTimeMillis();
             System.out.println(String.format("Time %d: after extended task wait, elapsed time: %d.",
                     after, after - before));
         } catch (Exception e) {
-            e.printStackTrace();
             System.out
                     .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
                             numToWaitFor, numAcknowledged.get()));

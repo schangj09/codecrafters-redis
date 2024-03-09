@@ -12,7 +12,7 @@ public enum RespType {
         this.typePrefix = typePrefix;
     }
 
-    static RespType of(char typePrefix) {
+    public static RespType of(char typePrefix) {
         for (RespType type : RespType.values()) {
             if (type.typePrefix == typePrefix) {
                 return type;
