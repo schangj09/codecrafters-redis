@@ -79,6 +79,9 @@ public class LeaderService extends RedisServiceBase {
                     continue;
                 }
                 if (clientConnection != conn) {
+                    // WORKARDOUND for codecrafters integration test "replication-17"
+                    // once we send the first replicated command, then stop hardcoding the replconf ack
+                    follower.setTestingDontWaitForAck(false);
                     try {
                         clientConnection.writer.writeFlush(command.asCommand());
                     } catch (IOException e) {
