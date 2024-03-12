@@ -30,14 +30,13 @@ public class WaitExecutor {
         try {
             // send a replConf ack command to each follower on a separate thread
             // wait on the latch to block until enough acks are received
-            List<Callable<Void>> followerCalls = new ArrayList<>();
+            List<Future<Void>> callFutures = new ArrayList<>();
             for (ConnectionToFollower follower : followers) {
-                followerCalls.add(() -> {
+                callFutures.add(executorService.submit(() -> {
                     requestAckFromFollower(follower);
                     return null;
-                });
+                }));
             }
-            List<Future<Void>> callFutures = executorService.invokeAll(followerCalls);
 
             // extend the timeout to allow for codecrafters tests to pass - this may be needed for
             // "replication-18" which expects all replicas, even if it asks for less than all
