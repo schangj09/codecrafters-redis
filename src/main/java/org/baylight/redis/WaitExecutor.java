@@ -14,7 +14,7 @@ public class WaitExecutor {
 
     private final CountDownLatch latch;
     private final ExecutorService executorService;
-    boolean isCodecraftersTest = true;
+    boolean isCodecraftersTest = false;
 
     public WaitExecutor(int numToWaitFor, ExecutorService executorService) {
         this.numToWaitFor = numToWaitFor;
