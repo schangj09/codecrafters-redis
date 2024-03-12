@@ -19,7 +19,7 @@ public class WaitExecutor {
     public WaitExecutor(int numToWaitFor, ExecutorService executorService) {
         this.numToWaitFor = numToWaitFor;
         this.executorService = executorService;
-        numAcknowledged = new AtomicInteger(0);
+        this.numAcknowledged = new AtomicInteger(0);
         this.latch = new CountDownLatch(numToWaitFor);
     }
 
