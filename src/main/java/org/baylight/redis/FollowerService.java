@@ -90,7 +90,7 @@ public class FollowerService extends RedisServiceBase {
         byte[] response = command.execute(this);
         if (writeResponse) {
             System.out.println(String.format("Follower service sending GETACK response: %s",
-                    new String(response)));
+                    new String(response).replace("\r\n", "\\r\\n")));
             if (response != null && response.length > 0) {
                 conn.writer.writeFlush(response);
             }

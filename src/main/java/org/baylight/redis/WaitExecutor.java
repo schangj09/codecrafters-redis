@@ -73,12 +73,17 @@ public class WaitExecutor {
                         // give extra time for codecrafters tests to pass
                         Thread.sleep(extendedTimeout - timeoutMillis);
                     } else {
-                        // sleep for entire timeoutMillis for codecrafters test "replication-17" to pass
-                        long duration = System.currentTimeMillis() - before;
-                        if (duration < timeoutMillis) {
-                            System.out.println(String.format("Received %d replConfAcks.",
-                                    numAcknowledged.get()));
-                            Thread.sleep(timeoutMillis - duration);
+                        // although we have enough acks to return now, we will sleep up to entire
+                        // timeoutMillis until we get ack from all followers
+                        // - this is for codecrafters test "replication-17" to pass since it
+                        // expects us to return the count of all follower replicas
+                        while (numAcknowledged.get() < followers.size()) {
+                            long duration = System.currentTimeMillis() - before;
+                            if (duration < timeoutMillis) {
+                                System.out.println(String.format("Received %d replConfAcks.",
+                                        numAcknowledged.get()));
+                                Thread.sleep(100L);
+                            }
                         }
                     }
                 } catch (InterruptedException e) {
