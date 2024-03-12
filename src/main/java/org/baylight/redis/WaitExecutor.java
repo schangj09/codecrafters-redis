@@ -37,8 +37,7 @@ public class WaitExecutor {
                         connection.sendAndWaitForReplConfAck();
                         System.out.println(String.format("Time %d: after send on %s",
                                 System.currentTimeMillis(), connection));
-                        System.out.println(numAcknowledged);
-
+                        System.out.println(Integer.toHexString(System.identityHashCode(numAcknowledged)));
                         int prevAck = numAcknowledged.getAndIncrement();
                         latch.countDown();
                         System.out
@@ -70,6 +69,7 @@ public class WaitExecutor {
                         System.out.println(String.format(
                                 "Timed out waiting for %d replConfAcks. Received %d acks.",
                                 numToWaitFor, numAcknowledged.get()));
+                        System.out.println(Integer.toHexString(System.identityHashCode(numAcknowledged)));
                         // sleep for the extended timeout
                         System.out.println(String.format(
                                 "Time %d: sleeping extend for %d millis for acks.",
@@ -106,6 +106,7 @@ public class WaitExecutor {
                     .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
                             numToWaitFor, numAcknowledged.get()));
         }
+        System.out.println(Integer.toHexString(System.identityHashCode(numAcknowledged)));
         System.out.println(String.format("Returning %d of %d requested acks.",
                 numAcknowledged.get(), numToWaitFor));
         return numAcknowledged.get();
