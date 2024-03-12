@@ -77,13 +77,13 @@ public class WaitExecutor {
                         // timeoutMillis until we get ack from all followers
                         // - this is for codecrafters test "replication-17" to pass since it
                         // expects us to return the count of all follower replicas
-                        while (numAcknowledged.get() < followers.size()) {
-                            long duration = System.currentTimeMillis() - before;
-                            if (duration < timeoutMillis) {
-                                System.out.println(String.format("Received %d replConfAcks.",
-                                        numAcknowledged.get()));
-                                Thread.sleep(100L);
-                            }
+                        for (long duration = System.currentTimeMillis() - before;
+                            (numAcknowledged.get() < followers.size() && duration < timeoutMillis);
+                            duration = System.currentTimeMillis() - before
+                        ) {
+                            System.out.println(String.format("Received %d replConfAcks.",
+                                    numAcknowledged.get()));
+                            Thread.sleep(100L);
                         }
                     }
                 } catch (InterruptedException e) {
