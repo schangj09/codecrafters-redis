@@ -37,6 +37,8 @@ public class WaitExecutor {
                         connection.sendAndWaitForReplConfAck();
                         System.out.println(String.format("Time %d: after send on %s",
                                 System.currentTimeMillis(), connection));
+                        System.out.println(numAcknowledged);
+
                         int prevAck = numAcknowledged.getAndIncrement();
                         latch.countDown();
                         System.out
