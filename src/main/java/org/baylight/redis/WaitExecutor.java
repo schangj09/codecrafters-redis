@@ -3,7 +3,6 @@ package org.baylight.redis;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -87,14 +86,14 @@ public class WaitExecutor {
                     after, after - before));
 
             // cancel all pending tasks
+            int countCancelled = 0;
             for (Future<Void> future : callFutures) {
-                int countCancelled = 0;
                 if (future.cancel(true)) {
                     countCancelled++;
                 }
-                System.out.println(String.format("Cancelled %d of %d tasks.", countCancelled,
-                        callFutures.size()));
             }
+            System.out.println(String.format("Cancelled %d of %d tasks.", countCancelled,
+            callFutures.size()));
         } catch (Exception e) {
             System.out
                     .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
