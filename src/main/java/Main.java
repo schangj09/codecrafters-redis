@@ -1,11 +1,8 @@
 import java.io.IOException;
 import java.time.Clock;
 
-import org.baylight.redis.EventLoop;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.RedisServiceOptions;
-import org.baylight.redis.commands.RedisCommandConstructor;
-import org.baylight.redis.protocol.RespValueParser;
 
 public class Main {
   public static void main(String[] args) {
@@ -19,9 +16,7 @@ public class Main {
     RedisServiceBase service = RedisServiceBase.newInstance(options, Clock.systemUTC());
     try {
       service.start();
-
-      EventLoop loop = new EventLoop(service, new RedisCommandConstructor(), new RespValueParser());
-      loop.processLoop();
+      service.processMainLoop();
       System.out.println(String.format("Event loop terminated"));
 
     } catch (IOException e) {
