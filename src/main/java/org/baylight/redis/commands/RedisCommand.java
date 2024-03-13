@@ -84,7 +84,7 @@ public abstract class RedisCommand {
         throw new UnsupportedOperationException("Unimplemented method 'asCommand'");
     }
     public static String responseLogString(byte[] response) {
-        return new String(response).replace("\r\n", "\\r\\n");
+        return response == null ? null : new String(response).replace("\r\n", "\\r\\n");
     }
 
 }

@@ -195,11 +195,13 @@ public class ConnectionToLeader {
     }
 
     public void executeCommand(ClientConnection conn, RedisCommand command) throws IOException {
-        if (command.isReplicatedCommand()) {
-            System.out
-                    .println(String.format("Received replicated command from leader: %s", command));
-        } else {
-            System.out.println(String.format("Received request from leader: %s", command));
+        if (leaderConnection.equals(conn)) {
+            if (command.isReplicatedCommand()) {
+                System.out.println(
+                        String.format("Received replicated command from leader: %s", conn));
+            } else {
+                System.out.println(String.format("Received request from leader: %s", conn));
+            }
         }
 
         try {
@@ -221,7 +223,7 @@ public class ConnectionToLeader {
                 }
             } else {
                 System.out.println(String.format("Follower service do not send %s response: %s",
-                        command.getType().name(), response == null ? null : new String(response)));
+                        command.getType().name(), RedisCommand.responseLogString(response)));
             }
         } finally {
             replicationPending = false;
@@ -229,8 +231,8 @@ public class ConnectionToLeader {
     }
 
     public boolean shouldSendResponseToConnection(RedisCommand command, ClientConnection conn) {
-        if (!conn.equals(leaderConnection)) {
-            return false;
+        if (!leaderConnection.equals(conn)) {
+            return true;
         }
         boolean isReplconfGetack = command instanceof ReplConfCommand && ((ReplConfCommand) command)
                 .getOptionsMap().containsKey(ReplConfCommand.GETACK_NAME);
