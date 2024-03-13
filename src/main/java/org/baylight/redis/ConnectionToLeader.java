@@ -181,11 +181,18 @@ public class ConnectionToLeader {
 
                     // responseConsumer returns True if we expect the RDB value from the command
                     if (cmd.responseConsumer.apply(cmd.command, response)) {
-                        byte[] rdb = leaderConnection.readRDB();
-                        
-                        response = new RespBulkString(rdb);
-                        System.out.println(String.format("Received leader RDB: %s", response));
-                        cmd.responseConsumer.apply(cmd.command, response);
+                        try {
+                            byte[] rdb = leaderConnection.readRDB();
+
+                            response = new RespBulkString(rdb);
+                            System.out.println(
+                                    String.format("Received leader RDB: %s", response));
+                            cmd.responseConsumer.apply(cmd.command, response);
+                        } catch (IOException e) {
+                            System.out.println(String.format(
+                                    "ConnectionToLeader: IOException on readRDB: %s %s",
+                                    e.getClass().getSimpleName(), e.getMessage()));
+                        }
                     }
                 }
                 // sleep a bit if there were no commands processed
@@ -213,11 +220,13 @@ public class ConnectionToLeader {
             System.out.println(String.format("Received command from leader: %s", command));
         }
 
-        boolean sendResponseToLeader = shouldSendResponseToLeader(command);
-        service.execute(command, conn, sendResponseToLeader);
+        service.execute(command, conn);
     }
 
-    private boolean shouldSendResponseToLeader(RedisCommand command) {
+    public boolean shouldSendResponseToConnection(RedisCommand command, ClientConnection conn) {
+        if (!conn.equals(leaderConnection)) {
+            return false;
+        }
         boolean isReplconfGetack = command instanceof ReplConfCommand && ((ReplConfCommand) command)
                 .getOptionsMap().containsKey(ReplConfCommand.GETACK_NAME);
         return isReplconfGetack;

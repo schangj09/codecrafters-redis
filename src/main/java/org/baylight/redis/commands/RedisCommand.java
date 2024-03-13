@@ -83,4 +83,8 @@ public abstract class RedisCommand {
         // must be overridden by subclass in order to send the command to the leader or follower
         throw new UnsupportedOperationException("Unimplemented method 'asCommand'");
     }
+    public static String responseLogString(byte[] response) {
+        return new String(response).replace("\r\n", "\\r\\n");
+    }
+
 }

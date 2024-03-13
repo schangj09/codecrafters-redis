@@ -129,7 +129,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap;
     }
 
-    public abstract void execute(RedisCommand command, ClientConnection conn, boolean writeResponse)
+    public abstract void execute(RedisCommand command, ClientConnection conn)
             throws IOException;
 
     public boolean isExpired(StoredData storedData) {
@@ -234,7 +234,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     void executeCommand(ClientConnection conn, RedisCommand command) throws IOException {
         System.out.println(String.format("Received client command: %s", command));
 
-        execute(command, conn, true);
+        execute(command, conn);
         switch (command) {
         case EofCommand c -> {
             conn.close();
