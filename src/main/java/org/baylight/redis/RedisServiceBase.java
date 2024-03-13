@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Clock;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.Map;
@@ -23,12 +24,16 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
     private static final Set<String> DEFAULT_SECTIONS = Set.of("server", "replication", "stats",
             "replication-graph");
+
     private ServerSocket serverSocket;
+    private EventLoop eventLoop;
+    private final ExecutorService connectionAcceptExecutorService;
+    private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
+    private volatile boolean done = false;
     private final int port;
     private final String role;
     private final Clock clock;
     private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
-    private EventLoop eventLoop;
 
     public static RedisServiceBase newInstance(RedisServiceOptions options, Clock clock) {
         String role = options.getRole();
@@ -44,6 +49,10 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         this.port = options.getPort();
         this.role = options.getRole();
         this.clock = clock;
+
+        connectionAcceptExecutorService = Executors.newFixedThreadPool(1); // We need just one
+                                                                           // thread for accepting
+                                                                           // new connections
     }
 
     public void start() throws IOException {
@@ -52,6 +61,40 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         System.out.println("Server started. Listening on Port " + port);
 
         eventLoop = new EventLoop(this, new RedisCommandConstructor(), new RespValueParser());
+
+        // create the thread for accepting new connections
+        connectionAcceptExecutorService.execute(() -> {
+            while (!done) {
+                Socket clientSocket = null;
+                try {
+                    clientSocket = serverSocket.accept();
+                    clientSocket.setTcpNoDelay(true);
+                    clientSocket.setKeepAlive(true);
+                    clientSocket.setSoTimeout(0); // infinite timeout
+
+                    ClientConnection conn = new ClientConnection(clientSocket);
+                    clientSockets.add(conn);
+                    System.out.println(
+                            String.format("Connection accepted from client: %s, opened: %s",
+                                    clientSocket, !clientSocket.isClosed()));
+                } catch (IOException e) {
+                    System.out.println("IOException on accept: " + e.getMessage());
+                }
+            }
+
+            // loop was terminated so close any open connections
+            for (ClientConnection conn : clientSockets) {
+                try {
+                    System.out.println(String.format("Closing connection to client: %s, opened: %s",
+                            conn.clientSocket, !conn.clientSocket.isClosed()));
+                    if (!conn.clientSocket.isClosed()) {
+                        conn.clientSocket.close();
+                    }
+                } catch (IOException e) {
+                    System.out.println("IOException: " + e.getMessage());
+                }
+            }
+        });
     }
 
     public void closeSocket() throws IOException {
@@ -178,11 +221,46 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         eventLoop.processLoop();
     }
 
+    public void terminate() {
+        System.out.println(
+                String.format("Terminate invoked. Closing %d connections.", clientSockets.size()));
+        done = true;
+        // stop accepting new connections and shut down the accept connections thread
+        try {
+            closeSocket();
+        } catch (IOException e) {
+            System.out.println("IOException on socket close: " + e.getMessage());
+        }
+        // executor close - waits for thread to finish closing all open connections
+        this.connectionAcceptExecutorService.close();
+    }
+
+
+    public Collection<ClientConnection> getClientSockets() {
+        return clientSockets;
+    }
+
+    void executeCommand(ClientConnection conn, RedisCommand command) throws IOException {
+        System.out.println(String.format("Received client command: %s", command));
+
+        execute(command, conn, true);
+        switch (command) {
+        case EofCommand c -> {
+            conn.clientSocket.close();
+        }
+        case TerminateCommand c -> {
+            eventLoop.terminate();
+            terminate();
+        }
+        default -> {
+            // no action for other command types
+        }
+        }
+    }
+
     static class EventLoop {
         // keep a list of socket connections and continue checking for new connections
         private final RedisServiceBase service;
-        private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
-        private final ExecutorService executor;
         private final RedisCommandConstructor commandConstructor;
         private final RespValueParser valueParser;
         private volatile boolean done = false;
@@ -190,66 +268,19 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         public EventLoop(RedisServiceBase service, RedisCommandConstructor commandConstructor,
                 RespValueParser valueParser) {
             this.service = service;
-            executor = Executors.newFixedThreadPool(1); // We need just one thread for accepting new
-                                                        // connections
             this.commandConstructor = commandConstructor;
             this.valueParser = valueParser;
-
-            // create the thread for accepting new connections
-            executor.execute(() -> {
-                while (!done) {
-                    Socket clientSocket = null;
-                    try {
-                        clientSocket = service.getServerSocket().accept();
-                        clientSocket.setTcpNoDelay(true);
-                        clientSocket.setKeepAlive(true);
-                        clientSocket.setSoTimeout(0); // infinite timeout
-
-                        ClientConnection conn = new ClientConnection(clientSocket);
-                        clientSockets.add(conn);
-                        System.out.println(
-                                String.format("Connection accepted from client: %s, opened: %s",
-                                        clientSocket, !clientSocket.isClosed()));
-                    } catch (IOException e) {
-                        System.out.println("IOException on accept: " + e.getMessage());
-                    }
-                }
-
-                // loop was terminated so close any open connections
-                for (ClientConnection conn : clientSockets) {
-                    try {
-                        System.out.println(
-                                String.format("Closing connection to client: %s, opened: %s",
-                                        conn.clientSocket, !conn.clientSocket.isClosed()));
-                        if (!conn.clientSocket.isClosed()) {
-                            conn.clientSocket.close();
-                        }
-                    } catch (IOException e) {
-                        System.out.println("IOException: " + e.getMessage());
-                    }
-                }
-            });
         }
 
         public void terminate() {
-            System.out.println(String.format("Terminate invoked. Closing %d connections.",
-                    clientSockets.size()));
             done = true;
-            // stop accepting new connections and shut down the accept connections thread
-            try {
-                service.closeSocket();
-            } catch (IOException e) {
-                System.out.println("IOException on socket close: " + e.getMessage());
-            }
-            // executor close - waits for thread to finish closing all open connections
-            executor.close();
         }
 
         public void processLoop() throws InterruptedException {
             while (!done) {
                 // check for bytes on next socket and process
                 boolean didProcess = false;
-                Iterator<ClientConnection> iter = clientSockets.iterator();
+                Iterator<ClientConnection> iter = service.getClientSockets().iterator();
                 if (!service.isReplicationFromLeaderPending()) {
                     for (; iter.hasNext();) {
                         ClientConnection conn = iter.next();
@@ -276,7 +307,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                                         .newCommandFromValue(valueParser.parse(conn.reader));
                                 didProcess = true;
                                 if (command != null) {
-                                    process(conn, command);
+                                    service.executeCommand(conn, command);
                                 }
                             }
                         } catch (Exception e) {
@@ -290,23 +321,6 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                     // System.out.println("sleep 1s");
                     Thread.sleep(80L);
                 }
-            }
-        }
-
-        void process(ClientConnection conn, RedisCommand command) throws IOException {
-            System.out.println(String.format("Received client command: %s", command));
-
-            service.execute(command, conn, true);
-            switch (command) {
-            case EofCommand c -> {
-                conn.clientSocket.close();
-            }
-            case TerminateCommand c -> {
-                terminate();
-            }
-            default -> {
-                // no action for other command types
-            }
             }
         }
     }
