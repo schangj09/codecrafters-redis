@@ -4,15 +4,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Clock;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.commands.RedisCommandConstructor;
@@ -30,7 +27,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     private final RedisCommandConstructor commandConstructor;
     private final RespValueParser valueParser;
     private final ExecutorService connectionAcceptExecutorService;
-    private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
+    private final ConnectionManager connectionManager;
     private volatile boolean done = false;
     private final int port;
     private final String role;
@@ -56,6 +53,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
         // Thread pool of size 1 for accepting new connections
         connectionAcceptExecutorService = Executors.newFixedThreadPool(1);
+
+        connectionManager = new ConnectionManager();
     }
 
     public void start() throws IOException {
@@ -76,27 +75,17 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                     clientSocket.setSoTimeout(0); // infinite timeout
 
                     ClientConnection conn = new ClientConnection(clientSocket, valueParser);
-                    clientSockets.add(conn);
+                    connectionManager.addConnection(conn);
                     System.out.println(
-                            String.format("Connection accepted from client: %s, opened: %s",
-                                    clientSocket, !clientSocket.isClosed()));
+                            String.format("Connection accepted from client: %s, opened: %s", conn,
+                                    !conn.isClosed()));
                 } catch (IOException e) {
                     System.out.println("IOException on accept: " + e.getMessage());
                 }
             }
 
             // loop was terminated so close any open connections
-            for (ClientConnection conn : clientSockets) {
-                try {
-                    System.out.println(String.format("Closing connection to client: %s, opened: %s",
-                            conn, !conn.isClosed()));
-                    if (!conn.isClosed()) {
-                        conn.close();
-                    }
-                } catch (IOException e) {
-                    System.out.println("IOException: " + e.getMessage());
-                }
-            }
+            connectionManager.closeAllConnections();
         });
     }
 
@@ -225,8 +214,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     }
 
     public void terminate() {
-        System.out.println(
-                String.format("Terminate invoked. Closing %d connections.", clientSockets.size()));
+        System.out.println(String.format("Terminate invoked. Closing %d connections.",
+                connectionManager.getNumConnections()));
         done = true;
         // stop accepting new connections and shut down the accept connections thread
         try {
@@ -238,8 +227,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         this.connectionAcceptExecutorService.close();
     }
 
-    public Collection<ClientConnection> getClientSockets() {
-        return clientSockets;
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 
     void executeCommand(ClientConnection conn, RedisCommand command) throws IOException {
@@ -278,46 +267,23 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         public void processLoop() throws InterruptedException {
             while (!done) {
                 // check for bytes on next socket and process
-                boolean didProcess = false;
-                Iterator<ClientConnection> iter = service.getClientSockets().iterator();
+                AtomicBoolean didProcess = new AtomicBoolean(false);
                 if (!service.isReplicationFromLeaderPending()) {
-                    for (; iter.hasNext();) {
-                        ClientConnection conn = iter.next();
-                        if (conn.isClosed()) {
-                            System.out.println(
-                                    String.format("Connection closed by the server: %s", conn));
-                            iter.remove();
-                            continue;
-                        } else if (conn.isFollowerHandshakeComplete()) {
-                            System.out.println(String.format(
-                                    "EventLoop: no longer listening to commands from client after follower connection handshake complete: %s",
-                                    conn));
-                            iter.remove();
-                            continue;
-                        }
-
-                        try {
-                            while (conn.available() > 0) {
-                                System.out.println(String.format(
-                                        "EventLoop: about to read from connection, available: %d %s",
-                                        conn.available(), conn));
-
-                                RespValue value = conn.readValue();
-                                RedisCommand command = commandConstructor
-                                        .newCommandFromValue(value);
-                                didProcess = true;
-                                if (command != null) {
-                                    service.executeCommand(conn, command);
-                                }
+                    service.getConnectionManager().getNextValue((conn, value) -> {
+                        RedisCommand command = commandConstructor.newCommandFromValue(value);
+                        didProcess.set(true);
+                        if (command != null) {
+                            try {
+                                service.executeCommand(conn, command);
+                            } catch (Exception e) {
+                                System.out.println(String.format("EventLoop Exception: %s \"%s\"",
+                                        e.getClass().getSimpleName(), e.getMessage()));
                             }
-                        } catch (Exception e) {
-                            System.out.println(String.format("EventLoop Exception: %s \"%s\"",
-                                    e.getClass().getSimpleName(), e.getMessage()));
                         }
-                    }
+                    });
                 }
                 // sleep a bit if there were no lines processed
-                if (!didProcess) {
+                if (!didProcess.get()) {
                     // System.out.println("sleep 1s");
                     Thread.sleep(80L);
                 }
