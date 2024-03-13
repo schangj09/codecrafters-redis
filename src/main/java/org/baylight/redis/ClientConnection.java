@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Objects;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 import org.baylight.redis.io.BufferedResponseStreamWriter;
@@ -83,6 +84,21 @@ public class ClientConnection {
     @Override
     public String toString() {
         return clientSocket.toString();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(clientSocket);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof ClientConnection))
+            return false;
+        ClientConnection other = (ClientConnection) obj;
+        return Objects.equals(clientSocket, other.clientSocket);
     }
 
 }
