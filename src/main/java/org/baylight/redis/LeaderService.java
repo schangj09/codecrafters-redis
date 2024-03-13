@@ -74,7 +74,7 @@ public class LeaderService extends RedisServiceBase {
                 ClientConnection clientConnection = follower.getFollowerConnection();
                 if (clientConnection.isClosed()) {
                     System.out.println(
-                            String.format("Follower connection closed: %s", conn.clientSocket));
+                            String.format("Follower connection closed: %s", conn));
                     iter.remove();
                     continue;
                 }
@@ -83,17 +83,17 @@ public class LeaderService extends RedisServiceBase {
                     // once we send the first replicated command, then stop hardcoding the replconf ack
                     follower.setTestingDontWaitForAck(false);
                     try {
-                        clientConnection.writer.writeFlush(command.asCommand());
+                        clientConnection.writeFlush(command.asCommand());
                     } catch (IOException e) {
                         System.out.println(String.format(
                                 "Follower exception during replication connection: %s, exception: %s",
-                                conn.clientSocket, e.getMessage()));
+                                conn, e.getMessage()));
                     }
                 }
             }
         }
         if (response != null && response.length > 0 && writeResponse) {
-            conn.writer.writeFlush(response);
+            conn.writeFlush(response);
         }
     }
 

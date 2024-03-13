@@ -86,9 +86,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
             for (ClientConnection conn : clientSockets) {
                 try {
                     System.out.println(String.format("Closing connection to client: %s, opened: %s",
-                            conn.clientSocket, !conn.clientSocket.isClosed()));
-                    if (!conn.clientSocket.isClosed()) {
-                        conn.clientSocket.close();
+                            conn, !conn.isClosed()));
+                    if (!conn.isClosed()) {
+                        conn.close();
                     }
                 } catch (IOException e) {
                     System.out.println("IOException: " + e.getMessage());
@@ -246,7 +246,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         execute(command, conn, true);
         switch (command) {
         case EofCommand c -> {
-            conn.clientSocket.close();
+            conn.close();
         }
         case TerminateCommand c -> {
             eventLoop.terminate();
@@ -286,25 +286,25 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                         ClientConnection conn = iter.next();
                         if (conn.isClosed()) {
                             System.out.println(String.format("Connection closed by the server: %s",
-                                    conn.clientSocket));
+                                    conn));
                             iter.remove();
                             continue;
                         } else if (conn.isFollowerHandshakeComplete()) {
                             System.out.println(String.format(
                                     "EventLoop: no longer listening to commands from client after follower connection handshake complete: %s",
-                                    conn.clientSocket));
+                                    conn));
                             iter.remove();
                             continue;
                         }
 
                         try {
-                            while (conn.reader.available() > 0) {
+                            while (conn.available() > 0) {
                                 System.out.println(String.format(
                                         "EventLoop: about to read from connection, available: %d %s",
-                                        conn.reader.available(), conn.clientSocket));
+                                        conn.available(), conn));
 
                                 RedisCommand command = commandConstructor
-                                        .newCommandFromValue(valueParser.parse(conn.reader));
+                                        .newCommandFromValue(valueParser.parse(conn.getReader()));
                                 didProcess = true;
                                 if (command != null) {
                                     service.executeCommand(conn, command);

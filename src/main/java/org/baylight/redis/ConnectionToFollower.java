@@ -52,7 +52,7 @@ public class ConnectionToFollower {
         String ackString = new String(ack.asCommand()).toUpperCase();
         System.out.println(String.format("sendAndWaitForReplConfAck: Sending command %s",
                 ackString.replace("\r\n", "\\r\\n")));
-        followerConnection.writer.writeFlush(ackString.getBytes());
+        followerConnection.writeFlush(ackString.getBytes());
 
         if (testingDontWaitForAck) {
             String response = "REPLCONF ACK 0";
@@ -60,7 +60,7 @@ public class ConnectionToFollower {
                     "sendAndWaitForReplConfAck: not waiting, harcoded response: \"%s\"", response));
             return new RespSimpleStringValue(response);
         } else {
-            RespValue response = new RespValueParser().parse(followerConnection.reader);
+            RespValue response = new RespValueParser().parse(followerConnection.getReader());
             System.out.println(String.format("sendAndWaitForReplConfAck: response from replica: %s",
                     response));
             return response;
@@ -69,7 +69,7 @@ public class ConnectionToFollower {
 
     @Override
     public String toString() {
-        return "ConnectionToFollower: " + followerConnection.clientSocket;
+        return "ConnectionToFollower: " + followerConnection;
     }
 
 }

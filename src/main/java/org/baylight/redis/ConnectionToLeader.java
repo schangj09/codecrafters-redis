@@ -41,7 +41,7 @@ public class ConnectionToLeader {
 
         leaderConnection = new ClientConnection(service.getLeaderClientSocket());
         System.out.println(String.format("Connection to leader: %s, isOpened: %s",
-                leaderConnection.clientSocket, !leaderConnection.clientSocket.isClosed()));
+                leaderConnection, !leaderConnection.isClosed()));
 
         // create the thread for sending commands to the leader and receiving replication commands
         executor.execute(() -> {
@@ -97,7 +97,7 @@ public class ConnectionToLeader {
                         }
                         setFullResyncRdb((RespBulkString) response4);
                         System.out.println(String.format("Handshake completed"));
-                        startBytesOffset = leaderConnection.reader.getNumBytesReceived();
+                        startBytesOffset = leaderConnection.getNumBytesReceived();
                         handshakeComplete = true;
                         return false;
                     });
@@ -143,10 +143,10 @@ public class ConnectionToLeader {
             // check for commands waiting to be sent
             boolean didProcess = false;
 
-            if (leaderConnection.clientSocket.isClosed()) {
+            if (leaderConnection.isClosed()) {
                 System.out.println(String.format(
                         "Terminating process due to connection is closed by leader: %s",
-                        leaderConnection.clientSocket));
+                        leaderConnection));
                 terminate();
                 continue;
             }
@@ -155,16 +155,16 @@ public class ConnectionToLeader {
                 // if handshake is completed then read replicated commands from the leader and track
                 // the total bytes read
                 if (isHandshakeComplete()) {
-                    while (leaderConnection.reader.available() > 0) {
+                    while (leaderConnection.available() > 0) {
                         replicationPending = true;
                         RedisCommand command = commandConstructor
-                                .newCommandFromValue(valueParser.parse(leaderConnection.reader));
+                                .newCommandFromValue(valueParser.parse(leaderConnection.getReader()));
                         didProcess = true;
                         if (command != null) {
                             process(leaderConnection, command);
                         }
                         long prev = numBytesReceived.getAndSet(
-                                leaderConnection.reader.getNumBytesReceived() - startBytesOffset);
+                                leaderConnection.getNumBytesReceived() - startBytesOffset);
                         System.out.println(String.format("DEBUG: Updated num bytes from %d to %d",
                                 prev, numBytesReceived.get()));
                     }
@@ -173,25 +173,25 @@ public class ConnectionToLeader {
                     CommandAndResponseConsumer cmd = commandsToLeader.pollFirst();
                     // send the command to the leader
                     System.out.println(String.format("Sending leader command: %s", cmd.command));
-                    leaderConnection.writer.writeFlush(cmd.command.asCommand());
+                    leaderConnection.writeFlush(cmd.command.asCommand());
 
                     // read the response - will wait on the stream until the whole value is parsed
                     RespValueParser respValueParser = new RespValueParser();
                     RespValue response;
-                    response = respValueParser.parse(leaderConnection.reader);
+                    response = respValueParser.parse(leaderConnection.getReader());
                     System.out.println(String.format("Received leader response: %s", response));
                     // responseConsumer returns True if we expect the RDB value from the command
                     if (cmd.responseConsumer.apply(cmd.command, response)) {
-                        int val = leaderConnection.reader.read();
+                        int val = leaderConnection.getReader().read();
                         if (val != '$') {
                             throw new IllegalArgumentException(
                                     "Expected RDB from leader, got char " + val);
                         }
-                        long len = leaderConnection.reader.readLong();
+                        long len = leaderConnection.getReader().readLong();
                         // TODO: refactor the RDB processing with a stream instead of byte array
                         byte[] rdb = new byte[(int) len];
                         for (int i = 0; i < len; i++) {
-                            rdb[i] = (byte) leaderConnection.reader.read();
+                            rdb[i] = (byte) leaderConnection.getReader().read();
                         }
                         response = new RespBulkString(rdb);
                         System.out.println(String.format("Received leader RDB: %s", response));
@@ -206,7 +206,7 @@ public class ConnectionToLeader {
                     // no more replication pending if there is nothing on the socket after the
                     // handshake
                     if (handshakeComplete) {
-                        replicationPending = leaderConnection.reader.available() > 0;
+                        replicationPending = leaderConnection.available() > 0;
                     }
                 }
             } catch (Exception e) {
