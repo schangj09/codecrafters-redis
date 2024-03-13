@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.baylight.redis.commands.ReplConfCommand;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
-import org.baylight.redis.protocol.RespValueParser;
 
 public class ConnectionToFollower {
     private final LeaderService service;
@@ -60,7 +59,7 @@ public class ConnectionToFollower {
                     "sendAndWaitForReplConfAck: not waiting, harcoded response: \"%s\"", response));
             return new RespSimpleStringValue(response);
         } else {
-            RespValue response = new RespValueParser().parse(followerConnection.getReader());
+            RespValue response = followerConnection.readValue();
             System.out.println(String.format("sendAndWaitForReplConfAck: response from replica: %s",
                     response));
             return response;

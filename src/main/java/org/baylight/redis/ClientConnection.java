@@ -9,21 +9,43 @@ import java.net.Socket;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 import org.baylight.redis.io.BufferedResponseStreamWriter;
+import org.baylight.redis.protocol.RespValue;
+import org.baylight.redis.protocol.RespValueParser;
 
 public class ClientConnection {
-    private Socket clientSocket;
+    private final Socket clientSocket;
+    private final RespValueParser valueParser;
     private InputStream inputStream;
     private OutputStream outputStream;
     private BufferedInputLineReader reader;
     private BufferedResponseStreamWriter writer;
     volatile boolean followerHandshakeComplete = false;
 
-    public ClientConnection(Socket s) throws IOException {
-        clientSocket = s;
-        inputStream = s.getInputStream();
+    public ClientConnection(Socket clientSocket, RespValueParser valueParser) throws IOException {
+        this.clientSocket = clientSocket;
+        this.valueParser = valueParser;
+        inputStream = clientSocket.getInputStream();
         reader = new BufferedInputLineReader(new BufferedInputStream(inputStream));
-        outputStream = s.getOutputStream();
+        outputStream = clientSocket.getOutputStream();
         writer = new BufferedResponseStreamWriter(new BufferedOutputStream(outputStream));
+    }
+
+    RespValue readValue() throws IOException {
+        return valueParser.parse(reader);
+    }
+
+    byte[] readRDB() throws IOException {
+        int val = reader.read();
+        if (val != '$') {
+            throw new IllegalArgumentException("Expected RDB from leader, got char " + val);
+        }
+        long len = reader.readLong();
+        // TODO: refactor the RDB processing with a stream instead of byte array
+        byte[] rdb = new byte[(int) len];
+        for (int i = 0; i < len; i++) {
+            rdb[i] = (byte) reader.read();
+        }
+        return rdb;
     }
 
     String getConnectionString() {
@@ -44,16 +66,6 @@ public class ClientConnection {
 
     public long getNumBytesReceived() {
         return reader.getNumBytesReceived();
-    }
-
-    /**
-     * Temporary package level method for accessing the reader until we refacter the value parser
-     * reader into this class.
-     * 
-     * @return the reader
-     */
-    BufferedInputLineReader getReader() {
-        return reader;
     }
 
     public void writeFlush(byte[] bytes) throws IOException {

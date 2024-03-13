@@ -39,7 +39,7 @@ public class ConnectionToLeader {
         commandConstructor = new RedisCommandConstructor();
         valueParser = new RespValueParser();
 
-        leaderConnection = new ClientConnection(service.getLeaderClientSocket());
+        leaderConnection = new ClientConnection(service.getLeaderClientSocket(), valueParser);
         System.out.println(String.format("Connection to leader: %s, isOpened: %s",
                 leaderConnection, !leaderConnection.isClosed()));
 
@@ -158,7 +158,7 @@ public class ConnectionToLeader {
                     while (leaderConnection.available() > 0) {
                         replicationPending = true;
                         RedisCommand command = commandConstructor
-                                .newCommandFromValue(valueParser.parse(leaderConnection.getReader()));
+                                .newCommandFromValue(leaderConnection.readValue());
                         didProcess = true;
                         if (command != null) {
                             process(leaderConnection, command);
@@ -176,23 +176,13 @@ public class ConnectionToLeader {
                     leaderConnection.writeFlush(cmd.command.asCommand());
 
                     // read the response - will wait on the stream until the whole value is parsed
-                    RespValueParser respValueParser = new RespValueParser();
-                    RespValue response;
-                    response = respValueParser.parse(leaderConnection.getReader());
+                    RespValue response = leaderConnection.readValue();
                     System.out.println(String.format("Received leader response: %s", response));
+
                     // responseConsumer returns True if we expect the RDB value from the command
                     if (cmd.responseConsumer.apply(cmd.command, response)) {
-                        int val = leaderConnection.getReader().read();
-                        if (val != '$') {
-                            throw new IllegalArgumentException(
-                                    "Expected RDB from leader, got char " + val);
-                        }
-                        long len = leaderConnection.getReader().readLong();
-                        // TODO: refactor the RDB processing with a stream instead of byte array
-                        byte[] rdb = new byte[(int) len];
-                        for (int i = 0; i < len; i++) {
-                            rdb[i] = (byte) leaderConnection.getReader().read();
-                        }
+                        byte[] rdb = leaderConnection.readRDB();
+                        
                         response = new RespBulkString(rdb);
                         System.out.println(String.format("Received leader RDB: %s", response));
                         cmd.responseConsumer.apply(cmd.command, response);

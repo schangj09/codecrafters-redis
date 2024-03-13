@@ -27,6 +27,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
     private ServerSocket serverSocket;
     private EventLoop eventLoop;
+    private final RedisCommandConstructor commandConstructor;
+    private final RespValueParser valueParser;
     private final ExecutorService connectionAcceptExecutorService;
     private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
     private volatile boolean done = false;
@@ -49,10 +51,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         this.port = options.getPort();
         this.role = options.getRole();
         this.clock = clock;
+        commandConstructor = new RedisCommandConstructor();
+        valueParser = new RespValueParser();
 
-        connectionAcceptExecutorService = Executors.newFixedThreadPool(1); // We need just one
-                                                                           // thread for accepting
-                                                                           // new connections
+        // Thread pool of size 1 for accepting new connections
+        connectionAcceptExecutorService = Executors.newFixedThreadPool(1);
     }
 
     public void start() throws IOException {
@@ -60,7 +63,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         serverSocket.setReuseAddress(true);
         System.out.println("Server started. Listening on Port " + port);
 
-        eventLoop = new EventLoop(this, new RedisCommandConstructor(), new RespValueParser());
+        eventLoop = new EventLoop(this, commandConstructor);
 
         // create the thread for accepting new connections
         connectionAcceptExecutorService.execute(() -> {
@@ -72,7 +75,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                     clientSocket.setKeepAlive(true);
                     clientSocket.setSoTimeout(0); // infinite timeout
 
-                    ClientConnection conn = new ClientConnection(clientSocket);
+                    ClientConnection conn = new ClientConnection(clientSocket, valueParser);
                     clientSockets.add(conn);
                     System.out.println(
                             String.format("Connection accepted from client: %s, opened: %s",
@@ -235,7 +238,6 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         this.connectionAcceptExecutorService.close();
     }
 
-
     public Collection<ClientConnection> getClientSockets() {
         return clientSockets;
     }
@@ -262,14 +264,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         // keep a list of socket connections and continue checking for new connections
         private final RedisServiceBase service;
         private final RedisCommandConstructor commandConstructor;
-        private final RespValueParser valueParser;
         private volatile boolean done = false;
 
-        public EventLoop(RedisServiceBase service, RedisCommandConstructor commandConstructor,
-                RespValueParser valueParser) {
+        public EventLoop(RedisServiceBase service, RedisCommandConstructor commandConstructor) {
             this.service = service;
             this.commandConstructor = commandConstructor;
-            this.valueParser = valueParser;
         }
 
         public void terminate() {
@@ -285,8 +284,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                     for (; iter.hasNext();) {
                         ClientConnection conn = iter.next();
                         if (conn.isClosed()) {
-                            System.out.println(String.format("Connection closed by the server: %s",
-                                    conn));
+                            System.out.println(
+                                    String.format("Connection closed by the server: %s", conn));
                             iter.remove();
                             continue;
                         } else if (conn.isFollowerHandshakeComplete()) {
@@ -303,8 +302,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                                         "EventLoop: about to read from connection, available: %d %s",
                                         conn.available(), conn));
 
+                                RespValue value = conn.readValue();
                                 RedisCommand command = commandConstructor
-                                        .newCommandFromValue(valueParser.parse(conn.getReader()));
+                                        .newCommandFromValue(value);
                                 didProcess = true;
                                 if (command != null) {
                                     service.executeCommand(conn, command);
