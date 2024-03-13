@@ -16,7 +16,7 @@ public class Main {
     RedisServiceBase service = RedisServiceBase.newInstance(options, Clock.systemUTC());
     try {
       service.start();
-      service.processMainLoop();
+      service.runCommandLoop();
       System.out.println(String.format("Event loop terminated"));
 
     } catch (IOException e) {

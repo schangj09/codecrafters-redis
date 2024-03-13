@@ -209,8 +209,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return false;
     }
 
-    public void processMainLoop() throws InterruptedException {
-        eventLoop.processLoop();
+    public void runCommandLoop() throws InterruptedException {
+        eventLoop.runCommandLoop();
     }
 
     public void terminate() {
@@ -264,7 +264,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
             done = true;
         }
 
-        public void processLoop() throws InterruptedException {
+        public void runCommandLoop() throws InterruptedException {
             while (!done) {
                 // check for bytes on next socket and process
                 AtomicBoolean didProcess = new AtomicBoolean(false);

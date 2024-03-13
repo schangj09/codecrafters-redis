@@ -85,21 +85,7 @@ public class FollowerService extends RedisServiceBase {
 
     @Override
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
-        // if the command came from the leader, then for most commands the leader does not expect a
-        // response
-        boolean writeResponse = leaderConnection.shouldSendResponseToConnection(command, conn);
-
-        byte[] response = command.execute(this);
-        if (writeResponse) {
-            System.out.println(String.format("Follower service sending %s response: %s",
-                    command.getType().name(), RedisCommand.responseLogString(response)));
-            if (response != null && response.length > 0) {
-                conn.writeFlush(response);
-            }
-        } else {
-            System.out.println(String.format("Follower service do not send %s response: %s",
-                    command.getType().name(), response == null ? null : new String(response)));
-        }
+        leaderConnection.executeCommand(conn, command);
     }
 
     @Override

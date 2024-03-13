@@ -16,7 +16,14 @@ public class ConnectionManager {
     }
 
     public void addConnection(ClientConnection conn) {
-        clientSockets.add(conn);
+        clientSockets.addLast(conn);
+    }
+
+    public void addPriorityConnection(ClientConnection priorityConnection) {
+        // for followers that listen to a leader, the leader connection should be the first
+        // connection in the queue so getNextValue will prioritize replication commands 
+        // from the leader before commands from other clients
+        clientSockets.addFirst(priorityConnection);
     }
 
     public void closeAllConnections() {

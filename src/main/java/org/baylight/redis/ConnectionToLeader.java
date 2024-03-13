@@ -5,13 +5,11 @@ import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 
 import org.baylight.redis.commands.PingCommand;
 import org.baylight.redis.commands.PsyncCommand;
 import org.baylight.redis.commands.RedisCommand;
-import org.baylight.redis.commands.RedisCommandConstructor;
 import org.baylight.redis.commands.ReplConfCommand;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
@@ -23,30 +21,27 @@ public class ConnectionToLeader {
     private final ClientConnection leaderConnection;
     private final Deque<CommandAndResponseConsumer> commandsToLeader = new ConcurrentLinkedDeque<>();
     private final ExecutorService executor;
-    private final RedisCommandConstructor commandConstructor;
     private final RespValueParser valueParser;
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
     private volatile boolean replicationPending = true;
     private long startBytesOffset = 0;
-    private final AtomicLong numBytesReceived = new AtomicLong(0L);
     private RespBulkString fullResyncRdb;
 
     public ConnectionToLeader(FollowerService service) throws IOException {
         this.service = service;
         executor = Executors.newFixedThreadPool(1); // We need just one thread for sending commands
                                                     // to the leader
-        commandConstructor = new RedisCommandConstructor();
         valueParser = new RespValueParser();
 
         leaderConnection = new ClientConnection(service.getLeaderClientSocket(), valueParser);
-        System.out.println(String.format("Connection to leader: %s, isOpened: %s",
-                leaderConnection, !leaderConnection.isClosed()));
+        System.out.println(String.format("Connection to leader: %s, isOpened: %s", leaderConnection,
+                !leaderConnection.isClosed()));
 
         // create the thread for sending commands to the leader and receiving replication commands
         executor.execute(() -> {
             try {
-                processLoop();
+                runHandshakeLoop();
             } catch (InterruptedException e) {
                 System.out
                         .println("InterruptedException on send command thread: " + e.getMessage());
@@ -64,7 +59,7 @@ public class ConnectionToLeader {
     }
 
     public long getNumBytesReceived() {
-        return numBytesReceived.get();
+        return leaderConnection.getNumBytesReceived() - startBytesOffset;
     }
 
     public void sendLeaderCommand(RedisCommand command,
@@ -99,6 +94,12 @@ public class ConnectionToLeader {
                         System.out.println(String.format("Handshake completed"));
                         startBytesOffset = leaderConnection.getNumBytesReceived();
                         handshakeComplete = true;
+
+                        // after the handshake, allow the ConnectionManager to poll for commands
+                        // from the leader and process them in the FollowerService on the main event
+                        // loop
+                        service.getConnectionManager().addPriorityConnection(leaderConnection);
+                        replicationPending = false;
                         return false;
                     });
                     return false;
@@ -138,8 +139,8 @@ public class ConnectionToLeader {
         executor.close();
     }
 
-    public void processLoop() throws InterruptedException {
-        while (!done) {
+    public void runHandshakeLoop() throws InterruptedException {
+        while (!done && !handshakeComplete) {
             // check for commands waiting to be sent
             boolean didProcess = false;
 
@@ -152,23 +153,6 @@ public class ConnectionToLeader {
             }
 
             try {
-                // if handshake is completed then read replicated commands from the leader and track
-                // the total bytes read
-                if (isHandshakeComplete()) {
-                    while (leaderConnection.available() > 0) {
-                        replicationPending = true;
-                        RedisCommand command = commandConstructor
-                                .newCommandFromValue(leaderConnection.readValue());
-                        didProcess = true;
-                        if (command != null) {
-                            process(leaderConnection, command);
-                        }
-                        long prev = numBytesReceived.getAndSet(
-                                leaderConnection.getNumBytesReceived() - startBytesOffset);
-                        System.out.println(String.format("DEBUG: Updated num bytes from %d to %d",
-                                prev, numBytesReceived.get()));
-                    }
-                }
                 while (!commandsToLeader.isEmpty()) {
                     CommandAndResponseConsumer cmd = commandsToLeader.pollFirst();
                     // send the command to the leader
@@ -185,8 +169,7 @@ public class ConnectionToLeader {
                             byte[] rdb = leaderConnection.readRDB();
 
                             response = new RespBulkString(rdb);
-                            System.out.println(
-                                    String.format("Received leader RDB: %s", response));
+                            System.out.println(String.format("Received leader RDB: %s", response));
                             cmd.responseConsumer.apply(cmd.command, response);
                         } catch (IOException e) {
                             System.out.println(String.format(
@@ -200,27 +183,49 @@ public class ConnectionToLeader {
                 if (!didProcess) {
                     // System.out.println("sleep 1s");
                     Thread.sleep(50L);
-                    // no more replication pending if there is nothing on the socket after the
-                    // handshake
-                    if (handshakeComplete) {
-                        replicationPending = leaderConnection.available() > 0;
-                    }
                 }
             } catch (Exception e) {
                 System.out.println(String.format("ConnectionToLeader Loop Exception: %s \"%s\"",
                         e.getClass().getSimpleName(), e.getMessage()));
             }
         }
+        System.out.println(String.format(
+                "Exiting thread for handshake commands - done: %s, handshakeComplete: %s", done,
+                handshakeComplete));
     }
 
-    void process(ClientConnection conn, RedisCommand command) throws IOException {
+    public void executeCommand(ClientConnection conn, RedisCommand command) throws IOException {
         if (command.isReplicatedCommand()) {
-            System.out.println(String.format("Received replicated command: %s", command));
+            System.out
+                    .println(String.format("Received replicated command from leader: %s", command));
         } else {
-            System.out.println(String.format("Received command from leader: %s", command));
+            System.out.println(String.format("Received request from leader: %s", command));
         }
 
-        service.execute(command, conn);
+        try {
+            // TODO remove replicationPending
+            // replicationPending should be unnecessary now that we are processing commands
+            // from the leader (both replication and getack) on the main service loop and we
+            // have ensured the replication commands get processed first before other connections
+            replicationPending = true;
+            // if the command came from the leader, then for most commands the leader does not
+            // expect a response
+            boolean writeResponse = shouldSendResponseToConnection(command, conn);
+
+            byte[] response = command.execute(service);
+            if (writeResponse) {
+                System.out.println(String.format("Follower service sending %s response: %s",
+                        command.getType().name(), RedisCommand.responseLogString(response)));
+                if (response != null && response.length > 0) {
+                    conn.writeFlush(response);
+                }
+            } else {
+                System.out.println(String.format("Follower service do not send %s response: %s",
+                        command.getType().name(), response == null ? null : new String(response)));
+            }
+        } finally {
+            replicationPending = false;
+        }
     }
 
     public boolean shouldSendResponseToConnection(RedisCommand command, ClientConnection conn) {
