@@ -46,8 +46,7 @@ public class LeaderService extends RedisServiceBase {
     }
 
     @Override
-    public void execute(RedisCommand command, ClientConnection conn)
-            throws IOException {
+    public void execute(RedisCommand command, ClientConnection conn) throws IOException {
         // for the leader, return the command response and replicate to the followers
         byte[] response = command.execute(this);
         // Note: first complete replication before sending the response
@@ -59,8 +58,8 @@ public class LeaderService extends RedisServiceBase {
             replMap.put(connectionString, new ConnectionToFollower(this, conn));
         }
         if (command.getType() == Type.PSYNC) {
-            // This command is the final handshake command, so now we must no longer 
-            // read commands from the connection - now the connection is used for 
+            // This command is the final handshake command, so now we must no longer
+            // read commands from the connection - now the connection is used for
             // the leader to send replication commands and getack requests.
             // EventLoop will remove the connection from the list of connections from which it
             // listens for commands.
@@ -73,14 +72,14 @@ public class LeaderService extends RedisServiceBase {
                 ConnectionToFollower follower = iter.next();
                 ClientConnection clientConnection = follower.getFollowerConnection();
                 if (clientConnection.isClosed()) {
-                    System.out.println(
-                            String.format("Follower connection closed: %s", conn));
+                    System.out.println(String.format("Follower connection closed: %s", conn));
                     iter.remove();
                     continue;
                 }
                 if (clientConnection != conn) {
                     // WORKARDOUND for codecrafters integration test "replication-17"
-                    // once we send the first replicated command, then stop hardcoding the replconf ack
+                    // once we send the first replicated command, then stop hardcoding the replconf
+                    // ack
                     follower.setTestingDontWaitForAck(false);
                     try {
                         clientConnection.writeFlush(command.asCommand());
@@ -111,6 +110,8 @@ public class LeaderService extends RedisServiceBase {
                     new RespBulkString(RedisCommand.Type.REPLCONF.name().getBytes()),
                     new RespBulkString("ACK".getBytes()),
                     new RespBulkString(responseValue.getBytes()) }).asResponse();
+        } else if (optionsMap.containsKey(ReplConfCommand.ACK_NAME)) {
+            return null;
         }
         return RespConstants.OK;
     }
@@ -119,7 +120,8 @@ public class LeaderService extends RedisServiceBase {
     public int waitForReplicationServers(int numReplicas, long timeoutMillis) {
         // Note: the waitExecutor should return all replicated services that acknowledge, even if it
         // is greater than requested number
-        WaitExecutor waitExecutor = new WaitExecutor(numReplicas, executorService);
+        WaitExecutor waitExecutor = new WaitExecutor(Math.max(numReplicas, replMap.size()),
+                executorService);
         return waitExecutor.wait(replMap.values(), timeoutMillis);
     }
 

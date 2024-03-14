@@ -10,6 +10,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.baylight.redis.commands.RedisCommand;
+import org.baylight.redis.protocol.RespValue;
+
 public class WaitExecutor {
     private final int numToWaitFor;
     private final AtomicInteger numAcknowledged;
@@ -27,20 +30,21 @@ public class WaitExecutor {
 
     int wait(Collection<ConnectionToFollower> followers, long timeoutMillis) {
         try {
+            // extend the timeout to allow for codecrafters tests to pass - this may be needed for
+            // "replication-18" which expects all replicas, even if it asks for less than all
+            // of them, so we need to wait longer than the default timeout.
+            long extendedTimeout = timeoutMillis + 100L;
+
             // send a replConf ack command to each follower on a separate thread
             // wait on the latch to block until enough acks are received
             List<Future<Void>> callFutures = new ArrayList<>();
             for (ConnectionToFollower follower : followers) {
                 callFutures.add(executorService.submit(() -> {
-                    requestAckFromFollower(follower);
+                    requestAckFromFollower(follower, extendedTimeout);
                     return null;
                 }));
             }
 
-            // extend the timeout to allow for codecrafters tests to pass - this may be needed for
-            // "replication-18" which expects all replicas, even if it asks for less than all
-            // of them, so we need to wait longer than the default timeout.
-            long extendedTimeout = timeoutMillis + 1500L;
             long before = System.currentTimeMillis();
             System.out.println(String.format("Time %d: waiting u to %d millis for acks.", before,
                     extendedTimeout));
@@ -55,7 +59,7 @@ public class WaitExecutor {
                                 Integer.toHexString(System.identityHashCode(numAcknowledged)));
                         // sleep for the extended timeout
                         System.out.println(String.format(
-                                "Time %d: sleeping extend for %d millis for acks.",
+                                "Time %d: sleeping extend for up to %d millis for acks.",
                                 System.currentTimeMillis(), extendedTimeout - timeoutMillis));
                         // give extended time for codecrafters tests to pass
                         waitUntil = before + extendedTimeout;
@@ -92,8 +96,8 @@ public class WaitExecutor {
                     countCancelled++;
                 }
             }
-            System.out.println(String.format("Cancelled %d of %d tasks.", countCancelled,
-            callFutures.size()));
+            System.out.println(
+                    String.format("Cancelled %d of %d tasks.", countCancelled, callFutures.size()));
         } catch (Exception e) {
             System.out
                     .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
@@ -105,19 +109,27 @@ public class WaitExecutor {
         return numAcknowledged.get();
     }
 
-    private void requestAckFromFollower(ConnectionToFollower connection) {
+    private void requestAckFromFollower(ConnectionToFollower connection, long extendedTimeout) {
         try {
             System.out.println(String.format("Sending replConfAck to %s", connection.toString()));
             System.out.println(String.format("Time %d: before send on %s",
                     System.currentTimeMillis(), connection));
-            connection.sendAndWaitForReplConfAck();
-            System.out.println(String.format("Time %d: after send on %s",
-                    System.currentTimeMillis(), connection));
-            System.out.println(Integer.toHexString(System.identityHashCode(numAcknowledged)));
-            int prevAck = numAcknowledged.getAndIncrement();
-            latch.countDown();
-            System.out.println(String.format("Received replConfAck %d (prev %d) from %s",
-                    numAcknowledged.get(), prevAck, connection.toString()));
+            // if no response received within timeout, then it returns null
+            RespValue ackResponse = connection.sendAndWaitForReplConfAck(extendedTimeout);
+            if (ackResponse == null) {
+                System.out.println(
+                        String.format("Time %d: after send on %s, Timed out waiting, no response. Still waiting for %d replConfAcks.",
+                                System.currentTimeMillis(), connection, numToWaitFor - numAcknowledged.get()));
+            } else {
+                System.out.println(String.format("Time %d: after send on %s, response: %s",
+                        System.currentTimeMillis(), connection,
+                        RedisCommand.responseLogString(ackResponse.asResponse())));
+                System.out.println(Integer.toHexString(System.identityHashCode(numAcknowledged)));
+                int prevAck = numAcknowledged.getAndIncrement();
+                latch.countDown();
+                System.out.println(String.format("Received replConfAck %d (prev %d) from %s",
+                        numAcknowledged.get(), prevAck, connection.toString()));
+            }
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(

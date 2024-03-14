@@ -50,6 +50,7 @@ public class ConnectionManager {
                         }
                         if (value != null) {
                             getClientValuesQueue(conn).offer(value);
+                            conn.notifyNewValueAvailable();
                         }
                     }
                 }
@@ -114,6 +115,14 @@ public class ConnectionManager {
             }
         }
         return foundValue;
+    }
+
+    public RespValue getNextValue(ClientConnection conn) {
+        if (!clientValues.get(conn).isEmpty()) {
+            return clientValues.get(conn).poll();
+        } else {
+            return null;
+        }
     }
 
 }

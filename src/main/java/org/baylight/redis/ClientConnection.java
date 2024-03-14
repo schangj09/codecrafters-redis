@@ -110,4 +110,12 @@ public class ClientConnection {
         return Objects.equals(clientSocket, other.clientSocket);
     }
 
+    public synchronized void notifyNewValueAvailable() {
+        notifyAll();
+    }
+
+    public synchronized void waitForNewValueAvailable(long timeoutMillis) throws InterruptedException {
+        wait(timeoutMillis);
+    }
+
 }

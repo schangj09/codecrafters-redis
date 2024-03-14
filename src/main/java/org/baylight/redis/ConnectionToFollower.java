@@ -9,6 +9,7 @@ import org.baylight.redis.protocol.RespValue;
 public class ConnectionToFollower {
     private final LeaderService service;
     private final ClientConnection followerConnection;
+
     /**
      * WORKAROUND for codecrafters integration test "replication-17" Stage 17 expects our service to
      * not send a REPLCONF to the followers during the WAIT command. But, Stage 18 expects it to be
@@ -46,7 +47,7 @@ public class ConnectionToFollower {
         this.testingDontWaitForAck = testingDontWaitForAck;
     }
 
-    public RespValue sendAndWaitForReplConfAck() throws IOException {
+    public RespValue sendAndWaitForReplConfAck(long timeoutMillis) throws IOException, InterruptedException {
         ReplConfCommand ack = new ReplConfCommand(ReplConfCommand.Option.GETACK, "*");
         String ackString = new String(ack.asCommand()).toUpperCase();
         System.out.println(String.format("sendAndWaitForReplConfAck: Sending command %s",
@@ -59,8 +60,10 @@ public class ConnectionToFollower {
                     "sendAndWaitForReplConfAck: not waiting, harcoded response: \"%s\"", response));
             return new RespSimpleStringValue(response);
         } else {
-            RespValue response = followerConnection.readValue();
-            System.out.println(String.format("sendAndWaitForReplConfAck: response from replica: %s",
+            System.out.println("sendAndWaitForReplConfAck: waiting for REPLCONF ACK");
+            followerConnection.waitForNewValueAvailable(timeoutMillis);
+            RespValue response = service.getConnectionManager().getNextValue(followerConnection);
+            System.out.println(String.format("sendAndWaitForReplConfAck: got response from replica: %s",
                     response));
             return response;
         }
