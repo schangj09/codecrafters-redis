@@ -3,7 +3,7 @@ import java.io.IOException;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 
-public class RespInteger implements RespValue {
+public class RespInteger extends RespValueBase {
     private final long value;
 
     public RespInteger(BufferedInputLineReader reader) throws NumberFormatException, IOException {
@@ -11,12 +11,8 @@ public class RespInteger implements RespValue {
     }
 
     public RespInteger(long value) {
+        super(RespType.INTEGER);
         this.value = value;
-    }
-
-    @Override
-    public RespType getType() {
-        return RespType.INTEGER;
     }
 
     @Override

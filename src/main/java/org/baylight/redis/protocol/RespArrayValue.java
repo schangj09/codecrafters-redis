@@ -6,15 +6,17 @@ import java.util.Arrays;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 
-public class RespArrayValue implements RespValue {
+public class RespArrayValue extends RespValueBase {
     RespValue[] values;
 
     public RespArrayValue(RespValue[] values) {
+        super(RespType.ARRAY);
         this.values = values;
     }
 
     public RespArrayValue(BufferedInputLineReader reader, RespValueParser valueParser)
             throws IOException {
+        super(RespType.ARRAY);
         values = new RespValue[reader.readInt()];
         for (int i = 0; i < values.length; i++) {
             values[i] = valueParser.parse(reader);
@@ -27,11 +29,6 @@ public class RespArrayValue implements RespValue {
 
     public RespValue[] getValues() {
         return values;
-    }
-
-    @Override
-    public RespType getType() {
-        return RespType.ARRAY;
     }
 
     @Override

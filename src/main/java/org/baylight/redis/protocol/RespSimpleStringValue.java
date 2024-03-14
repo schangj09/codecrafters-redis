@@ -7,12 +7,12 @@ import org.baylight.redis.io.BufferedInputLineReader;
 /**
  * A RESP simple string value.
  **/
-public class RespSimpleStringValue implements RespValue {
-
-    private String s;
+public class RespSimpleStringValue extends RespValueBase {
+    private final String value;
 
     public RespSimpleStringValue(String s) {
-        this.s = s;
+        super(RespType.SIMPLE_STRING);
+        this.value = s;
     }
 
     public RespSimpleStringValue(BufferedInputLineReader reader) throws IOException {
@@ -20,23 +20,18 @@ public class RespSimpleStringValue implements RespValue {
     }
 
     @Override
-    public RespType getType() {
-        return RespType.SIMPLE_STRING;
-    }
-
-    @Override
     public byte[] asResponse() {
-        return ("+" + s + "\r\n").getBytes();
+        return ("+" + value + "\r\n").getBytes();
     }
 
     @Override
     public String getValueAsString() {
-        return s;
+        return value;
     }
 
     @Override
     public String toString() {
-        return "RespSimpleStringValue [s=" + s + "]";
+        return "RespSimpleStringValue [s=" + value + "]";
     }
 
     @Override
@@ -49,12 +44,12 @@ public class RespSimpleStringValue implements RespValue {
             return false;
         }
         RespSimpleStringValue other = (RespSimpleStringValue) obj;
-        return s.equals(other.s);
+        return value.equals(other.value);
     }
 
     @Override
     public int hashCode() {
-        return s.hashCode();
+        return value.hashCode();
     }
 
 }

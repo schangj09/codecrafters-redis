@@ -6,14 +6,16 @@ import java.util.Arrays;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 
-public class RespBulkString implements RespValue {
+public class RespBulkString extends RespValueBase {
     private final byte[] value;
 
     public RespBulkString(byte[] value) {
+        super(RespType.BULK_STRING);
         this.value = value;
     }
 
     public RespBulkString(BufferedInputLineReader reader) throws IOException {
+        super(RespType.BULK_STRING);
         value = reader.readNBytes(reader.readInt());
         reader.readCRLF();
     }
@@ -38,11 +40,6 @@ public class RespBulkString implements RespValue {
             result[n - 1] = '\n';
         }
         return result;
-    }
-
-    @Override
-    public RespType getType() {
-        return RespType.BULK_STRING;
     }
 
     @Override
