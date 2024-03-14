@@ -56,7 +56,7 @@ public class ConnectionToLeader {
     }
 
     public boolean isReplicationPending() {
-        return replicationPending;
+        return false;
     }
 
     public long getNumBytesReceived() {
@@ -94,6 +94,7 @@ public class ConnectionToLeader {
                         setFullResyncRdb((RespBulkString) response4);
                         System.out.println(String.format("Handshake completed"));
                         startBytesOffset = leaderConnection.getNumBytesReceived();
+                        lastBytesOffset = startBytesOffset;
                         handshakeComplete = true;
 
                         // after the handshake, allow the ConnectionManager to poll for commands
