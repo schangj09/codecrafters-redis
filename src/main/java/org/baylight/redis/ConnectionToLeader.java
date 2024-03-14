@@ -188,14 +188,21 @@ public class ConnectionToLeader {
                 handshakeComplete));
     }
 
-    public void executeCommand(ClientConnection conn, RedisCommand command) throws IOException {
-        if (leaderConnection.equals(conn)) {
-            if (command.isReplicatedCommand()) {
-                System.out.println(
-                        String.format("Received replicated command from leader: %s", conn));
-            } else {
-                System.out.println(String.format("Received request from leader: %s", conn));
-            }
+    public boolean isLeaderConnection(ClientConnection conn) {
+        return leaderConnection.equals(conn);
+    }
+
+    public void executeCommandFromLeader(ClientConnection conn, RedisCommand command) throws IOException {
+        if (!isLeaderConnection(conn)) {
+            System.out.println(String.format("ConnectionToLeader ERROR: executeCommandFromLeader called with non-leader connection: %s", conn));
+            return;
+        }
+
+        if (command.isReplicatedCommand()) {
+            System.out.println(
+                    String.format("Received replicated command from leader: %s", conn));
+        } else {
+            System.out.println(String.format("Received request from leader: %s", conn));
         }
 
         // if the command came from the leader, then for most commands the leader does not

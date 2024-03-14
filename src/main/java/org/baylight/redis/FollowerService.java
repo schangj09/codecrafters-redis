@@ -78,16 +78,24 @@ public class FollowerService extends RedisServiceBase {
         return leaderClientSocket;
     }
 
-
     @Override
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
-        leaderConnection.executeCommand(conn, command);
+        if (leaderConnection.isLeaderConnection(conn)) {
+            leaderConnection.executeCommandFromLeader(conn, command);
+        } else {
+            System.out.println(String.format("Executing command from non-leader connection: %s", conn));
+            byte[] response = command.execute(this);
+            if (response != null && response.length > 0) {
+                conn.writeFlush(response);
+            }
+        }
     }
 
     @Override
     public byte[] replicationConfirm(Map<String, RespValue> optionsMap, long startBytesOffset) {
         if (optionsMap.containsKey(ReplConfCommand.GETACK_NAME)) {
-            String responseValue = String.valueOf(startBytesOffset - leaderConnection.getHandshakeBytesReceived());
+            String responseValue = String
+                    .valueOf(startBytesOffset - leaderConnection.getHandshakeBytesReceived());
             return new RespArrayValue(new RespValue[] {
                     new RespBulkString(RedisCommand.Type.REPLCONF.name().getBytes()),
                     new RespBulkString("ACK".getBytes()),
