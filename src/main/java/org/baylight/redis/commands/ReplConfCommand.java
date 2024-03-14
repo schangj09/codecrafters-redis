@@ -36,13 +36,23 @@ public class ReplConfCommand extends RedisCommand {
                     "[listening-port:int capa:string getack:string]" });
 
     private Map<String, RespValue> optionsMap = new HashMap<>();
+    private final long startBytesOffset;
 
     public ReplConfCommand() {
-        super(Type.REPLCONF);
+        this(0L);
     }
 
     public ReplConfCommand(Option option, String optionValue) {
+        this(option, optionValue, 0L);
+    }
+
+    public ReplConfCommand(long startBytesOffset) {
         super(Type.REPLCONF);
+        this.startBytesOffset = startBytesOffset;
+    }
+
+    public ReplConfCommand(Option option, String optionValue, long startBytesOffset) {
+        this(startBytesOffset);
         optionsMap.put("0", new RespSimpleStringValue(Type.REPLCONF.name()));
         optionsMap.put(option.getName(), optionValue == null ? RespConstants.NULL_VALUE
                 : new RespSimpleStringValue(optionValue));
@@ -55,7 +65,7 @@ public class ReplConfCommand extends RedisCommand {
 
     @Override
     public byte[] execute(RedisServiceBase service) {
-        return service.replicationConfirm(optionsMap);
+        return service.replicationConfirm(optionsMap, startBytesOffset);
     }
 
     @Override

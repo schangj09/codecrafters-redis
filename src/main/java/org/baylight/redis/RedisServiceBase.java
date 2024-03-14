@@ -172,7 +172,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return DEFAULT_SECTIONS.contains(section);
     }
 
-    public abstract byte[] replicationConfirm(Map<String, RespValue> optionsMap);
+    public abstract byte[] replicationConfirm(Map<String, RespValue> optionsMap, long startBytesOffset);
 
     /**
      * Wait until replication has caught up for the given number of replicas. The service must block
