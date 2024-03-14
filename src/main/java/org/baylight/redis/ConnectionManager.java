@@ -3,16 +3,67 @@ package org.baylight.redis;
 import java.io.IOException;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 import org.baylight.redis.protocol.RespValue;
 
 public class ConnectionManager {
     private final Deque<ClientConnection> clientSockets = new ConcurrentLinkedDeque<>();
+    private final Map<ClientConnection, Queue<RespValue>> clientValues = new ConcurrentHashMap<>();
 
     public ConnectionManager() {
 
+    }
+
+    public void start(ExecutorService executorService) throws IOException {
+        // TODO implement orderly shutdown for this thread
+        executorService.submit(() -> {
+            for (;;) {
+                boolean didRead = false;
+                Iterator<ClientConnection> iter = clientSockets.iterator();
+                for (; iter.hasNext();) {
+                    ClientConnection conn = iter.next();
+                    if (conn.isClosed()) {
+                        System.out.println(
+                                String.format("Connection closed by the server: %s", conn));
+                        clientValues.remove(conn);
+                        iter.remove();
+                    }
+                    while (conn.available() > 0) {
+                        didRead = true;
+                        System.out.println(String.format(
+                                "ConnectionManager: about to read from connection, available: %d %s",
+                                conn.available(), conn));
+                        RespValue value = null;
+                        try {
+                            value = conn.readValue();
+                        } catch (Exception e) {
+                            System.out.println(String.format(
+                                    "ConnectionManager read exception conn: %s %s \"%s\"", conn,
+                                    e.getClass().getSimpleName(), e.getMessage()));
+                        }
+                        if (value != null) {
+                            getClientValuesQueue(conn).offer(value);
+                        }
+                    }
+                }
+                // if there was nothing to be read, then sleep a little
+                if (!didRead) {
+                    // System.out.println("sleep 1s");
+                    Thread.sleep(80L);
+                }
+            }
+        });
+    }
+
+    private Queue<RespValue> getClientValuesQueue(ClientConnection conn) {
+        return clientValues.computeIfAbsent(conn, (key) -> new ConcurrentLinkedQueue<RespValue>());
     }
 
     public void addConnection(ClientConnection conn) {
@@ -21,7 +72,7 @@ public class ConnectionManager {
 
     public void addPriorityConnection(ClientConnection priorityConnection) {
         // for followers that listen to a leader, the leader connection should be the first
-        // connection in the queue so getNextValue will prioritize replication commands 
+        // connection in the queue so getNextValue will prioritize replication commands
         // from the leader before commands from other clients
         clientSockets.addFirst(priorityConnection);
     }
@@ -44,36 +95,25 @@ public class ConnectionManager {
         return clientSockets.size();
     }
 
-    public void getNextValue(BiConsumer<ClientConnection, RespValue> valueHandler) {
+    public boolean getNextValue(BiConsumer<ClientConnection, RespValue> valueHandler) {
         Iterator<ClientConnection> iter = clientSockets.iterator();
-        for (; iter.hasNext();) {
+        boolean foundValue = false;
+        for (; !foundValue && iter.hasNext();) {
             ClientConnection conn = iter.next();
-            if (conn.isClosed()) {
-                System.out.println(String.format("Connection closed by the server: %s", conn));
-                iter.remove();
-                continue;
-            } else if (conn.isFollowerHandshakeComplete()) {
-                System.out.println(String.format(
-                        "ConnectionManager: no longer listening to commands from client after follower connection handshake complete: %s",
-                        conn));
-                iter.remove();
-                continue;
-            }
-
+            Queue<RespValue> valuesQueue = getClientValuesQueue(conn);
             try {
-                while (conn.available() > 0) {
-                    System.out.println(String.format(
-                            "ConnectionManager: about to read from connection, available: %d %s",
-                            conn.available(), conn));
-
-                    RespValue value = conn.readValue();
+                if (!valuesQueue.isEmpty()) {
+                    RespValue value = valuesQueue.poll();
                     valueHandler.accept(conn, value);
+                    foundValue = true;
                 }
             } catch (Exception e) {
-                System.out.println(String.format("ConnectionManager Exception: %s \"%s\"",
-                        e.getClass().getSimpleName(), e.getMessage()));
+                System.out.println(
+                        String.format("ConnectionManager nextValue exception conn: %s %s \"%s\"",
+                                conn, e.getClass().getSimpleName(), e.getMessage()));
             }
         }
+        return foundValue;
     }
 
 }

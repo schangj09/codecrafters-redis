@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.commands.RedisCommandConstructor;
@@ -26,7 +25,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     private EventLoop eventLoop;
     private final RedisCommandConstructor commandConstructor;
     private final RespValueParser valueParser;
-    private final ExecutorService connectionAcceptExecutorService;
+    private final ExecutorService connectionsExecutorService;
     private final ConnectionManager connectionManager;
     private volatile boolean done = false;
     private final int port;
@@ -51,8 +50,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         commandConstructor = new RedisCommandConstructor();
         valueParser = new RespValueParser();
 
-        // Thread pool of size 1 for accepting new connections
-        connectionAcceptExecutorService = Executors.newFixedThreadPool(1);
+        // Thread pool of size 2 - one for accepting new client connections, one for reading values
+        // from those clients in the ConnectionManager
+        connectionsExecutorService = Executors.newFixedThreadPool(2);
 
         connectionManager = new ConnectionManager();
     }
@@ -65,7 +65,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         eventLoop = new EventLoop(this, commandConstructor);
 
         // create the thread for accepting new connections
-        connectionAcceptExecutorService.execute(() -> {
+        connectionsExecutorService.execute(() -> {
             while (!done) {
                 Socket clientSocket = null;
                 try {
@@ -87,6 +87,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
             // loop was terminated so close any open connections
             connectionManager.closeAllConnections();
         });
+
+        // start thread to read from client connections
+        connectionManager.start(connectionsExecutorService);
     }
 
     public void closeSocket() throws IOException {
@@ -98,6 +101,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     }
 
     public void shutdown() {
+        connectionsExecutorService.shutdown();
     }
 
     public boolean containsKey(String key) {
@@ -129,8 +133,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap;
     }
 
-    public abstract void execute(RedisCommand command, ClientConnection conn)
-            throws IOException;
+    public abstract void execute(RedisCommand command, ClientConnection conn) throws IOException;
 
     public boolean isExpired(StoredData storedData) {
         long now = clock.millis();
@@ -172,7 +175,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return DEFAULT_SECTIONS.contains(section);
     }
 
-    public abstract byte[] replicationConfirm(Map<String, RespValue> optionsMap, long startBytesOffset);
+    public abstract byte[] replicationConfirm(Map<String, RespValue> optionsMap,
+            long startBytesOffset);
 
     /**
      * Wait until replication has caught up for the given number of replicas. The service must block
@@ -213,8 +217,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         } catch (IOException e) {
             System.out.println("IOException on socket close: " + e.getMessage());
         }
-        // executor close - waits for thread to finish closing all open connections
-        this.connectionAcceptExecutorService.close();
+        shutdown();
     }
 
     public ConnectionManager getConnectionManager() {
@@ -256,12 +259,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
         public void runCommandLoop() throws InterruptedException {
             while (!done) {
-                // check for bytes on next socket and process
-                AtomicBoolean didProcess = new AtomicBoolean(false);
-
-                service.getConnectionManager().getNextValue((conn, value) -> {
+                // check for a value on one of the client sockets and process it as a command
+                boolean didProcess = service.getConnectionManager().getNextValue((conn, value) -> {
                     RedisCommand command = commandConstructor.newCommandFromValue(value);
-                    didProcess.set(true);
                     if (command != null) {
                         try {
                             service.executeCommand(conn, command);
@@ -272,8 +272,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                     }
                 });
 
-                // sleep a bit if there were no lines processed
-                if (!didProcess.get()) {
+                // sleep a bit if there were no commands to be processed
+                if (!didProcess) {
                     // System.out.println("sleep 1s");
                     Thread.sleep(80L);
                 }
