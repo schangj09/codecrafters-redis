@@ -131,7 +131,6 @@ public class WaitExecutor {
                         numAcknowledged.get(), prevAck, connection.toString()));
             }
         } catch (Exception e) {
-            e.printStackTrace();
             System.out.println(
                     String.format("Error sending replConfAck to %s, error: %s %s, cause: %s",
                             connection.toString(), e.getClass().getSimpleName(), e.getMessage(),
