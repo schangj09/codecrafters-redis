@@ -13,12 +13,13 @@ import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 
 public class ReplConfCommand extends RedisCommand {
+    public static final String ACK_NAME = "ack";
     public static final String CAPA_NAME = "capa";
     public static final String GETACK_NAME = "getack";
     public static final String LISTENING_PORT_NAME = "listening-port";
 
     public static enum Option {
-        CAPA(CAPA_NAME), GETACK(GETACK_NAME), LISTENING_PORT(LISTENING_PORT_NAME);
+        ACK(ACK_NAME), CAPA(CAPA_NAME), GETACK(GETACK_NAME), LISTENING_PORT(LISTENING_PORT_NAME);
 
         String name;
 
@@ -33,7 +34,7 @@ public class ReplConfCommand extends RedisCommand {
 
     private static ArgReader ARG_READER = new ArgReader(Type.REPLCONF.name(),
             new String[] { ":string", // command name
-                    "[listening-port:int capa:string getack:string]" });
+                    "[ack:int capa:string getack:string listening-port:int]" });
 
     private Map<String, RespValue> optionsMap = new HashMap<>();
     private final long startBytesOffset;
@@ -73,6 +74,7 @@ public class ReplConfCommand extends RedisCommand {
         List<RespValue> cmdValues = new ArrayList<>();
         cmdValues.add(new RespBulkString(getType().name().toLowerCase().getBytes()));
 
+        addCommandOption(cmdValues, ACK_NAME);
         addCommandOption(cmdValues, CAPA_NAME);
         addCommandOption(cmdValues, GETACK_NAME);
         addCommandOption(cmdValues, LISTENING_PORT_NAME);
