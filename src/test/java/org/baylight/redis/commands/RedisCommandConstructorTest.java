@@ -10,9 +10,11 @@ import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespInteger;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
+import org.baylight.redis.protocol.RespValueContext;
 import org.junit.jupiter.api.Test;
 
 public class RedisCommandConstructorTest implements WithAssertions {
+    private static final long START_OFFSET = 345L;
 
     // Constructs a Ping command.
     @Test
@@ -89,14 +91,16 @@ public class RedisCommandConstructorTest implements WithAssertions {
         assertThat(actualCommand).asInstanceOf(type(PsyncCommand.class));
         assertThat(actualCommand.asCommand()).isEqualTo(expectedResponse.getBytes());
     }
+
     // Constructs a default ReplConf command.
     @Test
     public void test_newCommandFromValue_returnsReplConfCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespArrayValue value = new RespArrayValue(new RespValue[] {
                 new RespSimpleStringValue("replconf"),
                 new RespSimpleStringValue("listening-port"),
                 new RespInteger(123L) });
+        value.setContext(new RespValueContext(START_OFFSET, 21));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -105,6 +109,7 @@ public class RedisCommandConstructorTest implements WithAssertions {
         String expectedResponse = "*3\r\n$8\r\nreplconf\r\n$14\r\nlistening-port\r\n$3\r\n123\r\n";
         assertThat(actualCommand).asInstanceOf(type(ReplConfCommand.class));
         assertThat(actualCommand.asCommand()).isEqualTo(expectedResponse.getBytes());
+        assertThat(actualCommand).hasFieldOrPropertyWithValue("startBytesOffset", START_OFFSET);
     }
 
     // Constructs a Get command.

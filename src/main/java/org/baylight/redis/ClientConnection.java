@@ -11,6 +11,8 @@ import java.util.Objects;
 import org.baylight.redis.io.BufferedInputLineReader;
 import org.baylight.redis.io.BufferedResponseStreamWriter;
 import org.baylight.redis.protocol.RespValue;
+import org.baylight.redis.protocol.RespValueBase;
+import org.baylight.redis.protocol.RespValueContext;
 import org.baylight.redis.protocol.RespValueParser;
 
 public class ClientConnection {
@@ -32,7 +34,14 @@ public class ClientConnection {
     }
 
     RespValue readValue() throws IOException {
-        return valueParser.parse(reader);
+        long startBytesOffset = reader.getNumBytesReceived();
+        
+        RespValue value = valueParser.parse(reader);
+        
+        // set the context for the top-level value from the stream - used for creating a REPLCONF command
+        long length = reader.getNumBytesReceived() - startBytesOffset;
+        ((RespValueBase)value).setContext(new RespValueContext(startBytesOffset, (int)length));
+        return value;
     }
 
     byte[] readRDB() throws IOException {

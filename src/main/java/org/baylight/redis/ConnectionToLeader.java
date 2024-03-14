@@ -24,8 +24,7 @@ public class ConnectionToLeader {
     private final RespValueParser valueParser;
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
-    private long startBytesOffset = 0;
-    private long lastBytesOffset = 0;
+    private long handshakeBytesReceived = 0;
     private RespBulkString fullResyncRdb;
 
     public ConnectionToLeader(FollowerService service) throws IOException {
@@ -54,8 +53,8 @@ public class ConnectionToLeader {
         return handshakeComplete;
     }
 
-    public long getNumBytesReceived() {
-        return lastBytesOffset - startBytesOffset;
+    public long getHandshakeBytesReceived() {
+        return handshakeBytesReceived;
     }
 
     public void sendLeaderCommand(RedisCommand command,
@@ -88,8 +87,7 @@ public class ConnectionToLeader {
                         }
                         setFullResyncRdb((RespBulkString) response4);
                         System.out.println(String.format("Handshake completed"));
-                        startBytesOffset = leaderConnection.getNumBytesReceived();
-                        lastBytesOffset = startBytesOffset;
+                        handshakeBytesReceived = leaderConnection.getNumBytesReceived();
                         handshakeComplete = true;
 
                         // after the handshake, allow the ConnectionManager to poll for commands
@@ -205,8 +203,6 @@ public class ConnectionToLeader {
         boolean writeResponse = shouldSendResponseToConnection(command, conn);
 
         byte[] response = command.execute(service);
-        // temp solution for REPLCONF getack bytes - we should keep this context in the command
-        lastBytesOffset = leaderConnection.getNumBytesReceived();
         if (writeResponse) {
             System.out.println(String.format("Follower service sending %s response: %s",
                     command.getType().name(), RedisCommand.responseLogString(response)));

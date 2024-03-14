@@ -45,6 +45,11 @@ public class RedisCommandConstructor {
      * @return The RedisCommand object representing the parsed Redis command.
      */
     RedisCommand getCommand(RespArrayValue array) {
+        // if the array was read from a ClientConnection input stream, then it
+        // carries the context of the start bytes offset for ReplConf GETACK command
+        // - otherwise, just default to 0L
+        long arrayStartBytesOffset = array.getContext() == null ? 0L
+                : array.getContext().getStartBytesOffset();
         String command = getCommandName(array.getValues()[0]);
         RedisCommand.Type commandType = RedisCommand.Type.of(command);
         RedisCommand redisCommand = switch (commandType) {
@@ -53,7 +58,7 @@ public class RedisCommandConstructor {
         case INFO -> new InfoCommand();
         case PING -> new PingCommand();
         case PSYNC -> new PsyncCommand();
-        case REPLCONF -> new ReplConfCommand();
+        case REPLCONF -> new ReplConfCommand(arrayStartBytesOffset);
         case SET -> new SetCommand();
         case WAIT -> new WaitCommand();
         // special non-standard commands
