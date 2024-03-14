@@ -199,16 +199,6 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         throw new UnsupportedOperationException("no psync rdb implementation for the service");
     }
 
-    /**
-     * For a follower service, this method returns true if replication is pending. For a leader
-     * service, this method returns false.
-     * 
-     * @return
-     */
-    public boolean isReplicationFromLeaderPending() {
-        return false;
-    }
-
     public void runCommandLoop() throws InterruptedException {
         eventLoop.runCommandLoop();
     }
@@ -268,20 +258,20 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
             while (!done) {
                 // check for bytes on next socket and process
                 AtomicBoolean didProcess = new AtomicBoolean(false);
-                if (!service.isReplicationFromLeaderPending()) {
-                    service.getConnectionManager().getNextValue((conn, value) -> {
-                        RedisCommand command = commandConstructor.newCommandFromValue(value);
-                        didProcess.set(true);
-                        if (command != null) {
-                            try {
-                                service.executeCommand(conn, command);
-                            } catch (Exception e) {
-                                System.out.println(String.format("EventLoop Exception: %s \"%s\"",
-                                        e.getClass().getSimpleName(), e.getMessage()));
-                            }
+
+                service.getConnectionManager().getNextValue((conn, value) -> {
+                    RedisCommand command = commandConstructor.newCommandFromValue(value);
+                    didProcess.set(true);
+                    if (command != null) {
+                        try {
+                            service.executeCommand(conn, command);
+                        } catch (Exception e) {
+                            System.out.println(String.format("EventLoop Exception: %s \"%s\"",
+                                    e.getClass().getSimpleName(), e.getMessage()));
                         }
-                    });
-                }
+                    }
+                });
+
                 // sleep a bit if there were no lines processed
                 if (!didProcess.get()) {
                     // System.out.println("sleep 1s");

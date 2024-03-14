@@ -24,7 +24,6 @@ public class ConnectionToLeader {
     private final RespValueParser valueParser;
     private volatile boolean done = false;
     private volatile boolean handshakeComplete = false;
-    private volatile boolean replicationPending = true;
     private long startBytesOffset = 0;
     private long lastBytesOffset = 0;
     private RespBulkString fullResyncRdb;
@@ -53,10 +52,6 @@ public class ConnectionToLeader {
 
     public boolean isHandshakeComplete() {
         return handshakeComplete;
-    }
-
-    public boolean isReplicationPending() {
-        return false;
     }
 
     public long getNumBytesReceived() {
@@ -101,7 +96,6 @@ public class ConnectionToLeader {
                         // from the leader and process them in the FollowerService on the main event
                         // loop
                         service.getConnectionManager().addPriorityConnection(leaderConnection);
-                        replicationPending = false;
                         return false;
                     });
                     return false;
@@ -206,31 +200,22 @@ public class ConnectionToLeader {
             }
         }
 
-        try {
-            // TODO remove replicationPending
-            // replicationPending should be unnecessary now that we are processing commands
-            // from the leader (both replication and getack) on the main service loop and we
-            // have ensured the replication commands get processed first before other connections
-            replicationPending = true;
-            // if the command came from the leader, then for most commands the leader does not
-            // expect a response
-            boolean writeResponse = shouldSendResponseToConnection(command, conn);
+        // if the command came from the leader, then for most commands the leader does not
+        // expect a response
+        boolean writeResponse = shouldSendResponseToConnection(command, conn);
 
-            byte[] response = command.execute(service);
-            // temp solution for REPLCONF getack bytes - we should keep this context in the command
-            lastBytesOffset = leaderConnection.getNumBytesReceived();
-            if (writeResponse) {
-                System.out.println(String.format("Follower service sending %s response: %s",
-                        command.getType().name(), RedisCommand.responseLogString(response)));
-                if (response != null && response.length > 0) {
-                    conn.writeFlush(response);
-                }
-            } else {
-                System.out.println(String.format("Follower service do not send %s response: %s",
-                        command.getType().name(), RedisCommand.responseLogString(response)));
+        byte[] response = command.execute(service);
+        // temp solution for REPLCONF getack bytes - we should keep this context in the command
+        lastBytesOffset = leaderConnection.getNumBytesReceived();
+        if (writeResponse) {
+            System.out.println(String.format("Follower service sending %s response: %s",
+                    command.getType().name(), RedisCommand.responseLogString(response)));
+            if (response != null && response.length > 0) {
+                conn.writeFlush(response);
             }
-        } finally {
-            replicationPending = false;
+        } else {
+            System.out.println(String.format("Follower service do not send %s response: %s",
+                    command.getType().name(), RedisCommand.responseLogString(response)));
         }
     }
 

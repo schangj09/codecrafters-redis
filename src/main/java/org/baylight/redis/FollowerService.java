@@ -78,10 +78,6 @@ public class FollowerService extends RedisServiceBase {
         return leaderClientSocket;
     }
 
-    @Override
-    public boolean isReplicationFromLeaderPending() {
-        return leaderConnection.isReplicationPending();
-    }
 
     @Override
     public void execute(RedisCommand command, ClientConnection conn) throws IOException {
