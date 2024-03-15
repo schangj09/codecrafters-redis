@@ -19,6 +19,13 @@
         },
         {
             "type": "java",
+            "name": "Main with dbfilename",
+            "request": "launch",
+            "mainClass": "",
+            "args": "--dir .. --dbfilename redis.rdb"
+        },
+        {
+            "type": "java",
             "name": "Main Replica",
             "request": "launch",
             "mainClass": "Main",
