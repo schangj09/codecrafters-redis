@@ -28,6 +28,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     private final ExecutorService connectionsExecutorService;
     private final ConnectionManager connectionManager;
     private volatile boolean done = false;
+    private final RedisServiceOptions options;
     private final int port;
     private final String role;
     private final Clock clock;
@@ -44,6 +45,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     }
 
     protected RedisServiceBase(RedisServiceOptions options, Clock clock) {
+        this.options = options;
         this.port = options.getPort();
         this.role = options.getRole();
         this.clock = clock;
@@ -98,6 +100,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
     public int getPort() {
         return port;
+    }
+
+    public String getConfig(String configName) {
+        // Note: returns null for unknown config name
+        return options.getConfigValue(configName);
     }
 
     public void shutdown() {

@@ -16,6 +16,24 @@ import org.junit.jupiter.api.Test;
 public class RedisCommandConstructorTest implements WithAssertions {
     private static final long START_OFFSET = 345L;
 
+    // Constructs a Config command.
+    @Test
+    public void test_newCommandFromValue_returnsConfigCommand() {
+        // given
+        RespArrayValue value = new RespArrayValue(new RespValue[] {
+                new RespSimpleStringValue("config"),
+                new RespSimpleStringValue("get"),
+                new RespSimpleStringValue("port") });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        String expectedResponse = "*3\r\n$6\r\nconfig\r\n$3\r\nget\r\n$4\r\nport\r\n";
+        assertThat(actualCommand).asInstanceOf(type(ConfigCommand.class));
+        assertThat(new String(actualCommand.asCommand())).isEqualTo(expectedResponse);
+    }
+
     // Constructs a Ping command.
     @Test
     public void test_newCommandFromValue_returnsPingCommand() throws IOException {
@@ -89,7 +107,7 @@ public class RedisCommandConstructorTest implements WithAssertions {
         // then
         String expectedResponse = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
         assertThat(actualCommand).asInstanceOf(type(PsyncCommand.class));
-        assertThat(actualCommand.asCommand()).isEqualTo(expectedResponse.getBytes());
+        assertThat(new String(actualCommand.asCommand())).isEqualTo(expectedResponse);
     }
 
     // Constructs a default ReplConf command.
@@ -108,7 +126,7 @@ public class RedisCommandConstructorTest implements WithAssertions {
         // then
         String expectedResponse = "*3\r\n$8\r\nreplconf\r\n$14\r\nlistening-port\r\n$3\r\n123\r\n";
         assertThat(actualCommand).asInstanceOf(type(ReplConfCommand.class));
-        assertThat(actualCommand.asCommand()).isEqualTo(expectedResponse.getBytes());
+        assertThat(new String(actualCommand.asCommand())).isEqualTo(expectedResponse);
         assertThat(actualCommand).hasFieldOrPropertyWithValue("startBytesOffset", START_OFFSET);
     }
 

@@ -53,6 +53,7 @@ public class RedisCommandConstructor {
         String command = getCommandName(array.getValues()[0]);
         RedisCommand.Type commandType = RedisCommand.Type.of(command);
         RedisCommand redisCommand = switch (commandType) {
+        case CONFIG -> new ConfigCommand();
         case ECHO -> new EchoCommand();
         case GET -> new GetCommand();
         case INFO -> new InfoCommand();
