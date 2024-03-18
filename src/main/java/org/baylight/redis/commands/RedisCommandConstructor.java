@@ -64,6 +64,7 @@ public class RedisCommandConstructor {
         case SET -> new SetCommand();
         case TYPE -> new TypeCommand();
         case WAIT -> new WaitCommand();
+        case XADD -> new XaddCommand();
         // special non-standard commands
         case EOF -> new EofCommand();
         case TERMINATE -> new TerminateCommand();

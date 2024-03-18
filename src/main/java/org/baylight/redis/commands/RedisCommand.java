@@ -10,7 +10,7 @@ import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisCommand {
     public enum Type {
-        CONFIG, DEL, ECHO, GET, INFO, KEYS, PING, PSYNC, REPLCONF, SET, TYPE, WAIT,
+        CONFIG, DEL, ECHO, GET, INFO, KEYS, PING, PSYNC, REPLCONF, SET, TYPE, WAIT, XADD,
         // Folling are non-standard commands for baylight
         EOF, // close a client connection
         TERMINATE; // close all connections and kill the server
@@ -51,8 +51,8 @@ public abstract class RedisCommand {
     }
 
     protected void validateArgIsString(RespValue[] args, int index) {
-        RespValue arg = args[index];
-        if (!arg.isBulkString() && !arg.isSimpleString()) {
+        RespValue arg = index < args.length ? args[index] : null;
+        if (arg == null || (!arg.isBulkString() && !arg.isSimpleString())) {
             throw new IllegalArgumentException(String
                     .format("%s: Invalid arg, expected string. %d: %s", type.name(), index, arg));
         }

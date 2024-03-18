@@ -240,6 +240,30 @@ public class RedisCommandConstructorTest implements WithAssertions {
                 });
     }
 
+    // Constructs a Xadd command.
+    @Test
+    public void test_newCommandFromValue_returnsXaddCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] {
+                new RespSimpleStringValue("XADD"),
+                new RespSimpleStringValue("*"),
+                new RespBulkString("key1".getBytes()),
+                new RespBulkString("value1".getBytes()),
+                new RespBulkString("key2".getBytes()),
+                new RespBulkString("value2".getBytes())
+        });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(XaddCommand.class))
+                .matches(cmd -> {
+                    assertThat(cmd.getKey()).isEqualTo("*");
+                    return true;
+                });
+    }
+
     // Returns null if the command type is null.
     @Test
     public void test_newCommandFromValueUnknownValue() throws IOException {
