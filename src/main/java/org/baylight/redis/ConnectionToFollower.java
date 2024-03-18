@@ -29,10 +29,6 @@ public class ConnectionToFollower {
         return service.getTotalReplicationOffset();
     }
 
-    public boolean isHandshakeComplete() {
-        return followerConnection.isFollowerHandshakeComplete();
-    }
-
     public ClientConnection getFollowerConnection() {
         return followerConnection;
     }

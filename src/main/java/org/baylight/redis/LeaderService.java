@@ -53,17 +53,10 @@ public class LeaderService extends RedisServiceBase {
 
         // check if it is a new follower
         String connectionString = conn.getConnectionString();
-        if (command.getType() == Type.REPLCONF && !replMap.containsKey(connectionString)) {
-            // if so, save it as a follower and mark the handshake as complete
+        if (command.getType() == Type.PSYNC && !replMap.containsKey(connectionString)) {
+            // This command is the final handshake command.
+            // Save the connection as a follower so that future commands will be replicated to it
             replMap.put(connectionString, new ConnectionToFollower(this, conn));
-        }
-        if (command.getType() == Type.PSYNC) {
-            // This command is the final handshake command, so now we must no longer
-            // read commands from the connection - now the connection is used for
-            // the leader to send replication commands and getack requests.
-            // EventLoop will remove the connection from the list of connections from which it
-            // listens for commands.
-            conn.setFollowerHandshakeComplete();
         }
         // replicate to the followers
         if (command.isReplicatedCommand()) {

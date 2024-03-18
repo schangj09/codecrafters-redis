@@ -22,7 +22,6 @@ public class ClientConnection {
     private OutputStream outputStream;
     private BufferedInputLineReader reader;
     private BufferedResponseStreamWriter writer;
-    volatile boolean followerHandshakeComplete = false;
 
     public ClientConnection(Socket clientSocket, RespValueParser valueParser) throws IOException {
         this.clientSocket = clientSocket;
@@ -80,14 +79,6 @@ public class ClientConnection {
 
     public void writeFlush(byte[] bytes) throws IOException {
         writer.writeFlush(bytes);
-    }
-
-    public void setFollowerHandshakeComplete() {
-        followerHandshakeComplete = true;
-    }
-
-    public boolean isFollowerHandshakeComplete() {
-        return followerHandshakeComplete;
     }
 
     @Override
