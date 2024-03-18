@@ -7,7 +7,8 @@ import java.time.ZoneOffset;
 import org.baylight.redis.protocol.RespValue;
 
 public interface TestConstants {
-    Clock FIXED_CLOCK_EPOCH = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
+    long CLOCK_MILLIS = 90000;
+    Clock FIXED_CLOCK = Clock.fixed(Instant.ofEpochMilli(CLOCK_MILLIS), ZoneOffset.UTC);
 
     default String encodeResponse(RespValue value) {
         return new String(value.asResponse()).replace("\r\n", "\\r\\n");

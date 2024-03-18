@@ -1,6 +1,5 @@
 package org.baylight.redis.commands;
 
-import static org.baylight.redis.TestConstants.FIXED_CLOCK_EPOCH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -12,6 +11,7 @@ import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.LeaderService;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.StoredData;
+import org.baylight.redis.TestConstants;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
@@ -22,7 +22,7 @@ import org.baylight.redis.protocol.RespValue;
 
 import org.junit.jupiter.api.Test;
 
-public class GetCommandTest implements WithAssertions {
+public class GetCommandTest implements WithAssertions, TestConstants {
 
 
     // When a valid key is provided, the execute method should return the value associated with the key.
@@ -51,10 +51,10 @@ public class GetCommandTest implements WithAssertions {
     public void test_expiredKeyProvided_executeMethodShouldDeleteExpiredKeyAndReturnNull() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        StoredData storedData = new StoredData("value".getBytes(), FIXED_CLOCK_EPOCH.millis(), 100L);
+        StoredData storedData = new StoredData("value".getBytes(), CLOCK_MILLIS, 100L);
         when(service.containsKey(anyString())).thenReturn(true);
         when(service.get(anyString())).thenReturn(storedData);
-        when(service.isExpired(any())).thenReturn(storedData.isExpired(101L));
+        when(service.isExpired(any())).thenReturn(storedData.isExpired(CLOCK_MILLIS + 101L));
         GetCommand command = new GetCommand(new RespBulkString("key".getBytes()));
 
         // when
