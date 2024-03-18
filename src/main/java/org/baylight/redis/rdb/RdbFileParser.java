@@ -27,7 +27,9 @@ public class RdbFileParser {
         int next = reader.read();
         OpCode nextCode = OpCode.fromCode(next);
         if (nextCode == OpCode.RESIZEDB) {
-            throw new UnsupportedOperationException("RESIZEDB not supported yet");
+            skipResizeDb();
+            next = reader.read(); // read the valueType
+            nextCode = null;
         }
         while (nextCode == null || nextCode == OpCode.EXPIRETIME
                 || nextCode == OpCode.EXPIRETIMEMS) {
@@ -58,7 +60,9 @@ public class RdbFileParser {
             next = reader.read();
             EncodedValue value = reader.readValue(next);
             if (valueType != 0 || !value.isInt()) {
-                throw new IllegalArgumentException(String.format("expected value is a length prefix string, type: %d, value: %s", valueType, value));
+                throw new IllegalArgumentException(String.format(
+                        "Expected value should be a length prefix string, valueType: %d, value: %s", valueType,
+                        value));
             }
             byte[] valueBytes = reader.readNBytes(value.getValue());
             StoredData valueData = new StoredData(valueBytes, 0L, null);
@@ -78,4 +82,10 @@ public class RdbFileParser {
         return nextCode;
     }
 
+    public void skipResizeDb() throws IOException {
+        EncodedValue dbSize = reader.readValue(reader.read());
+        EncodedValue expirySize = reader.readValue(reader.read());
+        System.out.println(String.format("Skipping RESIZEDB dbSize: %s, expirySize: %s",
+                dbSize.getValue(), expirySize.getValue()));
+    }
 }

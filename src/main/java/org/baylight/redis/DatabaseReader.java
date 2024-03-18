@@ -32,6 +32,12 @@ public class DatabaseReader {
             if (dbCode == OpCode.AUX) {
                 dbCode = rdbFileParser.skipAux();
             }
+            // db code should be SELECTDB now.
+            if (dbCode != OpCode.SELECTDB) {
+                throw new IOException(
+                        String.format("Database unexpected OpCode: 0x%X not equal to 0x%X",
+                                dbCode.getCode(), OpCode.SELECTDB.getCode()));
+            }
             // select DB (0)
             if (dbCode == OpCode.SELECTDB) {
                 rdbFileParser.selectDB(dataStoreMap);

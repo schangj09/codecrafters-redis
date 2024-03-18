@@ -25,6 +25,9 @@ public class RdbFileParserTest implements WithAssertions {
     void testSelectDB() throws Exception {
         StreamBuilder builder = new StreamBuilder();
         builder.write(0x09); // db number
+        builder.write(0xFB); // resize db
+        builder.write(0x02); // db hash table size
+        builder.write(0x00); // expiry hash table size
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key1");
