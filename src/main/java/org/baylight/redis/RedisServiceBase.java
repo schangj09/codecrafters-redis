@@ -156,10 +156,10 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap.put(key, storedData);
     }
 
-    public StoredData xadd(String key, Map<String, RespValue> itemMap) {
+    public StoredData xadd(String key, String itemId, Map<String, RespValue> itemMap) {
         StoredData storedData = dataStoreMap.computeIfAbsent(key,
                 (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
-        storedData.getStreamValue().add(itemMap);
+        storedData.getStreamValue().add(itemId, itemMap);
         return storedData;
     }
 

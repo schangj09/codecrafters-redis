@@ -9,21 +9,23 @@ import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
 
 public class XaddCommand extends RedisCommand {
-    String key;
+    private String key;
+    private String itemId;
     Map<String, RespValue> itemMap = new HashMap<>();
 
     public XaddCommand() {
         super(Type.XADD);
     }
 
-    public XaddCommand(String key) {
+    public XaddCommand(String key, String itemId) {
         super(Type.XADD);
         this.key = key;
+        this.itemId = itemId;
     }
 
     @Override
     public byte[] execute(RedisServiceBase service) {
-        service.xadd(key, itemMap);
+        service.xadd(key, itemId, itemMap);
         return new RespBulkString(key.getBytes()).asResponse();
     }
 
@@ -42,8 +44,10 @@ public class XaddCommand extends RedisCommand {
         }
         validateArgIsString(args, 1);
         key = args[1].getValueAsString();
+        validateArgIsString(args, 2);
+        itemId = args[2].getValueAsString();
 
-        int nextArg = 2;
+        int nextArg = 3;
         for (int i = nextArg; i < args.length; i += 2) {
             validateArgIsString(args, i);
             validateArgIsString(args, i + 1);
@@ -55,10 +59,14 @@ public class XaddCommand extends RedisCommand {
 
     @Override
     public String toString() {
-        return "XaddCommand";
+        return "XaddCommand [key=" + key + ", itemId=" + itemId + ", itemMap=" + itemMap + "]";
     }
 
     public String getKey() {
         return key;
+    }
+
+    public String getItemId() {
+        return itemId;
     }
 }

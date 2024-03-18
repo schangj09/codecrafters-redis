@@ -2,21 +2,25 @@ package org.baylight.redis;
 
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.baylight.redis.protocol.RespValue;
 
 public class RedisStreamData {
     private final String streamKey;
-    private final Queue<Map<String, RespValue>> dataValues;
+    private final Queue<String> itemIds;
+    private final Map<String, Map<String, RespValue>> dataValues;
 
     public RedisStreamData(String streamKey) {
         this.streamKey = streamKey;
-        this.dataValues = new ConcurrentLinkedQueue<>();
+        this.itemIds = new ConcurrentLinkedQueue<>();
+        this.dataValues = new ConcurrentHashMap<>();
     }
 
-    void add(Map<String, RespValue> values) {
-        dataValues.offer(values);
+    void add(String itemId, Map<String, RespValue> values) {
+        itemIds.offer(itemId);
+        dataValues.put(itemId, values);
     }
 
     /**
@@ -29,8 +33,8 @@ public class RedisStreamData {
     /**
      * @return the dataValues
      */
-    public Queue<Map<String, RespValue>> getDataValues() {
-        return dataValues;
+    public Queue<String> getItemIds() {
+        return itemIds;
     }
 
     @Override

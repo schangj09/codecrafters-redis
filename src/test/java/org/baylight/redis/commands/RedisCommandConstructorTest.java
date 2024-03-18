@@ -246,6 +246,7 @@ public class RedisCommandConstructorTest implements WithAssertions {
         // given
         RespValue value = new RespArrayValue(new RespValue[] {
                 new RespSimpleStringValue("XADD"),
+                new RespSimpleStringValue("streamKey"),
                 new RespSimpleStringValue("*"),
                 new RespBulkString("key1".getBytes()),
                 new RespBulkString("value1".getBytes()),
@@ -259,7 +260,8 @@ public class RedisCommandConstructorTest implements WithAssertions {
         // then
         assertThat(actualCommand).asInstanceOf(type(XaddCommand.class))
                 .matches(cmd -> {
-                    assertThat(cmd.getKey()).isEqualTo("*");
+                    assertThat(cmd.getKey()).isEqualTo("streamKey");
+                    assertThat(cmd.getItemId()).isEqualTo("*");
                     return true;
                 });
     }

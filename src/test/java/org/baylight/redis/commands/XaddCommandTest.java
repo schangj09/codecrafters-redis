@@ -32,16 +32,16 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
     public void test_validKeyProvided_executeMethodShouldReturnValue() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        when(service.xadd(anyString(), anyMap()))
+        when(service.xadd(anyString(), anyString(), anyMap()))
                 .thenReturn(new StoredData(new RedisStreamData("key"), CLOCK_MILLIS, null));
-        XaddCommand command = new XaddCommand("key");
+        XaddCommand command = new XaddCommand("key", "itemId");
 
         // when
         byte[] result = command.execute(service);
 
         // then
         assertThat(result).isEqualTo(new RespBulkString("key".getBytes()).asResponse());
-        verify(service).xadd("key", new HashMap<>());
+        verify(service).xadd("key", "itemId", new HashMap<>());
         verifyNoMoreInteractions(service);
     }
 
@@ -50,7 +50,8 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
     public void test_setArgsCalledWithValidKey_keyShouldBeCorrectlySet() {
         // given
         RespValue[] args = { new RespSimpleStringValue("XADD"),
-                new RespBulkString("key".getBytes()) };
+                new RespBulkString("key".getBytes()),
+                new RespBulkString("itemId".getBytes()) };
         XaddCommand command = new XaddCommand();
 
         // when
@@ -58,6 +59,7 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
 
         // then
         assertThat(command.getKey()).isEqualTo("key");
+        assertThat(command.getItemId()).isEqualTo("itemId");
     }
 
     // When setArgs is called with no arguments, an IllegalArgumentException should be thrown.
