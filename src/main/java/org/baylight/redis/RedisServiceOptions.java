@@ -16,7 +16,7 @@ public class RedisServiceOptions {
     private String replicaof = null;
     private int replicaofPort = RedisConstants.DEFAULT_PORT;
     private String dir = ".";
-    private String dbfilename = "redis.rdb";
+    private String dbfilename = null;
 
     public boolean parseArgs(String[] args) {
         // Define the options
@@ -89,13 +89,6 @@ public class RedisServiceOptions {
             if (cmd.hasOption("dbfilename")) {
                 dbfilename = cmd.getOptionValue("dbfilename");
                 System.out.println("Dbfilename specified: " + getDbfilename());
-                // TEMP - don't check for file exists since initial test cases give a non-existant file
-                // check if dbfilename is a valid file
-                // File db = new File(getDir(), getDbfilename());
-                // if (!db.isFile()) {
-                //     throw new ParseException(
-                //             "Invalid dbfilename in dir: " + getDir() + "/" + getDbfilename());
-                // }
             }
 
         } catch (ParseException e) {
