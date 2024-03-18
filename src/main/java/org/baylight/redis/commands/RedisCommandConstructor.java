@@ -57,6 +57,7 @@ public class RedisCommandConstructor {
         case ECHO -> new EchoCommand();
         case GET -> new GetCommand();
         case INFO -> new InfoCommand();
+        case KEYS -> new KeysCommand();
         case PING -> new PingCommand();
         case PSYNC -> new PsyncCommand();
         case REPLCONF -> new ReplConfCommand(arrayStartBytesOffset);

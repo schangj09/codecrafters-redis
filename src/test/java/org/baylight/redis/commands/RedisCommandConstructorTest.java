@@ -99,6 +99,22 @@ public class RedisCommandConstructorTest implements WithAssertions {
         assertThat(actualCommand).asInstanceOf(type(InfoCommand.class));
     }
 
+    // Constructs a default Keys command.
+    @Test
+    public void test_newCommandFromValue_returnsKeysCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] {
+                new RespSimpleStringValue("keys"),
+                new RespSimpleStringValue("*")
+        });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(KeysCommand.class));
+    }
+
     // Constructs a default Psync command.
     @Test
     public void test_newCommandFromValue_returnsPsyncCommand() {
