@@ -71,6 +71,11 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         builder.write("key2");
         builder.write(4);
         builder.write("v002");
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key3");
+        builder.write(4);
+        builder.write("v003");
         builder.write(0xFE); // next db
 
         RdbFileParser parser = new RdbFileParser(builder.build(), FIXED_CLOCK);
@@ -80,8 +85,39 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-                "key1", new StoredData("v01".getBytes(), 0, 500000L),
-                "key2", new StoredData("v002".getBytes(), 0, 888888L));
+            "key1", new StoredData("v01".getBytes(), 0, 500000L),
+                "key2", new StoredData("v002".getBytes(), 0, 888888L),
+                "key3", new StoredData("v003".getBytes(), 0, null));
+        assertThat(dbData).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void testSelectDBFirstWithExpiry() throws Exception {
+        StreamBuilder builder = new StreamBuilder();
+        builder.write(0x09); // db number
+        builder.write(0xFD); // expiry in seconds
+        builder.write(encode(CLOCK_MILLIS/1000 + 500, 4)); // 4 byte int
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key0");
+        builder.write(3);
+        builder.write("v00");
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key1");
+        builder.write(3);
+        builder.write("v01");
+        builder.write(0xFE); // next db
+
+        RdbFileParser parser = new RdbFileParser(builder.build(), FIXED_CLOCK);
+
+        Map<String, StoredData> dbData = new HashMap<>();
+
+        assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
+
+        Map<String, StoredData> expectedResult = Map.of(
+            "key0", new StoredData("v00".getBytes(), 0, 500000L),
+            "key1", new StoredData("v01".getBytes(), 0, null));
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
