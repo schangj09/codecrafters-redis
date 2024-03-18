@@ -36,8 +36,12 @@ public class RdbParsePrimitives {
         return ByteUtils.decodeInt(file.readNBytes(4));
     }
 
-    public long readLong() throws IOException {
-        return ByteUtils.decodeLong(file.readNBytes(8));
+    public int readIntLittleEnd() throws IOException {
+        return ByteUtils.decodeIntLittleEnd(file.readNBytes(4));
+    }
+
+    public long readLongLittleEnd() throws IOException {
+        return ByteUtils.decodeLongLittleEnd(file.readNBytes(8));
     }
 
     public byte[] readNBytes(int length) throws IOException {

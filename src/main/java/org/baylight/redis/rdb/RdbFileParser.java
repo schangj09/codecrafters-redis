@@ -42,11 +42,11 @@ public class RdbFileParser {
             Long expiryTime = null;
             if (nextCode == OpCode.EXPIRETIME) {
                 // read 4 bytes for expiry time in seconds
-                expiryTime = reader.readInt() * 1000L;
+                expiryTime = reader.readIntLittleEnd() * 1000L;
                 next = reader.read();
             } else if (nextCode == OpCode.EXPIRETIMEMS) {
                 // read 8 bytes for expiry time in milliseconds
-                expiryTime = reader.readLong();
+                expiryTime = reader.readLongLittleEnd();
                 next = reader.read();
             }
 

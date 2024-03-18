@@ -13,25 +13,29 @@ public class ByteUtils {
     }
 
     public static int decodeInt(byte... bytes) {
-        // decode bytes to an integer
-        // hack for unsigned int support, chop off the most significant bit
-        return (int) (decodeLong(bytes) & 0x7FFF);
-    }
-
-    public static int decodeInt(int... bytes) {
-        // decode bytes to an integer - least significant bytes first
-        long value = 0;
-        for (int i = 0; i < bytes.length && i < Integer.BYTES; i++) {
-            byte byteVal = (byte) (bytes[i] & 0xFF);
-            int shift = i * 8;
-            value |= ((long) byteVal << shift) & ((long) 0xFF << shift);
+        // decode bytes to an integer - big-endian encoding
+        int value = 0;
+        for (int i = 0; i < bytes.length; i++) {
+            value = (value << 8) + (bytes[i] & 0xFF);
         }
-        // hack for unsigned long support, chop off the most significant bit
-        return (int)(value & 0x7FFF);
+        // hack for unsigned int support, chop off the most significant bit
+        return (int)(value & 0x7FFFFFFF);
     }
 
-    public static long decodeLong(byte... bytes) {
-        // decode bytes to a long - least significant bytes first
+    public static int decodeInt(int highByte, int lowByte) {
+        int value = (highByte << 8) | (lowByte & 0xFF);
+        // hack for unsigned int support, chop off the most significant bit
+        return (int)(value & 0x7FFFFFFF);
+    }
+
+    public static int decodeIntLittleEnd(byte... bytes) {
+        // decode bytes to an int - little endian encoding
+        // hack for unsigned int support, chop off the most significant bit
+        return (int)(decodeLongLittleEnd(bytes) & 0x7FFFFFFF);
+    }
+
+    public static long decodeLongLittleEnd(byte... bytes) {
+        // decode bytes to a long - little endian encoding
         System.out.println(String.format("decodeLong: %s", formatBytesArray(bytes)));
         long value = 0;
         for (int i = 0; i < bytes.length && i < Long.BYTES; i++) {

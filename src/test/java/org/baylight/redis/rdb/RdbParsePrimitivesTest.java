@@ -60,13 +60,16 @@ public class RdbParsePrimitivesTest implements WithAssertions {
     void testReadValue() throws Exception {
         StreamBuilder builder = new StreamBuilder();
         builder.write(0x39); // 2 bits 00
-        builder.write(new byte[] { (byte) (1 << 6) + 9, 0x5 });
-        builder.write(new byte[] { (byte) (2 << 6) + 11, 0xF, 0x5, 0x6, 0x7 });
+        builder.write(new byte[] { (byte) (1 << 6) + 9, (byte) 0xFE });
+        // the next int is too big for int32, so we expect the most significant bit to be chopped to
+        // exepcted value = 0x7E050607
+        builder.write(new byte[] { (byte) (2 << 6) + 11, (byte) 0xFE, 0x5, 0x6, 0x7 });
         BufferedInputStream file = builder.build();
         RdbParsePrimitives parser = new RdbParsePrimitives(file);
         assertThat(parser.readValue(file.read())).isEqualTo(new EncodedValue(Code.INT6, 0x39));
-        assertThat(parser.readValue(file.read())).isEqualTo(new EncodedValue(Code.INT14, 0x905));
-        assertThat(parser.readValue(file.read())).isEqualTo(new EncodedValue(Code.INT32, 0xF050607));
+        assertThat(parser.readValue(file.read())).isEqualTo(new EncodedValue(Code.INT14, 0x9FE));
+        assertThat(parser.readValue(file.read()))
+                .isEqualTo(new EncodedValue(Code.INT32, 0x7E050607));
     }
 
     @Test
