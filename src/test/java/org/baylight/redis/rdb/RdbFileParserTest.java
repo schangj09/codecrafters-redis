@@ -105,6 +105,7 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         builder.write(0xFB); // resize db
         builder.write(0x02); // db hash table size
         builder.write(0x01); // expiry hash table size
+        // key0
         builder.write(0xFD); // expiry in seconds
         builder.write(encode(CLOCK_MILLIS / 1000 + 500, 4)); // 4 byte int
         builder.write(0x00); // value type string
@@ -112,11 +113,21 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         builder.write("key0");
         builder.write(3);
         builder.write("v00");
+        // key1
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key1");
         builder.write(3);
         builder.write("v01");
+        // key2
+        builder.write(0xFC); // expiry in milliseconds
+        builder.write(encode(1640995200000L, 8)); // 8 byte int
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key2");
+        builder.write(4);
+        builder.write("v002");
+
         builder.write(0xFE); // next db
 
         RdbFileParser parser = new RdbFileParser(builder.build(), FIXED_CLOCK);
@@ -127,7 +138,8 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
 
         Map<String, StoredData> expectedResult = Map.of(
                 "key0", new StoredData("v00".getBytes(), 0, 500000L),
-                "key1", new StoredData("v01".getBytes(), 0, null));
+                "key1", new StoredData("v01".getBytes(), 0, null),
+                "key2", new StoredData("v002".getBytes(), 0, 1640995200000L - CLOCK_MILLIS));
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
@@ -135,25 +147,29 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
     void testSelectDBWithExpiryInPast() throws Exception {
         StreamBuilder builder = new StreamBuilder();
         builder.write(0x09); // db number
+        // key0
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key0");
         builder.write(3);
         builder.write("v00");
+        // key1
         builder.write(0xFD); // expiry in seconds
-        builder.write(encode(CLOCK_MILLIS / 1000 - 500, 4)); // 4 byte int
+        builder.write(encode(CLOCK_MILLIS / 1000 - 50, 4)); // 4 byte int
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key1");
         builder.write(3);
         builder.write("v01");
+        // key2
         builder.write(0xFC); // expiry in milliseconds
-        builder.write(encode(CLOCK_MILLIS - 8888, 8)); // 8 byte int
+        builder.write(encode(CLOCK_MILLIS, 8)); // 8 byte int equal to current time
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key2");
         builder.write(4);
         builder.write("v002");
+        // key3
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key3");
@@ -173,11 +189,11 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
-    byte[] encode(long i, int byteCount) {
+    byte[] encode(long val, int byteCount) {
         byte[] enc = new byte[byteCount];
         for (int j = 0; j < byteCount; j++) {
-            int shift = (byteCount - 1 - j) * 8;
-            enc[j] = (byte) ((i >> shift) & 0xFF);
+            int shift = (j * 8);
+            enc[j] = (byte) ((val >> shift) & 0xFF);
         }
         return enc;
     }
