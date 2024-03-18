@@ -62,6 +62,7 @@ public class RedisCommandConstructor {
         case PSYNC -> new PsyncCommand();
         case REPLCONF -> new ReplConfCommand(arrayStartBytesOffset);
         case SET -> new SetCommand();
+        case TYPE -> new TypeCommand();
         case WAIT -> new WaitCommand();
         // special non-standard commands
         case EOF -> new EofCommand();

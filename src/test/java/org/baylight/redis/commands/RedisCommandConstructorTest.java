@@ -197,6 +197,27 @@ public class RedisCommandConstructorTest implements WithAssertions {
                 });
     }
 
+    // Constructs a Type command.
+    @Test
+    public void test_newCommandFromValue_returnsTypeCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] {
+                new RespSimpleStringValue("type"),
+                new RespSimpleStringValue("happy")
+        });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(TypeCommand.class))
+                .matches(cmd -> {
+                    assertThat(cmd.getKey()).isEqualTo(new RespBulkString("happy".getBytes()));
+                    return true;
+                });
+        ;
+    }
+
     // Constructs a Wait command.
     @Test
     public void test_newCommandFromValue_returnsWaitCommand() {
