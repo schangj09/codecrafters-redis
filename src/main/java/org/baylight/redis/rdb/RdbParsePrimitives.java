@@ -2,16 +2,17 @@ package org.baylight.redis.rdb;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class RdbParsePrimitives {
 
-    private BufferedInputStream file;
+    FileReader file;
 
-    RdbParsePrimitives(BufferedInputStream file) {
-        this.file = file;
+    public RdbParsePrimitives(BufferedInputStream file) {
+        this.file = new FileReader(file);
     }
 
-    char[] readChars(int length) throws IOException {
+    public char[] readChars(int length) throws IOException {
         char[] c = new char[length];
         for (int i = 0; i < length; i++) {
             c[i] = (char) file.read();
@@ -19,19 +20,19 @@ public class RdbParsePrimitives {
         return c;
     }
 
-    boolean readHeader() throws IOException {
+    public boolean readHeader() throws IOException {
         return ByteUtils.compareToString(readChars(5), ("REDIS"));
     }
 
-    OpCode readCode() throws IOException {
+    public OpCode readCode() throws IOException {
         return OpCode.fromCode(file.read());
     }
 
-    EncodedValue readValue(int next) throws IOException {
+    public EncodedValue readValue(int next) throws IOException {
         return EncodedValue.parseValue(next, file);
     }
 
-    byte[] readNBytes(int length) throws IOException {
+    public byte[] readNBytes(int length) throws IOException {
         byte[] val = file.readNBytes(length);
         if (val.length != length) {
             throw new IOException("Unexpected end of file");
@@ -39,4 +40,22 @@ public class RdbParsePrimitives {
         return val;
     }
 
+    static class FileReader extends InputStream {
+        private BufferedInputStream file;
+        int readCount = 0;
+
+        FileReader(BufferedInputStream file) {
+            this.file = file;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (file.available() <= 0) {
+                throw new IOException("Unexpected end of file at index: " + readCount);
+            }
+            readCount++;
+            return file.read();
+        }
+        
+    }
 }

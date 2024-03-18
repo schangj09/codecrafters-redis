@@ -83,6 +83,6 @@ public class RdbParsePrimitivesTest implements WithAssertions {
         Arrays.fill(expected, (byte) 0x05);
         assertThat(parser.readNBytes(0x30)).isEqualTo(expected);
         assertThatThrownBy(() -> parser.readNBytes(0xA)).isInstanceOf(IOException.class)
-                .hasMessage("Unexpected end of file");
+                .hasMessage("Unexpected end of file at index: 57");
     }
 }
