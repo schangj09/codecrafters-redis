@@ -63,14 +63,15 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         builder.write(3);
         builder.write("v00");
         builder.write(0xFD); // expiry in seconds
-        builder.write(encode(CLOCK_MILLIS/1000 + 500, 4)); // 4 byte int
+        builder.write(encode(CLOCK_MILLIS / 1000 + 500, 4)); // 4 byte int
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key1");
         builder.write(3);
         builder.write("v01");
         builder.write(0xFC); // expiry in milliseconds
-        builder.write(encode(CLOCK_MILLIS + 888888, 8)); // 8 byte int
+        builder.write(encode(CLOCK_MILLIS + 0x7F0000000L, 8)); // 8 byte int (would be negative if
+                                                               // not long)
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key2");
@@ -90,9 +91,9 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-            "key0", new StoredData("v00".getBytes(), 0, null),
-            "key1", new StoredData("v01".getBytes(), 0, 500000L),
-                "key2", new StoredData("v002".getBytes(), 0, 888888L),
+                "key0", new StoredData("v00".getBytes(), 0, null),
+                "key1", new StoredData("v01".getBytes(), 0, 500000L),
+                "key2", new StoredData("v002".getBytes(), 0, 0x7F0000000L),
                 "key3", new StoredData("v003".getBytes(), 0, null));
         assertThat(dbData).isEqualTo(expectedResult);
     }
@@ -105,7 +106,7 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         builder.write(0x02); // db hash table size
         builder.write(0x01); // expiry hash table size
         builder.write(0xFD); // expiry in seconds
-        builder.write(encode(CLOCK_MILLIS/1000 + 500, 4)); // 4 byte int
+        builder.write(encode(CLOCK_MILLIS / 1000 + 500, 4)); // 4 byte int
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key0");
@@ -125,8 +126,8 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-            "key0", new StoredData("v00".getBytes(), 0, 500000L),
-            "key1", new StoredData("v01".getBytes(), 0, null));
+                "key0", new StoredData("v00".getBytes(), 0, 500000L),
+                "key1", new StoredData("v01".getBytes(), 0, null));
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
@@ -140,7 +141,7 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         builder.write(3);
         builder.write("v00");
         builder.write(0xFD); // expiry in seconds
-        builder.write(encode(CLOCK_MILLIS/1000 - 500, 4)); // 4 byte int
+        builder.write(encode(CLOCK_MILLIS / 1000 - 500, 4)); // 4 byte int
         builder.write(0x00); // value type string
         builder.write(4);
         builder.write("key1");
@@ -167,7 +168,7 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-            "key0", new StoredData("v00".getBytes(), 0, null),
+                "key0", new StoredData("v00".getBytes(), 0, null),
                 "key3", new StoredData("v003".getBytes(), 0, null));
         assertThat(dbData).isEqualTo(expectedResult);
     }
