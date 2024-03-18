@@ -40,7 +40,7 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
         byte[] result = command.execute(service);
 
         // then
-        assertThat(result).isEqualTo(new RespBulkString("key".getBytes()).asResponse());
+        assertThat(result).isEqualTo(new RespBulkString("itemId".getBytes()).asResponse());
         verify(service).xadd("key", "itemId", new HashMap<>());
         verifyNoMoreInteractions(service);
     }

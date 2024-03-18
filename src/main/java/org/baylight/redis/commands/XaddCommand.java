@@ -26,7 +26,7 @@ public class XaddCommand extends RedisCommand {
     @Override
     public byte[] execute(RedisServiceBase service) {
         service.xadd(key, itemId, itemMap);
-        return new RespBulkString(key.getBytes()).asResponse();
+        return new RespBulkString(itemId.getBytes()).asResponse();
     }
 
     @Override
