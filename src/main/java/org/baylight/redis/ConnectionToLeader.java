@@ -23,7 +23,6 @@ public class ConnectionToLeader {
     private final ExecutorService executor;
     private final RespValueParser valueParser;
     private volatile boolean done = false;
-    private volatile boolean handshakeComplete = false;
     private long handshakeBytesReceived = 0;
     private RespBulkString fullResyncRdb;
 
@@ -49,20 +48,8 @@ public class ConnectionToLeader {
         });
     }
 
-    public boolean isHandshakeComplete() {
-        return handshakeComplete;
-    }
-
     public long getHandshakeBytesReceived() {
         return handshakeBytesReceived;
-    }
-
-    public void sendLeaderCommand(RedisCommand command,
-            BiFunction<RedisCommand, RespValue, Boolean> responseConsumer) {
-        if (!isHandshakeComplete()) {
-            throw new RuntimeException("Handshake not complete. Cannot send command to leader.");
-        }
-        sendCommand(command, responseConsumer);
     }
 
     public void startHandshake() {
@@ -88,7 +75,6 @@ public class ConnectionToLeader {
                         setFullResyncRdb((RespBulkString) response4);
                         System.out.println(String.format("Handshake completed"));
                         handshakeBytesReceived = leaderConnection.getNumBytesReceived();
-                        handshakeComplete = true;
 
                         // after the handshake, allow the ConnectionManager to poll for commands
                         // from the leader and process them in the FollowerService on the main event
@@ -134,7 +120,7 @@ public class ConnectionToLeader {
     }
 
     public void runHandshakeLoop() throws InterruptedException {
-        while (!done && !handshakeComplete) {
+        while (!done) {
             // check for commands waiting to be sent
             boolean didProcess = false;
 
@@ -184,8 +170,7 @@ public class ConnectionToLeader {
             }
         }
         System.out.println(String.format(
-                "Exiting thread for handshake commands - done: %s, handshakeComplete: %s", done,
-                handshakeComplete));
+                "Exiting thread for handshake commands - done: %s", done));
     }
 
     public boolean isLeaderConnection(ClientConnection conn) {
