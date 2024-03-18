@@ -37,7 +37,8 @@ public class RdbFileParser {
         while (nextCode == null
                 || nextCode == OpCode.EXPIRETIME
                 || nextCode == OpCode.EXPIRETIMEMS) {
-            System.out.println("Next code at file index: " + nextCode + " " + reader.file.readCount);
+            System.out
+                    .println("Next code at file index: " + nextCode + " " + reader.file.readCount);
             Long expiryTime = null;
             if (nextCode == OpCode.EXPIRETIME) {
                 // read 4 bytes for expiry time in seconds
@@ -85,8 +86,13 @@ public class RdbFileParser {
             if (expiryTime != null) {
                 ttlMillis = expiryTime - now;
             }
-            StoredData valueData = new StoredData(valueBytes, 0L, ttlMillis);
-            dbData.put(new String(keyBytes), valueData);
+            // write it only if no expiration or expiration is not already past
+            if (ttlMillis == null || ttlMillis > 0L) {
+                StoredData valueData = new StoredData(valueBytes, 0L, ttlMillis);
+                dbData.put(new String(keyBytes), valueData);
+            } else {
+                System.out.println("Skipping expired key: " + new String(keyBytes));
+            }
 
             next = reader.read();
             nextCode = OpCode.fromCode(next);

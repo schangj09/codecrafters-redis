@@ -130,6 +130,48 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
+    @Test
+    void testSelectDBWithExpiryInPast() throws Exception {
+        StreamBuilder builder = new StreamBuilder();
+        builder.write(0x09); // db number
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key0");
+        builder.write(3);
+        builder.write("v00");
+        builder.write(0xFD); // expiry in seconds
+        builder.write(encode(CLOCK_MILLIS/1000 - 500, 4)); // 4 byte int
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key1");
+        builder.write(3);
+        builder.write("v01");
+        builder.write(0xFC); // expiry in milliseconds
+        builder.write(encode(CLOCK_MILLIS - 8888, 8)); // 8 byte int
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key2");
+        builder.write(4);
+        builder.write("v002");
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key3");
+        builder.write(4);
+        builder.write("v003");
+        builder.write(0xFE); // next db
+
+        RdbFileParser parser = new RdbFileParser(builder.build(), FIXED_CLOCK);
+
+        Map<String, StoredData> dbData = new HashMap<>();
+
+        assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
+
+        Map<String, StoredData> expectedResult = Map.of(
+            "key0", new StoredData("v00".getBytes(), 0, null),
+                "key3", new StoredData("v003".getBytes(), 0, null));
+        assertThat(dbData).isEqualTo(expectedResult);
+    }
+
     byte[] encode(long i, int byteCount) {
         byte[] enc = new byte[byteCount];
         for (int j = 0; j < byteCount; j++) {
