@@ -40,6 +40,10 @@ public class RdbParsePrimitives {
         return val;
     }
 
+    public int read() throws IOException {
+        return file.read();
+    }
+
     static class FileReader extends InputStream {
         private BufferedInputStream file;
         int readCount = 0;

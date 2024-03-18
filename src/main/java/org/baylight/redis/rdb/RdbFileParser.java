@@ -8,25 +8,23 @@ import org.baylight.redis.StoredData;
 
 public class RdbFileParser {
 
-    private BufferedInputStream file;
-    private final RdbParsePrimitives primitiveParser;
+    private final RdbParsePrimitives reader;
 
     public RdbFileParser(BufferedInputStream file) {
-        this.file = file;
-        primitiveParser = new RdbParsePrimitives(file);
+        reader = new RdbParsePrimitives(file);
     }
 
     public OpCode initDB() throws IOException {
-        primitiveParser.readHeader();
-        String dbVersion = new String(primitiveParser.readChars(4));
+        reader.readHeader();
+        String dbVersion = new String(reader.readChars(4));
         System.out.println("DB Version: " + dbVersion);
-        return primitiveParser.readCode();
+        return reader.readCode();
     }
 
     public OpCode selectDB(Map<String, StoredData> dbData) throws IOException {
-        int dbNumber = primitiveParser.readValue(file.read()).getValue();
+        int dbNumber = reader.readValue(reader.read()).getValue();
         System.out.println("Select DB: " + dbNumber);
-        int next = file.read();
+        int next = reader.read();
         OpCode nextCode = OpCode.fromCode(next);
         if (nextCode == OpCode.RESIZEDB) {
             throw new UnsupportedOperationException("RESIZEDB not supported yet");
@@ -37,7 +35,7 @@ public class RdbFileParser {
                 throw new UnsupportedOperationException("Expire time not supported yet");
             }
             int valueType = next;
-            next = file.read();
+            next = reader.read();
             // 0 = String Encoding
             // 1 = List Encoding
             // 2 = Set Encoding
@@ -49,25 +47,33 @@ public class RdbFileParser {
             // 12 = Sorted Set in Ziplist Encoding
             // 13 = Hashmap in Ziplist Encoding (Introduced in RDB version 4)
             // 14 = List in Quicklist encoding (Introduced in RDB version 7)
-            EncodedValue keyLength = primitiveParser.readValue(next);
+            EncodedValue keyLength = reader.readValue(next);
             byte[] keyBytes;
             if (!keyLength.isString()) {
                 // length encoded string
-                keyBytes = primitiveParser.readNBytes(keyLength.getValue());
+                keyBytes = reader.readNBytes(keyLength.getValue());
             } else {
                 keyBytes = keyLength.getString().getBytes();
             }
-            next = file.read();
-            EncodedValue value = primitiveParser.readValue(next);
+            next = reader.read();
+            EncodedValue value = reader.readValue(next);
             if (valueType != 0 || !value.isInt()) {
                 throw new IllegalArgumentException(String.format("expected value is a length prefix string, type: %d, value: %s", valueType, value));
             }
-            byte[] valueBytes = primitiveParser.readNBytes(value.getValue());
+            byte[] valueBytes = reader.readNBytes(value.getValue());
             StoredData valueData = new StoredData(valueBytes, 0L, null);
             dbData.put(new String(keyBytes), valueData);
 
-            next = file.read();
+            next = reader.read();
             nextCode = OpCode.fromCode(next);
+        }
+        return nextCode;
+    }
+
+    public OpCode skipAux() throws IOException {
+        OpCode nextCode = null;
+        while (nextCode == null || nextCode == OpCode.AUX) {
+            nextCode = OpCode.fromCode(reader.read());
         }
         return nextCode;
     }

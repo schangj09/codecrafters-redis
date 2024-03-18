@@ -28,11 +28,16 @@ public class DatabaseReader {
         try {
             RdbFileParser rdbFileParser = new RdbFileParser(new BufferedInputStream(dbFileInput));
             OpCode dbCode = rdbFileParser.initDB();
+            // skip AUX section
+            if (dbCode == OpCode.AUX) {
+                dbCode = rdbFileParser.skipAux();
+            }
+            // select DB (0)
             if (dbCode == OpCode.SELECTDB) {
                 rdbFileParser.selectDB(dataStoreMap);
             } else {
                 throw new IOException(
-                        String.format("Database unexpected OpCode: %d not equal to %d",
+                        String.format("Database unexpected OpCode: 0x%X not equal to 0x%X",
                                 dbCode.getCode(), OpCode.SELECTDB.getCode()));
             }
         } finally {
