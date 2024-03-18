@@ -4,8 +4,16 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
-public class TestConstants {
-    public static final Clock FIXED_CLOCK_EPOCH = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
+import org.baylight.redis.protocol.RespValue;
 
-    private TestConstants() { }
+public interface TestConstants {
+    Clock FIXED_CLOCK_EPOCH = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
+
+    default String encodeResponse(RespValue value) {
+        return new String(value.asResponse()).replace("\r\n", "\\r\\n");
+    }
+
+    default String encodeResponse(byte[] result) {
+        return new String(result).replace("\r\n", "\\r\\n");
+    }
 }

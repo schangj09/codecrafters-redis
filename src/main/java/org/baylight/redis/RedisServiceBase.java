@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Clock;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -304,5 +305,9 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                 }
             }
         }
+    }
+
+    public Collection<String> getKeys() {
+        return dataStoreMap.keySet();
     }
 }
