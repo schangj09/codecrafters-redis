@@ -61,8 +61,14 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         if (options.getDbfilename() != null) {
             try {
                 File dbFile = new File(options.getDir(), options.getDbfilename());
-                DatabaseReader reader = new DatabaseReader(dbFile, dataStoreMap);
-                reader.readDatabase();
+                // only read the file if it exists
+                if (dbFile.exists()) {
+                    DatabaseReader reader = new DatabaseReader(dbFile, dataStoreMap);
+                    reader.readDatabase();
+                } else {
+                    System.out.println(String.format("Database file %s does not exist",
+                            dbFile.getAbsolutePath()));
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
