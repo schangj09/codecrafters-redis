@@ -57,6 +57,11 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
     void testSelectDBWithExpiry() throws Exception {
         StreamBuilder builder = new StreamBuilder();
         builder.write(0x09); // db number
+        builder.write(0x00); // value type string
+        builder.write(4);
+        builder.write("key0");
+        builder.write(3);
+        builder.write("v00");
         builder.write(0xFD); // expiry in seconds
         builder.write(encode(CLOCK_MILLIS/1000 + 500, 4)); // 4 byte int
         builder.write(0x00); // value type string
@@ -85,6 +90,7 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
+            "key0", new StoredData("v00".getBytes(), 0, null),
             "key1", new StoredData("v01".getBytes(), 0, 500000L),
                 "key2", new StoredData("v002".getBytes(), 0, 888888L),
                 "key3", new StoredData("v003".getBytes(), 0, null));
@@ -92,9 +98,12 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
     }
 
     @Test
-    void testSelectDBFirstWithExpiry() throws Exception {
+    void testSelectDBResizeAndExpiry() throws Exception {
         StreamBuilder builder = new StreamBuilder();
         builder.write(0x09); // db number
+        builder.write(0xFB); // resize db
+        builder.write(0x02); // db hash table size
+        builder.write(0x01); // expiry hash table size
         builder.write(0xFD); // expiry in seconds
         builder.write(encode(CLOCK_MILLIS/1000 + 500, 4)); // 4 byte int
         builder.write(0x00); // value type string

@@ -31,8 +31,8 @@ public class RdbFileParser {
         OpCode nextCode = OpCode.fromCode(next);
         if (nextCode == OpCode.RESIZEDB) {
             skipResizeDb();
-            next = reader.read(); // read the valueType
-            nextCode = null;
+            next = reader.read(); // read the valueType or next code
+            nextCode = OpCode.fromCode(next);
         }
         while (nextCode == null
                 || nextCode == OpCode.EXPIRETIME
