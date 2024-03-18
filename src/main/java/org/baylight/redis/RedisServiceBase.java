@@ -1,5 +1,6 @@
 package org.baylight.redis;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -55,6 +56,17 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         // Thread pool of size 2 - one for accepting new client connections, one for reading values
         // from those clients in the ConnectionManager
         connectionsExecutorService = Executors.newFixedThreadPool(2);
+
+        // read database
+        if (options.getDbfilename() != null) {
+            try {
+                File dbFile = new File(options.getDir(), options.getDbfilename());
+                DatabaseReader reader = new DatabaseReader(dbFile, dataStoreMap);
+                reader.readDatabase();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         connectionManager = new ConnectionManager();
     }
