@@ -30,4 +30,13 @@ public class ByteUtils {
         return value;
     }
 
+    public static int decodeLong(byte... bytes) {
+        // decode bytes to an integer
+        int value = 0;
+        for (int i = 0; i < bytes.length; i++) {
+            value = (value << 8) + (bytes[i] & 0xFF);
+        }
+        return value;
+    }
+
 }

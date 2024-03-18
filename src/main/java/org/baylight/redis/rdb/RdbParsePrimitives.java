@@ -32,6 +32,14 @@ public class RdbParsePrimitives {
         return EncodedValue.parseValue(next, file);
     }
 
+    public int readInt() throws IOException {
+        return ByteUtils.decodeInt(file.readNBytes(4));
+    }
+
+    public long readLong() throws IOException {
+        return ByteUtils.decodeLong(file.readNBytes(8));
+    }
+
     public byte[] readNBytes(int length) throws IOException {
         byte[] val = file.readNBytes(length);
         if (val.length != length) {
