@@ -44,7 +44,7 @@ public class XaddCommand extends RedisCommand {
         key = args[1].getValueAsString();
 
         int nextArg = 2;
-        for (int i = nextArg; i < args.length; i++) {
+        for (int i = nextArg; i < args.length; i += 2) {
             validateArgIsString(args, i);
             validateArgIsString(args, i + 1);
             String itemKey = args[i].getValueAsString();

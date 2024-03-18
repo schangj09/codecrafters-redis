@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.commands.RedisCommandConstructor;
 import org.baylight.redis.protocol.RespConstants;
+import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.protocol.RespValueParser;
 
@@ -143,16 +144,23 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap.get(key);
     }
 
-    public String getType(String string) {
-        if (dataStoreMap.containsKey(string)) {
-            return "string";
+    public RespSimpleStringValue getType(String key) {
+        if (dataStoreMap.containsKey(key)) {
+            return dataStoreMap.get(key).getType().getTypeResponse();
         } else {
-            return "none";
+            return new RespSimpleStringValue("none");
         }
     }
 
     public StoredData set(String key, StoredData storedData) {
         return dataStoreMap.put(key, storedData);
+    }
+
+    public StoredData xadd(String key, Map<String, RespValue> itemMap) {
+        StoredData storedData = dataStoreMap.computeIfAbsent(key,
+                (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
+        storedData.getStreamValue().add(itemMap);
+        return storedData;
     }
 
     public void delete(String key) {
@@ -318,4 +326,5 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     public Collection<String> getKeys() {
         return dataStoreMap.keySet();
     }
+
 }

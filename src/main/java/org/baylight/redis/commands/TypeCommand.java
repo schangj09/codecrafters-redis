@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespBulkString;
-import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 
 /**
@@ -65,7 +64,7 @@ public class TypeCommand extends RedisCommand {
      */
     @Override
     public byte[] execute(RedisServiceBase service) {
-        return new RespSimpleStringValue(service.getType(key.getValueAsString())).asResponse();
+        return service.getType(key.getValueAsString()).asResponse();
     }
 
     /**

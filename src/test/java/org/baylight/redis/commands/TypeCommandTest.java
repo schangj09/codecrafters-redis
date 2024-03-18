@@ -27,7 +27,7 @@ public class TypeCommandTest implements WithAssertions, TestConstants {
     public void test_validKeyProvided_executeMethodShouldReturnValue() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        when(service.getType(anyString())).thenReturn("none");
+        when(service.getType(anyString())).thenReturn(new RespSimpleStringValue("none"));
         TypeCommand command = new TypeCommand(new RespBulkString("key".getBytes()));
 
         // when
