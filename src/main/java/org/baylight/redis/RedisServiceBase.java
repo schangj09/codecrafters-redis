@@ -144,8 +144,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     }
 
     public String getType(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getType'");
+        if (dataStoreMap.containsKey(string)) {
+            return "string";
+        } else {
+            return "none";
+        }
     }
 
     public StoredData set(String key, StoredData storedData) {
