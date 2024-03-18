@@ -88,7 +88,7 @@ public class RdbFileParser {
             }
             // write it only if no expiration or expiration is not already past
             if (ttlMillis == null || ttlMillis > 0L) {
-                StoredData valueData = new StoredData(valueBytes, 0L, ttlMillis);
+                StoredData valueData = new StoredData(valueBytes, now, ttlMillis);
                 dbData.put(new String(keyBytes), valueData);
             } else {
                 System.out.println("Skipping expired key: " + new String(keyBytes));

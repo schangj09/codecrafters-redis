@@ -48,8 +48,8 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-                "key1", new StoredData("v01".getBytes(), 0, null),
-                "key2", new StoredData("v002".getBytes(), 0, null));
+                "key1", new StoredData("v01".getBytes(), CLOCK_MILLIS, null),
+                "key2", new StoredData("v002".getBytes(), CLOCK_MILLIS, null));
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
@@ -91,10 +91,10 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-                "key0", new StoredData("v00".getBytes(), 0, null),
-                "key1", new StoredData("v01".getBytes(), 0, 500000L),
-                "key2", new StoredData("v002".getBytes(), 0, 0x7F0000000L),
-                "key3", new StoredData("v003".getBytes(), 0, null));
+                "key0", new StoredData("v00".getBytes(), CLOCK_MILLIS, null),
+                "key1", new StoredData("v01".getBytes(), CLOCK_MILLIS, 500000L),
+                "key2", new StoredData("v002".getBytes(), CLOCK_MILLIS, 0x7F0000000L),
+                "key3", new StoredData("v003".getBytes(), CLOCK_MILLIS, null));
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
@@ -137,9 +137,9 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-                "key0", new StoredData("v00".getBytes(), 0, 500000L),
-                "key1", new StoredData("v01".getBytes(), 0, null),
-                "key2", new StoredData("v002".getBytes(), 0, 1640995200000L - CLOCK_MILLIS));
+                "key0", new StoredData("v00".getBytes(), CLOCK_MILLIS, 500000L),
+                "key1", new StoredData("v01".getBytes(), CLOCK_MILLIS, null),
+                "key2", new StoredData("v002".getBytes(), CLOCK_MILLIS, 1640995200000L - CLOCK_MILLIS));
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
@@ -184,8 +184,8 @@ public class RdbFileParserTest implements WithAssertions, TestConstants {
         assertThat(parser.selectDB(dbData)).isEqualTo(OpCode.SELECTDB);
 
         Map<String, StoredData> expectedResult = Map.of(
-                "key0", new StoredData("v00".getBytes(), 0, null),
-                "key3", new StoredData("v003".getBytes(), 0, null));
+                "key0", new StoredData("v00".getBytes(), CLOCK_MILLIS, null),
+                "key3", new StoredData("v003".getBytes(), CLOCK_MILLIS, null));
         assertThat(dbData).isEqualTo(expectedResult);
     }
 
