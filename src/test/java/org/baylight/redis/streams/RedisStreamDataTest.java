@@ -23,6 +23,15 @@ public class RedisStreamDataTest implements WithAssertions {
     }
 
     @Test
+    void testAdd00_throwsException() {
+        RedisStreamData data = new RedisStreamData("test");
+        // the minimum itemId for an empty stream is 0-0
+        assertThatExceptionOfType(IllegalStreamItemIdException.class)
+                .isThrownBy(() -> data.add("0-0", new RespValue[] {}))
+                .withMessage("ERR The ID specified in XADD must be greater than 0-0");
+    }
+
+    @Test
     void testAddIdLessThanEqualLast_throwsException() throws Exception {
         RedisStreamData data = new RedisStreamData("test");
         data.add("9-3", new RespValue[] { new RespSimpleStringValue("testval") });

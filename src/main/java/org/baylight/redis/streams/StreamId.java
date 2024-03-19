@@ -4,6 +4,8 @@ import java.util.Objects;
 
 class StreamId {
 
+    public static final StreamId MIN_ID = new StreamId(0L, 0);
+
     private final long timeId;
     private final int counter;
 
