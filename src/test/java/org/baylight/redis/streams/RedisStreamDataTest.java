@@ -6,6 +6,7 @@ import org.baylight.redis.protocol.RespValue;
 import org.junit.jupiter.api.Test;
 
 public class RedisStreamDataTest implements WithAssertions {
+
     @Test
     void testAdd() throws Exception {
         RedisStreamData data = new RedisStreamData("test");
@@ -15,11 +16,39 @@ public class RedisStreamDataTest implements WithAssertions {
     }
 
     @Test
-    void testAddBadId_throwsException() {
+    void testAddAutoGenerateSequence() throws Exception {
+        RedisStreamData data = new RedisStreamData("test");
+
+        // Note: timestamp 0 starts with counter 1, but any other timestamp starts with counter 0
+        assertThat(data.add("0-*", new RespValue[] {})).isEqualTo(new StreamId(0, 1));
+        assertThat(data.add("0-*", new RespValue[] {})).isEqualTo(new StreamId(0, 2));
+
+        // start timestamp 11 with hardcoded counter 2
+        data.add("11-2", new RespValue[] {});
+        assertThat(data.add("11-*", new RespValue[] {})).isEqualTo(new StreamId(11, 3));
+
+        // expect timestamp 12 to start with counter 0
+        assertThat(data.add("12-*", new RespValue[] {})).isEqualTo(new StreamId(12, 0));
+    }
+
+    @Test
+    void testAddBadIdFormat_throwsException() {
         RedisStreamData data = new RedisStreamData("test");
         assertThatExceptionOfType(IllegalStreamItemIdException.class)
+                .isThrownBy(() -> data.add("abc-1", new RespValue[] {}))
+                .withMessage("ERR: bad id format: abc-1");
+
+        assertThatExceptionOfType(IllegalStreamItemIdException.class)
+                .isThrownBy(() -> data.add("*-*", new RespValue[] {}))
+                .withMessage("ERR: bad id format: *-*");
+
+        assertThatExceptionOfType(IllegalStreamItemIdException.class)
+                .isThrownBy(() -> data.add("1-**", new RespValue[] {}))
+                .withMessage("ERR: bad id format: 1-**");
+
+        assertThatExceptionOfType(IllegalStreamItemIdException.class)
                 .isThrownBy(() -> data.add("abc", new RespValue[] {}))
-                .withMessage("ERR: unknown id abc");
+                .withMessage("ERR: bad id format: abc");
     }
 
     @Test
