@@ -9,7 +9,7 @@ public class OrderedArrayList<T> extends ArrayList<T> {
     }
 
     T last() {
-        return get(size() - 1);
+        return size() > 0 ? get(size() - 1) : null;
     }
 
 }

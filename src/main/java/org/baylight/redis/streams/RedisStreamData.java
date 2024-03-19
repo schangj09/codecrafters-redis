@@ -21,7 +21,7 @@ public class RedisStreamData {
             long timeId = Long.parseLong(ids[0]);
             int counter = Integer.parseInt(ids[1]);
             streamId = new StreamId(timeId, counter);
-            if (StreamId.compare(streamId, streamIds.last()) >= 0) {
+            if (streamIds.size() > 0 && StreamId.compare(streamId, streamIds.last()) >= 0) {
                 throw new IllegalStreamItemIdException(String.format(
                     "ERR The ID specified in XADD is equal or smaller than the target stream top item"));
             }
