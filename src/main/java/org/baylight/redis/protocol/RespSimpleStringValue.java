@@ -21,7 +21,7 @@ public class RespSimpleStringValue extends RespValueBase {
 
     @Override
     public byte[] asResponse() {
-        return (RespType.SIMPLE_ERROR.typePrefix + value + "\r\n").getBytes();
+        return (RespType.SIMPLE_STRING.typePrefix + value + "\r\n").getBytes();
     }
 
     @Override
