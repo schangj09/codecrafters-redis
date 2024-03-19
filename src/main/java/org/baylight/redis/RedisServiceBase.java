@@ -20,6 +20,7 @@ import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.protocol.RespValueParser;
 import org.baylight.redis.streams.IllegalStreamItemIdException;
 import org.baylight.redis.streams.RedisStreamData;
+import org.baylight.redis.streams.StreamId;
 
 public abstract class RedisServiceBase implements ReplicationServiceInfoProvider {
 
@@ -162,12 +163,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap.put(key, storedData);
     }
 
-    public StoredData xadd(String key, String itemId, RespValue[] itemMap)
+    public StreamId xadd(String key, String itemId, RespValue[] itemMap)
             throws IllegalStreamItemIdException {
         StoredData storedData = dataStoreMap.computeIfAbsent(key,
                 (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
-        storedData.getStreamValue().add(itemId, itemMap);
-        return storedData;
+        return storedData.getStreamValue().add(itemId, itemMap);
     }
 
     public void delete(String key) {

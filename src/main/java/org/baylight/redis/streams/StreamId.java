@@ -2,7 +2,7 @@ package org.baylight.redis.streams;
 
 import java.util.Objects;
 
-class StreamId {
+public class StreamId {
 
     public static final StreamId MIN_ID = new StreamId(0L, 0);
 
