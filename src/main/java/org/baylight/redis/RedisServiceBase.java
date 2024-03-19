@@ -333,6 +333,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                                     "EventLoop Exception: %s \"%s\"",
                                     e.getClass().getSimpleName(), e.getMessage()));
                             e.printStackTrace();
+                            // since this is a blocking command, we better return an error response
+                            conn.sendError(e.getMessage());
                         }
                     }
                 });

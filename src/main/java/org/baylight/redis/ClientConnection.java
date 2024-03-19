@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 import org.baylight.redis.io.BufferedResponseStreamWriter;
+import org.baylight.redis.protocol.RespSimpleErrorValue;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.protocol.RespValueBase;
 import org.baylight.redis.protocol.RespValueContext;
@@ -34,12 +35,13 @@ public class ClientConnection {
 
     RespValue readValue() throws IOException {
         long startBytesOffset = reader.getNumBytesReceived();
-        
+
         RespValue value = valueParser.parse(reader);
-        
-        // set the context for the top-level value from the stream - used for creating a REPLCONF command
+
+        // set the context for the top-level value from the stream - used for creating a REPLCONF
+        // command
         long length = reader.getNumBytesReceived() - startBytesOffset;
-        ((RespValueBase)value).setContext(new RespValueContext(startBytesOffset, (int)length));
+        ((RespValueBase) value).setContext(new RespValueContext(startBytesOffset, (int) length));
         return value;
     }
 
@@ -105,8 +107,20 @@ public class ClientConnection {
         notifyAll();
     }
 
-    public synchronized void waitForNewValueAvailable(long timeoutMillis) throws InterruptedException {
+    public synchronized void waitForNewValueAvailable(long timeoutMillis)
+            throws InterruptedException {
         wait(timeoutMillis);
+    }
+
+    public void sendError(String message) {
+        try {
+            writeFlush(new RespSimpleErrorValue(message).asResponse());
+        } catch (IOException e) {
+            System.out.println(String.format(
+                    "ClientConnection: exception while sending error response: %s, %s", message,
+                    e.getMessage()));
+            e.printStackTrace();
+        }
     }
 
 }
