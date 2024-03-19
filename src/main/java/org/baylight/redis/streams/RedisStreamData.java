@@ -14,24 +14,15 @@ public class RedisStreamData {
         this.streamKey = streamKey;
     }
 
-    public synchronized StreamId add(String itemId, RespValue[] values) throws IllegalStreamItemIdException {
+    public synchronized StreamId add(String itemId, RespValue[] values)
+            throws IllegalStreamItemIdException {
         StreamId streamId;
         String[] ids = itemId.split("-");
         if (ids.length == 2) {
             long timeId = Long.parseLong(ids[0]);
             int counter = Integer.parseInt(ids[1]);
             streamId = new StreamId(timeId, counter);
-            if (streamIds.size() > 0) {
-                if (StreamId.compare(streamId, streamIds.last()) <= 0) {
-                    throw new IllegalStreamItemIdException(String.format(
-                        "ERR The ID specified in XADD is equal or smaller than the target stream top item"));
-                }
-            } else {
-                if (StreamId.compare(streamId, StreamId.MIN_ID) <= 0) {
-                    throw new IllegalStreamItemIdException(String.format(
-                        "ERR The ID specified in XADD must be greater than 0-0"));
-                }
-            }
+            validateStreamIdMinimum(streamId);
             streamIds.add(streamId);
             dataValues.put(streamId, values);
         } else {
@@ -39,6 +30,17 @@ public class RedisStreamData {
         }
         notifyAll();
         return streamId;
+    }
+
+    private void validateStreamIdMinimum(StreamId streamId) throws IllegalStreamItemIdException {
+        if (StreamId.compare(streamId, StreamId.MIN_ID) <= 0) {
+            throw new IllegalStreamItemIdException(String.format(
+                    "ERR The ID specified in XADD must be greater than 0-0"));
+        }
+        if (streamIds.size() > 0 && StreamId.compare(streamId, streamIds.last()) <= 0) {
+            throw new IllegalStreamItemIdException(String.format(
+                    "ERR The ID specified in XADD is equal or smaller than the target stream top item"));
+        }
     }
 
     /**
