@@ -1,5 +1,6 @@
 package org.baylight.redis.streams;
 
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ public class RedisStreamData {
         this.streamKey = streamKey;
     }
 
-    public synchronized StreamId add(String itemId, RespValue[] values)
+    public synchronized StreamId add(String itemId, Clock clock, RespValue[] values)
             throws IllegalStreamItemIdException {
         StreamId streamId;
         String[] ids = itemId.split("-");
@@ -45,12 +46,20 @@ public class RedisStreamData {
                 }
             }
             streamId = new StreamId(timeId, counter);
-            validateStreamIdMinimum(streamId);
-            streamIds.add(streamId);
-            dataValues.put(streamId, values);
+        } else if ("*".equals(itemId)) {
+            // autogenerate the time and counter
+            long now = clock.millis();
+            int counter = 0;
+            if (streamIds.size() > 0 && streamIds.last().getTimeId() == now) {
+                counter = streamIds.last().getCounter() + 1;
+            }
+            streamId = new StreamId(now, counter);
         } else {
             throw new IllegalStreamItemIdException(String.format("ERR: bad id format: %s", itemId));
         }
+        validateStreamIdMinimum(streamId);
+        streamIds.add(streamId);
+        dataValues.put(streamId, values);
         notifyAll();
         return streamId;
     }

@@ -167,7 +167,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
             throws IllegalStreamItemIdException {
         StoredData storedData = dataStoreMap.computeIfAbsent(key,
                 (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
-        return storedData.getStreamValue().add(itemId, itemMap);
+        return storedData.getStreamValue().add(itemId, clock, itemMap);
     }
 
     public void delete(String key) {
