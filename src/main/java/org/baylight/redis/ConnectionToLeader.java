@@ -36,7 +36,7 @@ public class ConnectionToLeader {
         System.out.println(String.format("Connection to leader: %s, isOpened: %s", leaderConnection,
                 !leaderConnection.isClosed()));
 
-        // create the thread for sending commands to the leader and receiving replication commands
+        // create the thread for sending handshake commands to the leader
         executor.execute(() -> {
             try {
                 runHandshakeLoop();
@@ -121,17 +121,15 @@ public class ConnectionToLeader {
 
     public void runHandshakeLoop() throws InterruptedException {
         while (!done) {
-            // check for commands waiting to be sent
-            boolean didProcess = false;
-
             if (leaderConnection.isClosed()) {
                 System.out.println(String.format(
-                        "Terminating process due to connection is closed by leader: %s",
+                        "Terminating service due to connection is closed by leader during handshake: %s",
                         leaderConnection));
                 terminate();
                 continue;
             }
 
+            // check for handshake commands waiting to be sent
             try {
                 while (!commandsToLeader.isEmpty()) {
                     CommandAndResponseConsumer cmd = commandsToLeader.pollFirst();
@@ -158,12 +156,8 @@ public class ConnectionToLeader {
                         }
                     }
                 }
-                // sleep a bit if there were no commands processed
-                // Note: handshake does not count so we will sleep after the handshake
-                if (!didProcess) {
-                    // System.out.println("sleep 1s");
-                    Thread.sleep(50L);
-                }
+                // sleep a bit before the next handshake command
+                Thread.sleep(50L);
             } catch (Exception e) {
                 System.out.println(String.format("ConnectionToLeader Loop Exception: %s \"%s\"",
                         e.getClass().getSimpleName(), e.getMessage()));
@@ -177,9 +171,12 @@ public class ConnectionToLeader {
         return leaderConnection.equals(conn);
     }
 
-    public void executeCommandFromLeader(ClientConnection conn, RedisCommand command) throws IOException {
+    public void executeCommandFromLeader(ClientConnection conn, RedisCommand command)
+            throws IOException {
         if (!isLeaderConnection(conn)) {
-            System.out.println(String.format("ConnectionToLeader ERROR: executeCommandFromLeader called with non-leader connection: %s", conn));
+            System.out.println(String.format(
+                    "ConnectionToLeader ERROR: executeCommandFromLeader called with non-leader connection: %s",
+                    conn));
             return;
         }
 
