@@ -15,6 +15,13 @@ public class RespValueParserTest implements WithAssertions {
     }
 
     @Test
+    void testParseSimpleError() throws Exception {
+        String inpuString = "-ERR ok\r\n";
+        BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));
+        assertThat(new RespValueParser().parse(reader)).isEqualTo(new RespSimpleErrorValue("ERR ok"));
+    }
+
+    @Test
     void testParseIntValue() throws Exception {
         String inpuString = ":-4500000005\r\n";
         BufferedInputLineReader reader = new BufferedInputLineReader(new ByteArrayInputStream(inpuString.getBytes()));

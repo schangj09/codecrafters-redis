@@ -4,18 +4,16 @@ import java.io.IOException;
 
 import org.baylight.redis.io.BufferedInputLineReader;
 
-/**
- * A RESP simple string value.
- **/
-public class RespSimpleStringValue extends RespValueBase {
+public class RespSimpleErrorValue extends RespValueBase {
+    
     private final String value;
 
-    public RespSimpleStringValue(String s) {
-        super(RespType.SIMPLE_STRING);
+    public RespSimpleErrorValue(String s) {
+        super(RespType.SIMPLE_ERROR);
         this.value = s;
     }
 
-    public RespSimpleStringValue(BufferedInputLineReader reader) throws IOException {
+    public RespSimpleErrorValue(BufferedInputLineReader reader) throws IOException {
         this(reader.readLine());
     }
 
@@ -31,7 +29,7 @@ public class RespSimpleStringValue extends RespValueBase {
 
     @Override
     public String toString() {
-        return "RespSimpleStringValue [s=" + value + "]";
+        return "RespSimpleErrorValue [s=" + value + "]";
     }
 
     @Override
@@ -43,7 +41,7 @@ public class RespSimpleStringValue extends RespValueBase {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        RespSimpleStringValue other = (RespSimpleStringValue) obj;
+        RespSimpleErrorValue other = (RespSimpleErrorValue) obj;
         return value.equals(other.value);
     }
 

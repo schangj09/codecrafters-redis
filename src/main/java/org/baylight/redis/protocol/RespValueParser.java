@@ -11,7 +11,7 @@ public class RespValueParser {
         RespType respType = RespType.of((char)type);
         return switch (respType) {
             case SIMPLE_STRING -> new RespSimpleStringValue(reader);
-            //case SIMPLE_ERROR -> new SimpleErrorRespValue(reader);
+            case SIMPLE_ERROR -> new RespSimpleErrorValue(reader);
             case INTEGER -> new RespInteger(reader);
             case BULK_STRING -> new RespBulkString(reader);
             case ARRAY -> new RespArrayValue(reader, this);
