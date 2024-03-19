@@ -3,7 +3,6 @@ package org.baylight.redis;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -14,18 +13,19 @@ import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.protocol.RespValue;
 
 public class WaitExecutor {
+    private final int requestWaitFor;
     private final int numToWaitFor;
     private final AtomicInteger numAcknowledged;
 
     private final CountDownLatch latch;
     private final ExecutorService executorService;
-    boolean isCodecraftersTest = false;
 
-    public WaitExecutor(int numToWaitFor, ExecutorService executorService) {
-        this.numToWaitFor = numToWaitFor;
+    public WaitExecutor(int requestWaitFor, int numFollowers, ExecutorService executorService) {
+        this.requestWaitFor = requestWaitFor;
+        this.numToWaitFor = Math.min(requestWaitFor, numFollowers);
         this.executorService = executorService;
         this.numAcknowledged = new AtomicInteger(0);
-        this.latch = new CountDownLatch(numToWaitFor);
+        this.latch = new CountDownLatch(requestWaitFor);
     }
 
     int wait(Collection<ConnectionToFollower> followers, long timeoutMillis) {
@@ -46,8 +46,8 @@ public class WaitExecutor {
             }
 
             long before = System.currentTimeMillis();
-            System.out.println(String.format("Time %d: waiting u to %d millis for acks.", before,
-                    extendedTimeout));
+            System.out.println(String.format(
+                    "Time %d: waiting u to %d millis for acks.", before, extendedTimeout));
             asyncSendRequest(() -> {
                 try {
                     long waitUntil;
@@ -82,11 +82,12 @@ public class WaitExecutor {
                 } catch (InterruptedException e) {
                     System.out.println(String.format(
                             "Interrupted while waiting for %d replConfAcks. Received %d acks.",
-                            numToWaitFor, numAcknowledged.get()));
+                            requestWaitFor, numAcknowledged.get()));
                 }
             }).get();
             long after = System.currentTimeMillis();
-            System.out.println(String.format("Time %d: after extended task wait, elapsed time: %d.",
+            System.out.println(String.format(
+                    "Time %d: after extended task wait, elapsed time: %d.",
                     after, after - before));
 
             // cancel all pending tasks
@@ -100,12 +101,13 @@ public class WaitExecutor {
                     String.format("Cancelled %d of %d tasks.", countCancelled, callFutures.size()));
         } catch (Exception e) {
             System.out
-                    .println(String.format("Error while sending %d replConfAcks. Received %d acks.",
+                    .println(String.format(
+                            "Error while sending %d replConfAcks. Received %d acks.",
                             numToWaitFor, numAcknowledged.get()));
         }
         System.out.println(Integer.toHexString(System.identityHashCode(numAcknowledged)));
         System.out.println(String.format("Returning %d of %d requested acks.",
-                numAcknowledged.get(), numToWaitFor));
+                numAcknowledged.get(), requestWaitFor));
         return numAcknowledged.get();
     }
 
@@ -118,8 +120,10 @@ public class WaitExecutor {
             RespValue ackResponse = connection.sendAndWaitForReplConfAck(extendedTimeout);
             if (ackResponse == null) {
                 System.out.println(
-                        String.format("Time %d: after send on %s, Timed out waiting, no response. Still waiting for %d replConfAcks.",
-                                System.currentTimeMillis(), connection, numToWaitFor - numAcknowledged.get()));
+                        String.format(
+                                "Time %d: after send on %s, Timed out waiting, no response. Still waiting for %d replConfAcks.",
+                                System.currentTimeMillis(), connection,
+                                numToWaitFor - numAcknowledged.get()));
             } else {
                 System.out.println(String.format("Time %d: after send on %s, response: %s",
                         System.currentTimeMillis(), connection,
@@ -132,19 +136,17 @@ public class WaitExecutor {
             }
         } catch (Exception e) {
             System.out.println(
-                    String.format("Error sending replConfAck to %s, error: %s %s, cause: %s",
+                    String.format(
+                            "Error sending replConfAck to %s, error: %s %s, cause: %s",
                             connection.toString(), e.getClass().getSimpleName(), e.getMessage(),
                             e.getCause()));
-            System.out.println(String.format("Not counted. Still waiting for %d replConfAcks.",
+            System.out.println(String.format(
+                    "Not counted. Still waiting for %d replConfAcks.",
                     numToWaitFor - numAcknowledged.get()));
         }
     }
 
     private Future<?> asyncSendRequest(Runnable runnable) {
-        if (isCodecraftersTest) {
-            runnable.run();
-            return CompletableFuture.completedFuture(null);
-        }
         return executorService.submit(runnable);
     }
 

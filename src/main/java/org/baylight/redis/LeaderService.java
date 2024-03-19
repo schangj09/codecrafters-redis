@@ -114,7 +114,7 @@ public class LeaderService extends RedisServiceBase {
         // Note: the waitExecutor should return all replicated services that acknowledge, even if it
         // is greater than requested number, but there is no point in waiting for more responses
         // than we have replicas, so we use min(numReplicas, replMap.size())
-        WaitExecutor waitExecutor = new WaitExecutor(Math.min(numReplicas, replMap.size()),
+        WaitExecutor waitExecutor = new WaitExecutor(numReplicas, replMap.size(),
                 executorService);
         return waitExecutor.wait(replMap.values(), timeoutMillis);
     }
