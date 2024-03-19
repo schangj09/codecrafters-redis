@@ -162,7 +162,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap.put(key, storedData);
     }
 
-    public StoredData xadd(String key, String itemId, RespValue[] itemMap) throws IllegalStreamItemIdException {
+    public StoredData xadd(String key, String itemId, RespValue[] itemMap)
+            throws IllegalStreamItemIdException {
         StoredData storedData = dataStoreMap.computeIfAbsent(key,
                 (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
         storedData.getStreamValue().add(itemId, itemMap);
@@ -279,10 +280,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
             commandsExecutorService.submit(() -> {
                 try {
                     execute(command, conn);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     System.out.println(String.format(
                             "EventLoop Exception: %s \"%s\"",
                             e.getClass().getSimpleName(), e.getMessage()));
+                    e.printStackTrace();
                 }
             });
         } else {
@@ -330,6 +332,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                             System.out.println(String.format(
                                     "EventLoop Exception: %s \"%s\"",
                                     e.getClass().getSimpleName(), e.getMessage()));
+                            e.printStackTrace();
                         }
                     }
                 });
