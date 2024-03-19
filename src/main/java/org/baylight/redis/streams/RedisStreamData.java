@@ -1,26 +1,37 @@
 package org.baylight.redis.streams;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.baylight.redis.protocol.RespValue;
 
 public class RedisStreamData {
     private final String streamKey;
-    private final Queue<String> itemIds;
-    private final Map<String, Map<String, RespValue>> dataValues;
+    private final OrderedArrayList<StreamId> streamIds = new OrderedArrayList<>();
+    private final Map<StreamId, Map<String, RespValue>> dataValues = new HashMap<>();
 
     public RedisStreamData(String streamKey) {
         this.streamKey = streamKey;
-        this.itemIds = new ConcurrentLinkedQueue<>();
-        this.dataValues = new ConcurrentHashMap<>();
     }
 
-    public void add(String itemId, Map<String, RespValue> values) {
-        itemIds.offer(itemId);
-        dataValues.put(itemId, values);
+    public synchronized StreamId add(String itemId, Map<String, RespValue> values) throws IllegalStreamItemIdException {
+        StreamId streamId;
+        String[] ids = itemId.split("-");
+        if (ids.length == 2) {
+            long timeId = Long.parseLong(ids[0]);
+            int counter = Integer.parseInt(ids[1]);
+            streamId = new StreamId(timeId, counter);
+            if (StreamId.compare(streamId, streamIds.last()) >= 0) {
+                throw new IllegalStreamItemIdException(String.format(
+                    "ERR The ID specified in XADD is equal or smaller than the target stream top item"));
+            }
+            streamIds.add(streamId);
+            dataValues.put(streamId, values);
+        } else {
+            throw new IllegalStreamItemIdException(String.format("ERR: unknown id %s", itemId));
+        }
+        notifyAll();
+        return streamId;
     }
 
     /**
@@ -31,10 +42,10 @@ public class RedisStreamData {
     }
 
     /**
-     * @return the dataValues
+     * @return the data for a stream id
      */
-    public Queue<String> getItemIds() {
-        return itemIds;
+    public Map<String, RespValue> getData(StreamId id) {
+        return dataValues.getOrDefault(id, null);
     }
 
     @Override

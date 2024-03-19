@@ -29,7 +29,7 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
     // When a valid key is provided, the execute method should return the value associated with the
     // key.
     @Test
-    public void test_validKeyProvided_executeMethodShouldReturnValue() {
+    public void test_validKeyProvided_executeMethodShouldReturnValue() throws Exception {
         // given
         RedisServiceBase service = mock(LeaderService.class);
         when(service.xadd(anyString(), anyString(), anyMap()))

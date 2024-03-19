@@ -7,6 +7,7 @@ import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
+import org.baylight.redis.streams.IllegalStreamItemIdException;
 
 public class XaddCommand extends RedisCommand {
     private String key;
@@ -25,8 +26,12 @@ public class XaddCommand extends RedisCommand {
 
     @Override
     public byte[] execute(RedisServiceBase service) {
-        service.xadd(key, itemId, itemMap);
-        return new RespBulkString(itemId.getBytes()).asResponse();
+        try {
+            service.xadd(key, itemId, itemMap);
+            return new RespBulkString(itemId.getBytes()).asResponse();
+        } catch (IllegalStreamItemIdException e) {
+            return new RespBulkString(e.getMessage().getBytes()).asResponse();
+        }
     }
 
     @Override
