@@ -29,6 +29,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     private final RedisCommandConstructor commandConstructor;
     private final RespValueParser valueParser;
     private final ExecutorService connectionsExecutorService;
+    private final ExecutorService commandsExecutorService;
     private final ConnectionManager connectionManager;
     private volatile boolean done = false;
     private final RedisServiceOptions options;
@@ -58,6 +59,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         // Thread pool of size 2 - one for accepting new client connections, one for reading values
         // from those clients in the ConnectionManager
         connectionsExecutorService = Executors.newFixedThreadPool(2);
+        // Use a cached thread pool for executing blocking commands
+        commandsExecutorService = Executors.newCachedThreadPool();
 
         // read database
         if (options.getDbfilename() != null) {
@@ -129,6 +132,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
 
     public void shutdown() {
         connectionsExecutorService.shutdown();
+        commandsExecutorService.shutdown();
     }
 
     public boolean containsKey(String key) {
@@ -269,7 +273,20 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     void executeCommand(ClientConnection conn, RedisCommand command) throws IOException {
         System.out.println(String.format("Received client command: %s", command));
 
-        execute(command, conn);
+        if (command.isBlockingCommand()) {
+            commandsExecutorService.submit(() -> {
+                try {
+                    execute(command, conn);
+                } catch (IOException e) {
+                    System.out.println(String.format(
+                            "EventLoop Exception: %s \"%s\"",
+                            e.getClass().getSimpleName(), e.getMessage()));
+                }
+            });
+        } else {
+            execute(command, conn);
+        }
+
         switch (command) {
         case EofCommand c -> {
             conn.close();
@@ -308,7 +325,8 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
                         try {
                             service.executeCommand(conn, command);
                         } catch (Exception e) {
-                            System.out.println(String.format("EventLoop Exception: %s \"%s\"",
+                            System.out.println(String.format(
+                                    "EventLoop Exception: %s \"%s\"",
                                     e.getClass().getSimpleName(), e.getMessage()));
                         }
                     }

@@ -38,6 +38,10 @@ public abstract class RedisCommand {
         return type == Type.SET || type == Type.DEL;
     }
 
+    public boolean isBlockingCommand() {
+        return false;
+    }
+
     protected void setArgs(RespValue[] args) {
         // ignore by default
     }

@@ -42,6 +42,11 @@ public class WaitCommand extends RedisCommand {
     }
 
     @Override
+    public boolean isBlockingCommand() {
+        return true;
+    }
+
+    @Override
     public byte[] execute(RedisServiceBase service) {
         int count = service.waitForReplicationServers(numReplicas, timeoutMillis);
         return new RespInteger(count).asResponse();
