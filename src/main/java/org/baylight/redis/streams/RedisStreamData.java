@@ -8,13 +8,13 @@ import org.baylight.redis.protocol.RespValue;
 public class RedisStreamData {
     private final String streamKey;
     private final OrderedArrayList<StreamId> streamIds = new OrderedArrayList<>();
-    private final Map<StreamId, Map<String, RespValue>> dataValues = new HashMap<>();
+    private final Map<StreamId, RespValue[]> dataValues = new HashMap<>();
 
     public RedisStreamData(String streamKey) {
         this.streamKey = streamKey;
     }
 
-    public synchronized StreamId add(String itemId, Map<String, RespValue> values) throws IllegalStreamItemIdException {
+    public synchronized StreamId add(String itemId, RespValue[] values) throws IllegalStreamItemIdException {
         StreamId streamId;
         String[] ids = itemId.split("-");
         if (ids.length == 2) {
@@ -44,13 +44,14 @@ public class RedisStreamData {
     /**
      * @return the data for a stream id
      */
-    public Map<String, RespValue> getData(StreamId id) {
+    public RespValue[] getData(StreamId id) {
         return dataValues.getOrDefault(id, null);
     }
 
     @Override
     public String toString() {
         return "RedisStreamData [streamKey=" + streamKey
+                + ", lastStreamId=" + streamIds.last()
                 + ", dataValues.size=" + dataValues.size() + "]";
     }
 

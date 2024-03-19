@@ -162,7 +162,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return dataStoreMap.put(key, storedData);
     }
 
-    public StoredData xadd(String key, String itemId, Map<String, RespValue> itemMap) throws IllegalStreamItemIdException {
+    public StoredData xadd(String key, String itemId, RespValue[] itemMap) throws IllegalStreamItemIdException {
         StoredData storedData = dataStoreMap.computeIfAbsent(key,
                 (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
         storedData.getStreamValue().add(itemId, itemMap);

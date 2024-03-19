@@ -1,6 +1,6 @@
 package org.baylight.redis.commands;
 
-import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -32,7 +32,7 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
     public void test_validKeyProvided_executeMethodShouldReturnValue() throws Exception {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        when(service.xadd(anyString(), anyString(), anyMap()))
+        when(service.xadd(anyString(), anyString(), any()))
                 .thenReturn(new StoredData(new RedisStreamData("key"), CLOCK_MILLIS, null));
         XaddCommand command = new XaddCommand("key", "itemId");
 
@@ -41,17 +41,22 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
 
         // then
         assertThat(result).isEqualTo(new RespBulkString("itemId".getBytes()).asResponse());
-        verify(service).xadd("key", "itemId", new HashMap<>());
+        verify(service).xadd("key", "itemId", new RespValue[0]);
         verifyNoMoreInteractions(service);
     }
 
-    // When setArgs is called with a valid key, the key should be correctly set.
+    // When setArgs is called with a valid data, the data should be correctly set.
     @Test
     public void test_setArgsCalledWithValidKey_keyShouldBeCorrectlySet() {
         // given
         RespValue[] args = { new RespSimpleStringValue("XADD"),
                 new RespBulkString("key".getBytes()),
-                new RespBulkString("itemId".getBytes()) };
+                new RespBulkString("itemId".getBytes()),
+                new RespBulkString("i1".getBytes()),
+                new RespBulkString("val1".getBytes()),
+                new RespBulkString("i2".getBytes()),
+                new RespBulkString("val2".getBytes())
+        };
         XaddCommand command = new XaddCommand();
 
         // when
@@ -60,6 +65,12 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
         // then
         assertThat(command.getKey()).isEqualTo("key");
         assertThat(command.getItemId()).isEqualTo("itemId");
+        assertThat(command.getItemMap()).isEqualTo(new RespValue[] {
+                new RespBulkString("i1".getBytes()),
+                new RespBulkString("val1".getBytes()),
+                new RespBulkString("i2".getBytes()),
+                new RespBulkString("val2".getBytes())
+        });
     }
 
     // When setArgs is called with no arguments, an IllegalArgumentException should be thrown.
@@ -86,6 +97,43 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args))
                 .withMessage("XADD: Invalid arg, expected string. 1: null");
+    }
+
+    // When setArgs is called with invalid data, an IllegalArgumentException should be thrown.
+    @Test
+    public void test_setArgsCalledWithWrongNumber_illegalArgumentExceptionShouldBeThrown() {
+        // given
+        RespValue[] args = { new RespSimpleStringValue("XADD"),
+                new RespBulkString("key".getBytes()),
+                new RespBulkString("itemId".getBytes()),
+                new RespBulkString("i1".getBytes())
+        };
+        XaddCommand command = new XaddCommand();
+
+        // when
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> command.setArgs(args))
+                .withMessage("XADD: Invalid number of item key value pairs");
+    }
+
+    // When setArgs is called with duplicate data, an IllegalArgumentException should be thrown.
+    @Test
+    public void test_setArgsCalledWithDuplicate_illegalArgumentExceptionShouldBeThrown() {
+        // given
+        RespValue[] args = { new RespSimpleStringValue("XADD"),
+                new RespBulkString("key".getBytes()),
+                new RespBulkString("itemId".getBytes()),
+                new RespBulkString("i2".getBytes()),
+                new RespBulkString("val1".getBytes()),
+                new RespBulkString("i2".getBytes()),
+                new RespBulkString("val2".getBytes())
+        };
+        XaddCommand command = new XaddCommand();
+
+        // when
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> command.setArgs(args))
+                .withMessage("XADD: Duplicate item key: BulkString [length=2, value=i2]");
     }
 
 }
