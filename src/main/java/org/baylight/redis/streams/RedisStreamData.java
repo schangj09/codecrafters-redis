@@ -1,4 +1,4 @@
-package org.baylight.redis;
+package org.baylight.redis.streams;
 
 import java.util.Map;
 import java.util.Queue;
@@ -18,7 +18,7 @@ public class RedisStreamData {
         this.dataValues = new ConcurrentHashMap<>();
     }
 
-    void add(String itemId, Map<String, RespValue> values) {
+    public void add(String itemId, Map<String, RespValue> values) {
         itemIds.offer(itemId);
         dataValues.put(itemId, values);
     }

@@ -3,6 +3,8 @@ package org.baylight.redis;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.baylight.redis.streams.RedisStreamData;
+
 /**
  * Data stored for a Redis map entry
  **/

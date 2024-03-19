@@ -18,6 +18,7 @@ import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.protocol.RespValueParser;
+import org.baylight.redis.streams.RedisStreamData;
 
 public abstract class RedisServiceBase implements ReplicationServiceInfoProvider {
 
