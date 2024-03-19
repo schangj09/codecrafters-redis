@@ -26,6 +26,10 @@ class StreamId {
         return counter;
     }
 
+    public String getId() {
+        return timeId + "-" + counter;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(timeId, counter);

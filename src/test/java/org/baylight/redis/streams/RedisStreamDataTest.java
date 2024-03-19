@@ -10,6 +10,8 @@ public class RedisStreamDataTest implements WithAssertions {
     void testAdd() throws Exception {
         RedisStreamData data = new RedisStreamData("test");
         assertThat(data.add("11-2", new RespValue[] {})).isEqualTo(new StreamId(11, 2));
+        assertThat(data.add("11-4", new RespValue[] {})).isEqualTo(new StreamId(11, 4));
+        assertThat(data.add("12-0", new RespValue[] {})).isEqualTo(new StreamId(12, 0));
     }
 
     @Test
@@ -18,6 +20,28 @@ public class RedisStreamDataTest implements WithAssertions {
         assertThatExceptionOfType(IllegalStreamItemIdException.class)
                 .isThrownBy(() -> data.add("abc", new RespValue[] {}))
                 .withMessage("ERR: unknown id abc");
+    }
+
+    @Test
+    void testAddIdLessThanEqualLast_throwsException() throws Exception {
+        RedisStreamData data = new RedisStreamData("test");
+        data.add("9-3", new RespValue[] { new RespSimpleStringValue("testval") });
+
+        // equals
+        assertThatExceptionOfType(IllegalStreamItemIdException.class)
+                .isThrownBy(() -> data.add("9-3", new RespValue[] {}))
+                .withMessage(
+                        "ERR The ID specified in XADD is equal or smaller than the target stream top item");
+        // counter is less than
+        assertThatExceptionOfType(IllegalStreamItemIdException.class)
+                .isThrownBy(() -> data.add("9-1", new RespValue[] {}))
+                .withMessage(
+                        "ERR The ID specified in XADD is equal or smaller than the target stream top item");
+        // time is less than
+        assertThatExceptionOfType(IllegalStreamItemIdException.class)
+                .isThrownBy(() -> data.add("8-0", new RespValue[] {}))
+                .withMessage(
+                        "ERR The ID specified in XADD is equal or smaller than the target stream top item");
     }
 
     @Test
