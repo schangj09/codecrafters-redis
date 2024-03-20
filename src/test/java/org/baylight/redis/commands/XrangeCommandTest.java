@@ -30,15 +30,20 @@ public class XrangeCommandTest implements WithAssertions, TestConstants {
         // given
         RedisServiceBase service = mock(LeaderService.class);
         when(service.xrange(anyString(), anyString(), anyString()))
-                .thenReturn(List.of(new StreamValue(StreamId.MIN_ID,
-                        new RespValue[] { new RespSimpleStringValue("v1") })));
+                .thenReturn(List.of(
+                        new StreamValue(StreamId.of(2, 3),
+                                new RespValue[] { new RespSimpleStringValue("v1") }),
+                        new StreamValue(StreamId.of(3, 4),
+                                new RespValue[] { new RespSimpleStringValue("v2") })));
         XrangeCommand command = new XrangeCommand("key", "123-1", "125");
 
         // when
         byte[] result = command.execute(service);
 
         // then
-        assertThat(result).isEqualTo(new RespArrayValue(new RespValue[] {}).asResponse());
+        String expectedResult = encodeResponse(
+                "*2\r\n*2\r\n$3\r\n2-3\r\n*1\r\n+v1\r\n*2\r\n$3\r\n3-4\r\n*1\r\n+v2\r\n");
+        assertThat(encodeResponse(result)).isEqualTo(expectedResult);
         verify(service).xrange("key", "123-1", "125");
         verifyNoMoreInteractions(service);
     }

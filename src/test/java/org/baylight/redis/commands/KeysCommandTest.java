@@ -31,7 +31,7 @@ public class KeysCommandTest implements WithAssertions, TestConstants {
         byte[] result = command.execute(service);
 
         // then
-        String expectedResult = "*2\\r\\n$5\\r\\nhello\\r\\n$3\\r\\nyou\\r\\n";
+        String expectedResult = encodeResponse("*2\r\n$5\r\nhello\r\n$3\r\nyou\r\n");
         assertThat(encodeResponse(result)).isEqualTo(expectedResult);
         verify(service).getKeys();
         verifyNoMoreInteractions(service);

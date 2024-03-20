@@ -1,11 +1,14 @@
 package org.baylight.redis.commands;
 
+import java.util.List;
+
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespSimpleErrorValue;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.streams.IllegalStreamItemIdException;
+import org.baylight.redis.streams.StreamValue;
 
 public class XrangeCommand extends RedisCommand {
     private String key;
@@ -26,8 +29,10 @@ public class XrangeCommand extends RedisCommand {
     @Override
     public byte[] execute(RedisServiceBase service) {
         try {
-            service.xrange(key, start, end);
-            return new RespArrayValue(new RespValue[] {}).asResponse();
+            List<StreamValue> result = service.xrange(key, start, end);
+            RespValue[] resultArray = result.stream().map(StreamValue::asRespArrayValue)
+                    .toArray(RespValue[]::new);
+            return new RespArrayValue(resultArray).asResponse();
         } catch (IllegalStreamItemIdException e) {
             return new RespSimpleErrorValue(e.getMessage()).asResponse();
         }
@@ -36,7 +41,12 @@ public class XrangeCommand extends RedisCommand {
     @Override
     public byte[] asCommand() {
         return new RespArrayValue(
-                new RespValue[] { new RespBulkString(getType().name().getBytes()) }).asResponse();
+                new RespValue[] {
+                        new RespBulkString(getType().name().getBytes()),
+                        new RespBulkString(key.getBytes()),
+                        new RespBulkString(start.getBytes()),
+                        new RespBulkString(end.getBytes())
+                }).asResponse();
     }
 
     @Override

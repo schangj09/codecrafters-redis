@@ -3,6 +3,8 @@ package org.baylight.redis.streams;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.baylight.redis.protocol.RespArrayValue;
+import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespValue;
 
 public class StreamValue {
@@ -44,6 +46,13 @@ public class StreamValue {
             return false;
         StreamValue other = (StreamValue) obj;
         return Objects.equals(itemId, other.itemId) && Arrays.equals(values, other.values);
+    }
+
+    public RespArrayValue asRespArrayValue() {
+        return new RespArrayValue(new RespValue[] {
+                new RespBulkString(itemId.getId().getBytes()),
+                new RespArrayValue(values)
+        });
     }
 
 }

@@ -10,6 +10,10 @@ public interface TestConstants {
     long CLOCK_MILLIS = 90000;
     Clock FIXED_CLOCK = Clock.fixed(Instant.ofEpochMilli(CLOCK_MILLIS), ZoneOffset.UTC);
 
+    default String encodeResponse(String value) {
+        return value.replace("\r\n", "\\r\\n");
+    }
+
     default String encodeResponse(RespValue value) {
         return new String(value.asResponse()).replace("\r\n", "\\r\\n");
     }
