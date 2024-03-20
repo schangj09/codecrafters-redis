@@ -10,7 +10,7 @@ import org.baylight.redis.protocol.RespValue;
 
 public abstract class RedisCommand {
     public enum Type {
-        CONFIG, DEL, ECHO, GET, INFO, KEYS, PING, PSYNC, REPLCONF, SET, TYPE, WAIT, XADD,
+        CONFIG, DEL, ECHO, GET, INFO, KEYS, PING, PSYNC, REPLCONF, SET, TYPE, WAIT, XADD, XRANGE,
         // Folling are non-standard commands for baylight
         EOF, // close a client connection
         TERMINATE; // close all connections and kill the server

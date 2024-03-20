@@ -170,6 +170,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return storedData.getStreamValue().add(itemId, clock, itemMap);
     }
 
+    public Object xrange(String key, String start, String end) throws IllegalStreamItemIdException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'xrange'");
+    }
+
     public void delete(String key) {
         dataStoreMap.remove(key);
     }

@@ -266,6 +266,30 @@ public class RedisCommandConstructorTest implements WithAssertions {
                 });
     }
 
+    // Constructs a Xrange command.
+    @Test
+    public void test_newCommandFromValue_returnsXrangeCommand() {
+        // given
+        RespValue value = new RespArrayValue(new RespValue[] {
+                new RespSimpleStringValue("XRANGE"),
+                new RespSimpleStringValue("streamKey"),
+                new RespSimpleStringValue("-"),
+                new RespSimpleStringValue("+")
+        });
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(XrangeCommand.class))
+                .matches(cmd -> {
+                    assertThat(cmd.getKey()).isEqualTo("streamKey");
+                    assertThat(cmd.getStart()).isEqualTo("-");
+                    assertThat(cmd.getEnd()).isEqualTo("+");
+                    return true;
+                });
+    }
+
     // Returns null if the command type is null.
     @Test
     public void test_newCommandFromValueUnknownValue() throws IOException {
