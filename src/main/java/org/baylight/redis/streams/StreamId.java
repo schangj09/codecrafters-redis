@@ -5,6 +5,7 @@ import java.util.Objects;
 public class StreamId implements Comparable<StreamId> {
 
     public static final StreamId MIN_ID = new StreamId(0L, 0);
+    public static final StreamId MAX_ID = new StreamId(Long.MAX_VALUE, Integer.MAX_VALUE);
 
     private final long timeId;
     private final int counter;

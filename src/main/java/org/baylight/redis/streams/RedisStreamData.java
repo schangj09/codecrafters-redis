@@ -87,6 +87,9 @@ public class RedisStreamData {
         if (param.equals("-")) {
             return StreamId.MIN_ID;
         }
+        if (param.equals("+")) {
+            return StreamId.MAX_ID;
+        }
         String[] ids = param.split("-");
         long timeId = 0;
         if (ids[0].length() > 0) {
