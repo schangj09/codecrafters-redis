@@ -1,5 +1,7 @@
 package org.baylight.redis.protocol;
 
+import java.util.List;
+
 /**
  * Inteface for RESP protocol values, such as simple string, bulk string, integer values, etc.
  */
@@ -97,4 +99,17 @@ public interface RespValue {
                     ? new RespBulkString(getValueAsString().getBytes())
                     : null;
     }
+
+    public static RespValue array(List<RespValue> values) {
+        return new RespArrayValue(values.toArray(new RespValue[] {}));
+    }
+
+    public static RespValue array(RespValue... values) {
+        return new RespArrayValue(values);
+    }
+
+    public static RespValue simpleString(String value) {
+        return new RespSimpleStringValue(value);
+    }
+
 }

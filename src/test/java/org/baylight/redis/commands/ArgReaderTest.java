@@ -3,6 +3,7 @@ package org.baylight.redis.commands;
 import java.util.Map;
 
 import org.assertj.core.api.WithAssertions;
+import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespInteger;
@@ -28,6 +29,16 @@ class ArgReaderTest implements WithAssertions {
     }
 
     @Test
+    public void testInvalidArgSpec_multipleVar() {
+        String[] argSpec = { ":int", "[c1:var]", "[c2:var]" };
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> new ArgReader("mycmd", argSpec))
+                .withMessage(
+                        "mycmd: invalid spec multiple vararg");
+    }
+
+    @Test
     public void testReadArgsRequired() {
         String[] argSpec = { ":int", "c1:string", "c2" };
         ArgReader reader = new ArgReader("mycmd", argSpec);
@@ -45,6 +56,28 @@ class ArgReaderTest implements WithAssertions {
                         "0", new RespSimpleStringValue("23"),
                         "c1", new RespSimpleStringValue("v1"),
                         "c2", RespConstants.NULL_VALUE));
+    }
+
+    @Test
+    public void testReadArgsVar() {
+        String[] argSpec = { ":int", "[c1:var xx:var]" };
+        ArgReader reader = new ArgReader("mycmd", argSpec);
+        RespValue[] args = {
+                new RespSimpleStringValue("23"),
+                new RespSimpleStringValue("c1"),
+                new RespSimpleStringValue("v1"),
+                new RespSimpleStringValue("c2")
+        };
+        Map<String, RespValue> options = reader.readArgs(args);
+
+        assertThat(options).hasSize(2);
+        assertThat(options).isEqualTo(
+                Map.of(
+                        "0", new RespSimpleStringValue("23"),
+                        "c1", new RespArrayValue(new RespValue[] {
+                                new RespSimpleStringValue("v1"),
+                                new RespSimpleStringValue("c2")
+                        })));
     }
 
     @Test
@@ -212,7 +245,8 @@ class ArgReaderTest implements WithAssertions {
         };
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> reader.readArgs(args))
-                .withMessage("SET: Invalid arg type, expected integer at index 4: RespSimpleStringValue [s=px]");
+                .withMessage(
+                        "SET: Invalid arg type, expected integer at index 4: RespSimpleStringValue [s=px]");
     }
 
 }

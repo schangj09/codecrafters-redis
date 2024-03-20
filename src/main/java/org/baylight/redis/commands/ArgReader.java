@@ -30,6 +30,7 @@ public class ArgReader {
             switch (type) {
             case "int":
             case "string":
+            case "var":
             case null:
                 break;
             default:
@@ -43,6 +44,10 @@ public class ArgReader {
 
         public boolean hasType() {
             return type != null && !type.isEmpty();
+        }
+
+        public boolean isVarArg() {
+            return "var".equals(type);
         }
     }
 
@@ -68,13 +73,26 @@ public class ArgReader {
     }
 
     private void parseArgSpec(String[] argSpec) {
+        boolean foundVarArg = false;
         for (int i = 0; i < argSpec.length; i++) {
             String s = argSpec[i];
             if (s.startsWith("[")) {
                 String[] options = s.substring(1, s.length() - 1).split(" ");
                 Set<GroupArg> group = new HashSet<>();
+                boolean groupHasVarArg = false;
                 for (String option : options) {
-                    group.add(parseGroupArg(option, i));
+                    GroupArg groupArg = parseGroupArg(option, i);
+                    if (groupArg.isVarArg()) {
+                        groupHasVarArg = true;
+                    }
+                    group.add(groupArg);
+                }
+                if (groupHasVarArg && foundVarArg) {
+                    throw new IllegalStateException(
+                            String.format("%s: invalid spec multiple vararg", commandName));
+                }
+                if (groupHasVarArg) {
+                    foundVarArg = true;
                 }
                 optionGroups.put(i, group);
             } else {
@@ -146,10 +164,25 @@ public class ArgReader {
             int i, int j, Arg arg) {
         if (!arg.hasName()) {
             validateArgType(args, i, arg);
-            optionMap.put(String.valueOf(j), args[i]);
+            if (arg.isVarArg()) {
+                List<RespValue> varArgs = new ArrayList<>();
+                for (; i < args.length; i++) {
+                    varArgs.add(args[i]);
+                }
+                optionMap.put(String.valueOf(j), RespValue.array(varArgs));
+            } else {
+                optionMap.put(String.valueOf(j), args[i]);
+            }
         } else {
             validateArgEquals(args, i, arg.name);
-            if (arg.hasType()) {
+            if (arg.isVarArg()) {
+                i++;
+                List<RespValue> varArgs = new ArrayList<>();
+                for (; i < args.length; i++) {
+                    varArgs.add(args[i]);
+                }
+                optionMap.put(arg.name, RespValue.array(varArgs));
+            } else if (arg.hasType()) {
                 i++;
                 if (i >= args.length) {
                     throw new IllegalArgumentException(
