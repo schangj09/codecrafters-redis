@@ -2,7 +2,7 @@ package org.baylight.redis.streams;
 
 import java.util.Objects;
 
-public class StreamId {
+public class StreamId implements Comparable<StreamId> {
 
     public static final StreamId MIN_ID = new StreamId(0L, 0);
 
@@ -52,10 +52,19 @@ public class StreamId {
         return "StreamId [timeId=" + timeId + ", counter=" + counter + "]";
     }
 
+    @Override
+    public int compareTo(StreamId o) {
+        return compare(this, o);
+    }
+
     public static int compare(StreamId o1, StreamId o2) {
         return o1.timeId == o2.timeId
                 ? Integer.compare(o1.counter, o2.counter)
                 : Long.compare(o1.timeId, o2.timeId);
+    }
+
+    public static StreamId of(long timeId, int counter) {
+        return new StreamId(timeId, counter);
     }
 
 }

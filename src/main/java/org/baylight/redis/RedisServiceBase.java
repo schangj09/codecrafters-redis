@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Clock;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,7 @@ import org.baylight.redis.protocol.RespValueParser;
 import org.baylight.redis.streams.IllegalStreamItemIdException;
 import org.baylight.redis.streams.RedisStreamData;
 import org.baylight.redis.streams.StreamId;
+import org.baylight.redis.streams.StreamValue;
 
 public abstract class RedisServiceBase implements ReplicationServiceInfoProvider {
 
@@ -170,9 +172,10 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return storedData.getStreamValue().add(itemId, clock, itemMap);
     }
 
-    public Object xrange(String key, String start, String end) throws IllegalStreamItemIdException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'xrange'");
+    public List<StreamValue> xrange(String key, String start, String end) throws IllegalStreamItemIdException {
+        StoredData storedData = dataStoreMap.computeIfAbsent(key,
+                (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
+        return storedData.getStreamValue().queryRange(start, end);
     }
 
     public void delete(String key) {

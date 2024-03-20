@@ -17,7 +17,8 @@ import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
-
+import org.baylight.redis.streams.StreamId;
+import org.baylight.redis.streams.StreamValue;
 import org.junit.jupiter.api.Test;
 
 public class XrangeCommandTest implements WithAssertions, TestConstants {
@@ -29,7 +30,8 @@ public class XrangeCommandTest implements WithAssertions, TestConstants {
         // given
         RedisServiceBase service = mock(LeaderService.class);
         when(service.xrange(anyString(), anyString(), anyString()))
-                .thenReturn(null);
+                .thenReturn(List.of(new StreamValue(StreamId.MIN_ID,
+                        new RespValue[] { new RespSimpleStringValue("v1") })));
         XrangeCommand command = new XrangeCommand("key", "123-1", "125");
 
         // when

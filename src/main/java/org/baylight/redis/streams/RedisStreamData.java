@@ -2,6 +2,7 @@ package org.baylight.redis.streams;
 
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.baylight.redis.protocol.RespValue;
@@ -73,6 +74,42 @@ public class RedisStreamData {
             throw new IllegalStreamItemIdException(String.format(
                     "ERR The ID specified in XADD is equal or smaller than the target stream top item"));
         }
+    }
+
+    public List<StreamValue> queryRange(String start, String end) throws IllegalStreamItemIdException {
+        StreamId startId = parseForQuery(start, true);
+        StreamId endId = parseForQuery(end, false);
+        List<StreamId> ids = streamIds.range(startId, endId);
+        return ids.stream().map(id -> new StreamValue(id, dataValues.get(id))).toList();
+    }
+
+    private StreamId parseForQuery(String param, boolean isStart) throws IllegalStreamItemIdException {
+        String[] ids = param.split("-");
+        long timeId = 0;
+        if (ids[0].length() > 0) {
+            try {
+                timeId = Long.parseLong(ids[0]);
+            } catch (NumberFormatException e) {
+                throw new IllegalStreamItemIdException(
+                        String.format("ERR: bad query id format: %s", param));
+            }
+        }
+
+        int counter = 0;
+        if (ids.length == 2) {
+            try {
+                counter = Integer.parseInt(ids[1]);
+            } catch (NumberFormatException e) {
+                if (!"*".equals(ids[1])) {
+                    throw new IllegalStreamItemIdException(
+                            String.format("ERR: bad query id sequence format: %s", param));
+                }
+            }
+            return new StreamId(timeId, counter);
+        } else {
+            counter = isStart ? 0 : Integer.MAX_VALUE;
+        }
+        return new StreamId(timeId, counter);
     }
 
     /**
