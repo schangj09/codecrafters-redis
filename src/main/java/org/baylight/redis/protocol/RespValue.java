@@ -100,15 +100,15 @@ public interface RespValue {
                     : null;
     }
 
-    public static RespValue array(List<RespValue> values) {
+    public static RespArrayValue array(List<RespValue> values) {
         return new RespArrayValue(values.toArray(new RespValue[] {}));
     }
 
-    public static RespValue array(RespValue... values) {
+    public static RespArrayValue array(RespValue... values) {
         return new RespArrayValue(values);
     }
 
-    public static RespValue simpleString(String value) {
+    public static RespSimpleStringValue simpleString(String value) {
         return new RespSimpleStringValue(value);
     }
 

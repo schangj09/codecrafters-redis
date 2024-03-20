@@ -3,6 +3,7 @@ package org.baylight.redis.commands;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.protocol.RespArrayValue;
@@ -20,11 +21,10 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsConfigCommand() {
         // given
-        RespArrayValue value = new RespArrayValue(new RespValue[] {
+        RespArrayValue value = RespValue.array(
                 new RespSimpleStringValue("config"),
                 new RespSimpleStringValue("get"),
-                new RespSimpleStringValue("port")
-        });
+                new RespSimpleStringValue("port"));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -48,10 +48,9 @@ public class RedisCommandConstructorTest implements WithAssertions {
         assertThat(command).asInstanceOf(type(PingCommand.class));
 
         // given
-        value = new RespArrayValue(new RespValue[] {
+        value = RespValue.array(
                 new RespSimpleStringValue("PinG"),
-                new RespSimpleStringValue("command")
-        });
+                new RespSimpleStringValue("command"));
         // when
         command = new RedisCommandConstructor().newCommandFromValue(value);
         // then
@@ -69,10 +68,9 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsEchoCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("echo"),
-                new RespSimpleStringValue("command")
-        });
+                new RespSimpleStringValue("command"));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -88,9 +86,8 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsInfoCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
-                new RespSimpleStringValue("info")
-        });
+        RespValue value = RespValue.array(
+                new RespSimpleStringValue("info"));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -103,10 +100,9 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsKeysCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("keys"),
-                new RespSimpleStringValue("*")
-        });
+                new RespSimpleStringValue("*"));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -119,10 +115,9 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsPsyncCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("psync"),
-                new RespSimpleStringValue("?"), new RespInteger(-1L)
-        });
+                new RespSimpleStringValue("?"), new RespInteger(-1L));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -137,11 +132,10 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsReplConfCommand() {
         // given
-        RespArrayValue value = new RespArrayValue(new RespValue[] {
+        RespArrayValue value = RespValue.array(
                 new RespSimpleStringValue("replconf"),
                 new RespSimpleStringValue("listening-port"),
-                new RespInteger(123L)
-        });
+                new RespInteger(123L));
         value.setContext(new RespValueContext(START_OFFSET, 21));
 
         // when
@@ -158,10 +152,9 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsGetCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("get"),
-                new RespSimpleStringValue("happy")
-        });
+                new RespSimpleStringValue("happy"));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -179,11 +172,10 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsSetCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("SET"),
                 new RespSimpleStringValue("happy"),
-                new RespBulkString("face".getBytes())
-        });
+                new RespBulkString("face".getBytes()));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -201,10 +193,9 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsTypeCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("type"),
-                new RespSimpleStringValue("happy")
-        });
+                new RespSimpleStringValue("happy"));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -222,11 +213,10 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsWaitCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("WAIT"),
                 new RespSimpleStringValue("3"),
-                new RespBulkString("456".getBytes())
-        });
+                new RespBulkString("456".getBytes()));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -244,15 +234,14 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsXaddCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("XADD"),
                 new RespSimpleStringValue("streamKey"),
                 new RespSimpleStringValue("*"),
                 new RespBulkString("key1".getBytes()),
                 new RespBulkString("value1".getBytes()),
                 new RespBulkString("key2".getBytes()),
-                new RespBulkString("value2".getBytes())
-        });
+                new RespBulkString("value2".getBytes()));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -270,12 +259,11 @@ public class RedisCommandConstructorTest implements WithAssertions {
     @Test
     public void test_newCommandFromValue_returnsXrangeCommand() {
         // given
-        RespValue value = new RespArrayValue(new RespValue[] {
+        RespValue value = RespValue.array(
                 new RespSimpleStringValue("XRANGE"),
                 new RespSimpleStringValue("streamKey"),
                 new RespSimpleStringValue("-"),
-                new RespSimpleStringValue("+")
-        });
+                new RespSimpleStringValue("+"));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -286,6 +274,29 @@ public class RedisCommandConstructorTest implements WithAssertions {
                     assertThat(cmd.getKey()).isEqualTo("streamKey");
                     assertThat(cmd.getStart()).isEqualTo("-");
                     assertThat(cmd.getEnd()).isEqualTo("+");
+                    return true;
+                });
+    }
+
+    // Constructs a Xread command.
+    @Test
+    public void test_newCommandFromValue_returnsXreadCommand() {
+        // given
+        RespValue value = RespValue.array(
+                new RespSimpleStringValue("XREAD"),
+                new RespSimpleStringValue("streams"),
+                new RespSimpleStringValue("streamKey"),
+                new RespSimpleStringValue("9-1"));
+
+        // when
+        RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
+
+        // then
+        assertThat(actualCommand).asInstanceOf(type(XreadCommand.class))
+                .matches(cmd -> {
+                    assertThat(cmd.getKeys()).isEqualTo(List.of("streamKey"));
+                    assertThat(cmd.getStartValues()).isEqualTo(List.of("9-1"));
+                    assertThat(cmd.getTimeoutMillis()).isNull();
                     return true;
                 });
     }
@@ -303,18 +314,16 @@ public class RedisCommandConstructorTest implements WithAssertions {
         assertThat(command).isNull();
 
         // given
-        value = new RespArrayValue(new RespValue[] {
+        value = RespValue.array(
                 new RespBulkString("nocommand".getBytes()),
-                new RespSimpleStringValue("command")
-        });
+                new RespSimpleStringValue("command"));
         // when
         command = new RedisCommandConstructor().newCommandFromValue(value);
         // then
         assertThat(command).isNull();
 
         // given
-        value = new RespArrayValue(
-                new RespValue[] { new RespInteger(123L), new RespSimpleStringValue("ping") });
+        value = RespValue.array(new RespInteger(123L), new RespSimpleStringValue("ping"));
         // when
         command = new RedisCommandConstructor().newCommandFromValue(value);
         // then
