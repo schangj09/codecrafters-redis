@@ -155,6 +155,31 @@ public class RedisStreamDataTest implements WithAssertions, TestConstants {
     }
 
     @Test
+    void testQueryFromStart() throws Exception {
+        RedisStreamData data = new RedisStreamData("test");
+        data.add("0-*", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval0") });
+        data.add("9-1", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval1") });
+        data.add("10-1", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval2") });
+        data.add("10-2", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval3") });
+        data.add("11-1", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval4") });
+
+        assertThat(data.queryRange("-", "10")).isEqualTo(List.of(
+                new StreamValue(StreamId.of(0, 1),
+                        new RespValue[] { new RespSimpleStringValue("testval0") }),
+                new StreamValue(StreamId.of(9, 1),
+                        new RespValue[] { new RespSimpleStringValue("testval1") }),
+                new StreamValue(StreamId.of(10, 1),
+                        new RespValue[] { new RespSimpleStringValue("testval2") }),
+                new StreamValue(StreamId.of(10, 2),
+                        new RespValue[] { new RespSimpleStringValue("testval3") })));
+    }
+
+    @Test
     void testQueryBadIdFormat_throwsException() {
         RedisStreamData data = new RedisStreamData("test");
         assertThatExceptionOfType(IllegalStreamItemIdException.class)

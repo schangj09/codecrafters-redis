@@ -84,6 +84,9 @@ public class RedisStreamData {
     }
 
     private StreamId parseForQuery(String param, boolean isStart) throws IllegalStreamItemIdException {
+        if (param.equals("-")) {
+            return StreamId.MIN_ID;
+        }
         String[] ids = param.split("-");
         long timeId = 0;
         if (ids[0].length() > 0) {

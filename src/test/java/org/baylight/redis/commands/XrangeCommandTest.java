@@ -13,7 +13,6 @@ import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.LeaderService;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.TestConstants;
-import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
