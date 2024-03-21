@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -172,16 +173,29 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return storedData.getStreamValue().add(itemId, clock, itemMap);
     }
 
-    public List<StreamValue> xrange(String key, String start, String end) throws IllegalStreamItemIdException {
+    public List<StreamValue> xrange(String key, String start, String end)
+            throws IllegalStreamItemIdException {
         StoredData storedData = dataStoreMap.computeIfAbsent(key,
                 (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
         return storedData.getStreamValue().queryRange(start, end);
     }
 
-    public List<List<StreamValue>> xread(List<String> keys, List<String> startValues,
-            Long timeoutMillis) throws IllegalStreamItemIdException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'xread'");
+    public List<List<StreamValue>> xread(
+            List<String> keys, List<String> startValues, Long timeoutMillis)
+            throws IllegalStreamItemIdException {
+        List<List<StreamValue>> result = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            StoredData storedData = dataStoreMap.computeIfAbsent(key,
+                    (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
+
+            StreamId startId = StreamId.parse(startValues.get(i));
+            int count = RedisStreamData.MAX_READ_COUNT;
+            List<StreamValue> values = storedData.getStreamValue().readNextValues(count, startId,
+                    timeoutMillis);
+            result.add(values);
+        }
+        return result;
     }
 
     public void delete(String key) {

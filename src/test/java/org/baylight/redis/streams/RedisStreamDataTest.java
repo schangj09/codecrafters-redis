@@ -229,4 +229,27 @@ public class RedisStreamDataTest implements WithAssertions, TestConstants {
                 .withMessage("ERR: bad query id sequence format: 10-2a");
     }
 
+    @Test
+    void testReadNextValuesFromFixed() throws Exception {
+        RedisStreamData data = new RedisStreamData("test");
+        data.add("0-*", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval0") });
+        data.add("9-1", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval1") });
+        data.add("10-0", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval2") });
+        data.add("10-1", FIXED_CLOCK,
+                new RespValue[] { new RespSimpleStringValue("testval3") });
+
+        assertThat(data.readNextValues(5, StreamId.of(9, 1), null)).isEqualTo(
+                List.of(
+                        new StreamValue(
+                                StreamId.of(10, 0),
+                                new RespValue[] { new RespSimpleStringValue("testval2") }),
+                        new StreamValue(
+                                StreamId.of(10, 1),
+                                new RespValue[] { new RespSimpleStringValue("testval3") })));
+        assertThat(data.readNextValues(5, StreamId.of(10, 1), null)).isEmpty();
+    }
+
 }

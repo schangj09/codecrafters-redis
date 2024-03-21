@@ -100,7 +100,7 @@ public interface RespValue {
                     : null;
     }
 
-    public static RespArrayValue array(List<RespValue> values) {
+    public static RespArrayValue array(List<? extends RespValue> values) {
         return new RespArrayValue(values.toArray(new RespValue[] {}));
     }
 

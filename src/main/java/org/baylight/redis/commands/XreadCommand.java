@@ -7,7 +7,6 @@ import java.util.Map;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
-import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleErrorValue;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.streams.IllegalStreamItemIdException;
@@ -36,8 +35,21 @@ public class XreadCommand extends RedisCommand {
     public byte[] execute(RedisServiceBase service) {
         try {
             List<List<StreamValue>> result = service.xread(keys, startValues, timeoutMillis);
-            return RespConstants.NULL;
-        } catch (IllegalStreamItemIdException e) {
+            List<List<RespValue>> resultResp = new ArrayList<>();
+            for (int i = 0; i < keys.size(); i++) {
+                List<StreamValue> values = result.get(i);
+                List<RespValue> respValuesForKey = new ArrayList<>();
+                respValuesForKey.add(RespValue.simpleString(keys.get(i)));
+                respValuesForKey.add(RespValue.array(values.stream()
+                        .map(StreamValue::asRespArrayValue).toArray(RespArrayValue[]::new)));
+                resultResp.add(respValuesForKey);
+            }
+            return RespValue.array(
+                    resultResp.stream().map(RespValue::array).toArray(RespValue[]::new))
+                    .asResponse();
+        } catch (
+
+        IllegalStreamItemIdException e) {
             return new RespSimpleErrorValue(e.getMessage()).asResponse();
         }
     }

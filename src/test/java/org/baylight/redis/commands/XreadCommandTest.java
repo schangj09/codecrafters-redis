@@ -1,7 +1,7 @@
 package org.baylight.redis.commands;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -15,9 +15,10 @@ import org.baylight.redis.LeaderService;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.TestConstants;
 import org.baylight.redis.protocol.RespBulkString;
-import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
+import org.baylight.redis.streams.StreamId;
+import org.baylight.redis.streams.StreamValue;
 import org.junit.jupiter.api.Test;
 
 public class XreadCommandTest implements WithAssertions, TestConstants {
@@ -28,16 +29,21 @@ public class XreadCommandTest implements WithAssertions, TestConstants {
     public void test_validKeyProvided_executeMethodShouldReturnValue() throws Exception {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        when(service.xread(anyList(), anyList(), anyLong()))
-                .thenReturn(new ArrayList<>());
-        XreadCommand command = new XreadCommand(List.of("key"), List.of("123-*"), null);
+        when(service.xread(anyList(), anyList(), any()))
+                .thenReturn(
+                        List.of(
+                                List.of(new StreamValue(StreamId.of(0, 1), new RespValue[] {})),
+                                List.of(new StreamValue(StreamId.of(1, 1), new RespValue[] {}))));
+        XreadCommand command = new XreadCommand(List.of("key", "k2"), List.of("123-*", "0-0"),
+                null);
 
         // when
         byte[] result = command.execute(service);
 
         // then
-        assertThat(result).isEqualTo(RespConstants.NULL);
-        verify(service).xread(List.of("key"), List.of("123-*"), null);
+        String expected = encodeResponse("*2\r\n*2\r\n+key\r\n*1\r\n*2\r\n$3\r\n0-1\r\n*0\r\n*2\r\n+k2\r\n*1\r\n*2\r\n$3\r\n1-1\r\n*0\r\n");
+        assertThat(encodeResponse(result)).isEqualTo(expected);
+        verify(service).xread(List.of("key", "k2"), List.of("123-*", "0-0"), null);
         verifyNoMoreInteractions(service);
     }
 

@@ -68,4 +68,17 @@ public class StreamId implements Comparable<StreamId> {
         return new StreamId(timeId, counter);
     }
 
+    public static StreamId parse(String s) throws IllegalStreamItemIdException {
+        try {
+            if (s.contains("-")) {
+                String[] split = s.split("-");
+                return of(Long.parseLong(split[0]), Integer.parseInt(split[1]));
+            } else {
+                return of(Long.parseLong(s), 0);
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalStreamItemIdException("Invalid stream id: " + s);
+        }
+    }
+
 }

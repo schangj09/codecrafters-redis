@@ -1,6 +1,7 @@
 package org.baylight.redis.streams;
 
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map;
 import org.baylight.redis.protocol.RespValue;
 
 public class RedisStreamData {
+    public static final int MAX_READ_COUNT = 100;
     private final String streamKey;
     private final OrderedArrayList<StreamId> streamIds = new OrderedArrayList<>();
     private final Map<StreamId, RespValue[]> dataValues = new HashMap<>();
@@ -16,7 +18,7 @@ public class RedisStreamData {
         this.streamKey = streamKey;
     }
 
-    public synchronized StreamId add(String itemId, Clock clock, RespValue[] values)
+    public StreamId add(String itemId, Clock clock, RespValue[] values)
             throws IllegalStreamItemIdException {
         StreamId streamId;
         String[] ids = itemId.split("-");
@@ -61,7 +63,6 @@ public class RedisStreamData {
         validateStreamIdMinimum(streamId);
         streamIds.add(streamId);
         dataValues.put(streamId, values);
-        notifyAll();
         return streamId;
     }
 
@@ -76,14 +77,35 @@ public class RedisStreamData {
         }
     }
 
-    public List<StreamValue> queryRange(String start, String end) throws IllegalStreamItemIdException {
+    public List<StreamValue> readNextValues(int count, StreamId startId, Long timeoutMillis) {
+        count = Math.min(count, MAX_READ_COUNT);
+        if (count == 0) {
+            return List.of();
+        }
+        int index = streamIds.find(startId);
+        if (index < 0) {
+            return List.of();
+        }
+        List<StreamValue> values = new ArrayList<>();
+        int end = index + count;
+        for (int i = index; i < end && i < streamIds.size() - 1; i++) {
+            StreamId nextId = streamIds.get(i + 1);
+            StreamValue value = new StreamValue(nextId, dataValues.get(nextId));
+            values.add(value);
+        }
+        return values;
+    }
+
+    public List<StreamValue> queryRange(String start, String end)
+            throws IllegalStreamItemIdException {
         StreamId startId = parseForQuery(start, true);
         StreamId endId = parseForQuery(end, false);
         List<StreamId> ids = streamIds.range(startId, endId);
         return ids.stream().map(id -> new StreamValue(id, dataValues.get(id))).toList();
     }
 
-    private StreamId parseForQuery(String param, boolean isStart) throws IllegalStreamItemIdException {
+    private StreamId parseForQuery(String param, boolean isStart)
+            throws IllegalStreamItemIdException {
         if (param.equals("-")) {
             return StreamId.MIN_ID;
         }
@@ -111,11 +133,11 @@ public class RedisStreamData {
                             String.format("ERR: bad query id sequence format: %s", param));
                 }
             }
-            return new StreamId(timeId, counter);
+            return StreamId.of(timeId, counter);
         } else {
             counter = isStart ? 0 : Integer.MAX_VALUE;
         }
-        return new StreamId(timeId, counter);
+        return StreamId.of(timeId, counter);
     }
 
     /**
