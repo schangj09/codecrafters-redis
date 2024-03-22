@@ -2,12 +2,34 @@ package org.baylight.redis.streams;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
-public class OrderedArrayList<T extends Comparable<T>>  extends ArrayList<T> {
-    int find(T val) {
-        // could use binary search, but for now just indexOf
-        return indexOf(val);
+public class OrderedArrayList<T extends Comparable<T>> extends ArrayList<T> {
+
+    // get the index of the next item - this is the left most item which is greater than val
+    // returns 0 if val is smaller than all items and returns size() if val is
+    // greater than all items
+    int findNext(T val) {
+        if (size() == 0 || val.compareTo(get(0)) < 0) {
+            return 0;
+        }
+        if (val.compareTo(last()) >= 0) {
+            return size();
+        }
+        return find(0, size(), i -> get(i).compareTo(val) > 0);
+    }
+
+    // get the left most index of the value that matches the condition
+    static int find(int left, int right, Function<Integer, Boolean> matchCondition) {
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (matchCondition.apply(mid)) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        return left;
     }
 
     T last() {
@@ -15,9 +37,9 @@ public class OrderedArrayList<T extends Comparable<T>>  extends ArrayList<T> {
     }
 
     public List<T> range(T startId, T endId) {
-        // could use binary search, but for now just scan the array
-        return stream().filter(id -> id.compareTo(startId) >= 0 && id.compareTo(endId) <= 0)
-                .collect(Collectors.toList());
+        int i = find(0, size(), m -> get(m).compareTo(startId) >= 0);
+        int j = findNext(endId);
+        return subList(i, j);
     }
 
 }

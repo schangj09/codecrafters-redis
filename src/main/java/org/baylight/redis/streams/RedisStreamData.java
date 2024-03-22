@@ -82,14 +82,14 @@ public class RedisStreamData {
         if (count == 0) {
             return List.of();
         }
-        int index = streamIds.find(startId);
-        if (index < 0) {
+        int index = streamIds.findNext(startId);
+        if (index == streamIds.size()) {
             return List.of();
         }
         List<StreamValue> values = new ArrayList<>();
         int end = index + count;
-        for (int i = index; i < end && i < streamIds.size() - 1; i++) {
-            StreamId nextId = streamIds.get(i + 1);
+        for (int i = index; i < end && i < streamIds.size(); i++) {
+            StreamId nextId = streamIds.get(i);
             StreamValue value = new StreamValue(nextId, dataValues.get(nextId));
             values.add(value);
         }

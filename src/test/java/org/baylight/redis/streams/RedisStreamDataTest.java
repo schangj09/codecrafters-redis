@@ -236,6 +236,15 @@ public class RedisStreamDataTest implements WithAssertions, TestConstants {
                 new RespValue[] { new RespSimpleStringValue("testval0") });
         data.add("9-1", FIXED_CLOCK,
                 new RespValue[] { new RespSimpleStringValue("testval1") });
+        assertThat(data.readNextValues(5, StreamId.MIN_ID, null)).isEqualTo(
+                List.of(
+                        new StreamValue(
+                                StreamId.of(0, 1),
+                                new RespValue[] { new RespSimpleStringValue("testval0") }),
+                        new StreamValue(
+                                StreamId.of(9, 1),
+                                new RespValue[] { new RespSimpleStringValue("testval1") })));
+
         data.add("10-0", FIXED_CLOCK,
                 new RespValue[] { new RespSimpleStringValue("testval2") });
         data.add("10-1", FIXED_CLOCK,
