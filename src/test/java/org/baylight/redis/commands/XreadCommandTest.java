@@ -55,7 +55,9 @@ public class XreadCommandTest implements WithAssertions, TestConstants {
                 new RespSimpleStringValue("XREAD"),
                 new RespBulkString("streams".getBytes()),
                 new RespBulkString("key".getBytes()),
-                new RespBulkString("itemId".getBytes())
+                new RespBulkString("key2".getBytes()),
+                new RespBulkString("itemId".getBytes()),
+                new RespBulkString("itemId2".getBytes())
         };
         XreadCommand command = new XreadCommand();
 
@@ -63,8 +65,8 @@ public class XreadCommandTest implements WithAssertions, TestConstants {
         command.setArgs(args);
 
         // then
-        assertThat(command.getKeys()).isEqualTo(List.of("key"));
-        assertThat(command.getStartValues()).isEqualTo(List.of("itemId"));
+        assertThat(command.getKeys()).isEqualTo(List.of("key", "key2"));
+        assertThat(command.getStartValues()).isEqualTo(List.of("itemId", "itemId2"));
         assertThat(command.getTimeoutMillis()).isNull();
     }
 

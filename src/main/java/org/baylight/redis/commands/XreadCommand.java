@@ -83,9 +83,10 @@ public class XreadCommand extends RedisCommand {
                 throw new IllegalArgumentException(
                         String.format("%s: Invalid number of streams pairs", type.name()));
             }
-            for (int i = 0; i < valuesArray.length; i += 2) {
+            int n = valuesArray.length / 2;
+            for (int i = 0; i < n; i++) {
                 keys.add(valuesArray[i].getValueAsString());
-                startValues.add(valuesArray[i + 1].getValueAsString());
+                startValues.add(valuesArray[n + i].getValueAsString());
             }
         }
     }
