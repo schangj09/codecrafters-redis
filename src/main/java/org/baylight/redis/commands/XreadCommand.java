@@ -80,7 +80,7 @@ public class XreadCommand extends RedisCommand {
     @Override
     protected void setArgs(RespValue[] args) {
         ArgReader argReader = new ArgReader(type.name(), new String[] { ":string", // command name
-                "[block:string]",
+                "[block:int]",
                 "[streams:var]" // streams key with variable args after it
         });
         Map<String, RespValue> optionsMap = argReader.readArgs(args);

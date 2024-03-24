@@ -194,7 +194,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         Map<String, StreamId> startIds = new HashMap<>();
         int i = 0;
         for (String s : keys) {
-            startIds.put(s, StreamId.parse(startValues.get(i++)));
+            startIds.put(s, streams.get(s).getStreamIdForRead(startValues.get(i++)));
         }
         Map<String, List<StreamValue>> values = StreamsWaitManager.INSTANCE.readWithWait(streams,
                 startIds, 0, clock, timeoutMillis == null ? 1L : timeoutMillis);

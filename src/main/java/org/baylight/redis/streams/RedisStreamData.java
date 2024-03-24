@@ -149,6 +149,10 @@ public class RedisStreamData {
         return streamKey;
     }
 
+    public StreamId getStreamIdForRead(String id) throws IllegalStreamItemIdException {
+        return "$".equals(id) ? streamIds.getLast() : StreamId.parse(id);
+    }
+
     /**
      * @return the data for a stream id
      */
