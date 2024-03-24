@@ -15,6 +15,7 @@ import org.baylight.redis.LeaderService;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.TestConstants;
 import org.baylight.redis.protocol.RespBulkString;
+import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.streams.StreamId;
@@ -41,9 +42,30 @@ public class XreadCommandTest implements WithAssertions, TestConstants {
         byte[] result = command.execute(service);
 
         // then
-        String expected = encodeResponse("*2\r\n*2\r\n+key\r\n*1\r\n*2\r\n$3\r\n0-1\r\n*0\r\n*2\r\n+k2\r\n*1\r\n*2\r\n$3\r\n1-1\r\n*0\r\n");
+        String expected = encodeResponse(
+                "*2\r\n*2\r\n+key\r\n*1\r\n*2\r\n$3\r\n0-1\r\n*0\r\n*2\r\n+k2\r\n*1\r\n*2\r\n$3\r\n1-1\r\n*0\r\n");
         assertThat(encodeResponse(result)).isEqualTo(expected);
         verify(service).xread(List.of("key", "k2"), List.of("123-*", "0-0"), null);
+        verifyNoMoreInteractions(service);
+    }
+
+    // When a timeout is provided, the execute method should return NULL in case of no results
+    @Test
+    public void test_validKeyProvided_executeMethodReturnsNullForTimeout() throws Exception {
+        // given
+        RedisServiceBase service = mock(LeaderService.class);
+        when(service.xread(anyList(), anyList(), any()))
+                .thenReturn(List.of(List.of(), List.of()));
+        XreadCommand command = new XreadCommand(List.of("key", "k2"), List.of("123-*", "0-0"),
+                1L);
+
+        // when
+        byte[] result = command.execute(service);
+
+        // then
+        String expected = encodeResponse(RespConstants.NULL);
+        assertThat(encodeResponse(result)).isEqualTo(expected);
+        verify(service).xread(List.of("key", "k2"), List.of("123-*", "0-0"), 1L);
         verifyNoMoreInteractions(service);
     }
 

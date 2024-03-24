@@ -3,10 +3,12 @@ package org.baylight.redis.commands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
+import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleErrorValue;
 import org.baylight.redis.protocol.RespValue;
 import org.baylight.redis.streams.IllegalStreamItemIdException;
@@ -40,6 +42,13 @@ public class XreadCommand extends RedisCommand {
     public byte[] execute(RedisServiceBase service) {
         try {
             List<List<StreamValue>> result = service.xread(keys, startValues, timeoutMillis);
+            if (timeoutMillis != null) {
+                // special case if there are no results and timeout was specified, then we need to
+                // return null instead of the empty lists
+                if (result.stream().collect(Collectors.summingInt(List::size)) == 0) {
+                    return RespConstants.NULL;
+                }
+            }
             List<List<RespValue>> resultResp = new ArrayList<>();
             for (int i = 0; i < keys.size(); i++) {
                 List<StreamValue> values = result.get(i);
