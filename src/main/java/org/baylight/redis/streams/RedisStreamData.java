@@ -63,6 +63,8 @@ public class RedisStreamData {
         validateStreamIdMinimum(streamId);
         streamIds.add(streamId);
         dataValues.put(streamId, values);
+        // notify waiters if any
+        StreamsWaitManager.INSTANCE.addNotify(streamKey);
         return streamId;
     }
 
@@ -77,7 +79,7 @@ public class RedisStreamData {
         }
     }
 
-    public List<StreamValue> readNextValues(int count, StreamId startId, Long timeoutMillis) {
+    public List<StreamValue> readNextValues(int count, StreamId startId) {
         count = Math.min(count, MAX_READ_COUNT);
         if (count == 0) {
             return List.of();

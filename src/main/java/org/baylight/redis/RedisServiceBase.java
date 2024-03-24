@@ -5,14 +5,15 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.commands.RedisCommandConstructor;
@@ -24,6 +25,7 @@ import org.baylight.redis.streams.IllegalStreamItemIdException;
 import org.baylight.redis.streams.RedisStreamData;
 import org.baylight.redis.streams.StreamId;
 import org.baylight.redis.streams.StreamValue;
+import org.baylight.redis.streams.StreamsWaitManager;
 
 public abstract class RedisServiceBase implements ReplicationServiceInfoProvider {
 
@@ -183,19 +185,20 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     public List<List<StreamValue>> xread(
             List<String> keys, List<String> startValues, Long timeoutMillis)
             throws IllegalStreamItemIdException {
-        List<List<StreamValue>> result = new ArrayList<>();
-        for (int i = 0; i < keys.size(); i++) {
-            String key = keys.get(i);
-            StoredData storedData = dataStoreMap.computeIfAbsent(key,
-                    (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null));
-
-            StreamId startId = StreamId.parse(startValues.get(i));
-            int count = RedisStreamData.MAX_READ_COUNT;
-            List<StreamValue> values = storedData.getStreamValue().readNextValues(count, startId,
-                    timeoutMillis);
-            result.add(values);
+        Map<String, RedisStreamData> streams = keys.stream()
+                .collect(Collectors.toMap(
+                        s -> s,
+                        s -> dataStoreMap.computeIfAbsent(s,
+                                (k) -> new StoredData(new RedisStreamData(k), clock.millis(), null))
+                                .getStreamValue()));
+        Map<String, StreamId> startIds = new HashMap<>();
+        int i = 0;
+        for (String s : keys) {
+            startIds.put(s, StreamId.parse(startValues.get(i++)));
         }
-        return result;
+        Map<String, List<StreamValue>> values = StreamsWaitManager.INSTANCE.readWithWait(streams,
+                startIds, 0, clock, timeoutMillis == null ? 1L : timeoutMillis);
+        return keys.stream().map(values::get).toList();
     }
 
     public void delete(String key) {

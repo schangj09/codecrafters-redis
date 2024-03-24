@@ -236,7 +236,7 @@ public class RedisStreamDataTest implements WithAssertions, TestConstants {
                 new RespValue[] { new RespSimpleStringValue("testval0") });
         data.add("9-1", FIXED_CLOCK,
                 new RespValue[] { new RespSimpleStringValue("testval1") });
-        assertThat(data.readNextValues(5, StreamId.MIN_ID, null)).isEqualTo(
+        assertThat(data.readNextValues(5, StreamId.MIN_ID)).isEqualTo(
                 List.of(
                         new StreamValue(
                                 StreamId.of(0, 1),
@@ -250,7 +250,7 @@ public class RedisStreamDataTest implements WithAssertions, TestConstants {
         data.add("10-1", FIXED_CLOCK,
                 new RespValue[] { new RespSimpleStringValue("testval3") });
 
-        assertThat(data.readNextValues(5, StreamId.of(9, 1), null)).isEqualTo(
+        assertThat(data.readNextValues(5, StreamId.of(9, 1))).isEqualTo(
                 List.of(
                         new StreamValue(
                                 StreamId.of(10, 0),
@@ -258,7 +258,7 @@ public class RedisStreamDataTest implements WithAssertions, TestConstants {
                         new StreamValue(
                                 StreamId.of(10, 1),
                                 new RespValue[] { new RespSimpleStringValue("testval3") })));
-        assertThat(data.readNextValues(5, StreamId.of(10, 1), null)).isEmpty();
+        assertThat(data.readNextValues(5, StreamId.of(10, 1))).isEmpty();
     }
 
 }
