@@ -32,6 +32,11 @@ public class XreadCommand extends RedisCommand {
     }
 
     @Override
+    public boolean isBlockingCommand() {
+        return timeoutMillis != null;
+    }
+
+    @Override
     public byte[] execute(RedisServiceBase service) {
         try {
             List<List<StreamValue>> result = service.xread(keys, startValues, timeoutMillis);
