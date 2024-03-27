@@ -1,5 +1,6 @@
 # Java Redis Service
-## By Jeffrey Schang
+
+### By Jeffrey Schang
 
 [![progress-banner](resources/diagram1.png)](resources/diagram1.png)
 
@@ -7,36 +8,40 @@
 
 In this challenge, I have used the [codecrafters.io](https://app.codecrafters.io) platform to build a Redis clone step by step with some of the functionality of Redis. The base challenge includes implementing several basic commands like `PING` , `SET` and `GET` , and expiring keys. Along the way I've crafted (and refactored) the event loop, services, Redis serialization and more.
 
-**Note**: If you want to see more details  about the stages and how to do it yourself, head over to
-[codecrafters.io](https://codecrafters.io) to try for yourself.
+**Note**: If you want to see more details about the stages and how codecrafters works, check out
+[codecrafters.io](https://app.codecrafters.io/courses/redis/overview).
 
-# Stages of development
+## Stages of Development
 
-## Base stage
+### Base stage
 
-The basic steps include setting up a server TCP connection which accepts incoming connections, handle basic commands and responses on those, then adding support for multiple clients.
+The basic steps include setting up a server TCP connection which accepts incoming connections, handles basic commands and responses on those connections. Afterwards, I added support for multiple clients.
 
 For example, in Java the [ServerSocket.accept](https://docs.oracle.com/javase/8/docs/api/java/net/ServerSocket.html#accept--) method blocks while waiting. In [this commit](https://github.com/schangj09/codecrafters-redis/commit/dd7eeb89a771a7497328a17a1ad4caf67ef713fc), I created a separate thread for waiting on new connections and refactored the processing loop into a separate class that can process commands and send responses.
 
 I implemented a class hirearchy to represent the data types of the Resp protocol. And a separate hirearchy to represent the commands of the Redis protocol.
 
-## Extensions - Replication
+### Extensions - Replication
 
-In this extension, I've added support for running the instance as a replication "follower" servicer. This includes handling a handshake protocol for starting up the replication service as well as ACK responses from the follower to the leader.
+In the replication extension, I've added support for running the instance as a replication "follower" service. This includes implementing a handshake protocol while starting up the replication service, as well as sending ACK responses from the follower to the leader.
 
-The final stages of replication added the WAIT command, which blocks until getting responses from replication servers. However, the blocking command uncovered a significant flaw in my original design, that required a fair amount of refactoring. I had originally designed the event loop in the main thread to handle one command at a time. So, a blocking call meant that the main thread couldn't read the ACK responses from the connected replication servers.
+In the final stages of replication, I added the WAIT command, which blocks until getting responses from replication servers. However, the blocking command uncovered an issue in my original design, that required a fair amount of refactoring.
 
-I solved this by refactoring the EventLoop to separate reading new commands from the input stream into a separate thread for reading with a shared queue of input values. Then the command loop polls the input queue instead of reading directly from the input stream. This cahnges was also essential to support blocking reads in the last extension for [Streams](#extensions---streams).
+For this stage, I refactored the EventLoop to make a separate thread for reading commands from the input stream and save them into a queue for processing. Then the command loop polls the input queue instead of reading directly from the input stream. These changes were also essential to support blocking reads in the last extension for [Streams](#extensions---streams).
 
-## Extensions - RDB
+### Extensions - RDB
 
-This extension provides steps to implement reading the input state from a file in the Redis RDB format. It adds support for the command line options `--dbfilename` and `--dir` . This challenge includes parsing the input file and initializing the in-memory data map with stored values and expiration timestamps.
+This extension provides steps to implement reading the input state from a file in the [Redis RDB file format](https://rdb.fnordig.de/file_format.html). This challenge includes parsing the input file and initializing the in-memory data map with stored values and expiration timestamps. I added support for the command line options `--dbfilename` and `--dir` and
 
-## Extensions - Streams
+I wrote the classes and unit tests for reading encoded binary data from the RDB file format. [`EncodedValue`](src/main/java/org/baylight/redis/rdb/EncodedValue.java) provides the decoding for a number or special format value. [`RdbFileParser`](src/main/java/org/baylight/redis/rdb/RdbFileParser.java) has methods to read the sections of the file.
+
+### Extensions - Streams
 
 This extension adds support for `XADD` , `XRANGE` and `XREAD` with blocking. The primary challenges included blocking on read and supporting multiple streams with auto incrementing ids.
 
-# Structure
+[`StreamsWaitManager`](src/main/java/org/baylight/redis/streams/StreamsWaitManager.java) is a singleton instance class that enables a read command to wait on multiple streams. The reading thread will block on a special lock that is created just for that XREAD command. Then when an item is added to any stream via XADD, then any locks that exist for that stream are notified to unblock the waiting XREAD command.
+
+## Code Structure
 
 The entry point for the Redis implementation is in [`Main`](src/main/java/Main.java).
 
