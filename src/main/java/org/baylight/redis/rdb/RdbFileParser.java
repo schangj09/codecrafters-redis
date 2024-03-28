@@ -38,7 +38,7 @@ public class RdbFileParser {
                 || nextCode == OpCode.EXPIRETIME
                 || nextCode == OpCode.EXPIRETIMEMS) {
             System.out
-                    .println("Next code at file index: " + nextCode + " " + reader.file.readCount);
+                    .println(STR."Next code at file index: \{nextCode} \{reader.file.readCount}");
             Long expiryTime = null;
             if (nextCode == OpCode.EXPIRETIME) {
                 // read 4 bytes for expiry time in seconds
