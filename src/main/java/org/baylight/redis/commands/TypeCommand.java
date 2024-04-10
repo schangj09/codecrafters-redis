@@ -11,6 +11,12 @@ import org.baylight.redis.protocol.RespValue;
  * responsible for setting the command arguments and executing the command.
  */
 public class TypeCommand extends RedisCommand {
+
+    private static ArgReader ARG_READER = new ArgReader(Type.TYPE.name(), new String[] {
+            ":string", // command name
+            ":string" // key
+    });
+
     private RespBulkString key;
 
     /**
@@ -47,10 +53,7 @@ public class TypeCommand extends RedisCommand {
      */
     @Override
     public void setArgs(RespValue[] args) {
-        ArgReader argReader = new ArgReader(type.name(), new String[] { ":string", // command name
-                ":string" // key
-        });
-        Map<String, RespValue> optionsMap = argReader.readArgs(args);
+        Map<String, RespValue> optionsMap = ARG_READER.readArgs(args);
         this.key = optionsMap.get("1").asBulkString();
     }
 

@@ -15,6 +15,13 @@ import org.baylight.redis.streams.IllegalStreamItemIdException;
 import org.baylight.redis.streams.StreamValue;
 
 public class XreadCommand extends RedisCommand {
+
+    private static ArgReader ARG_READER = new ArgReader(Type.XREAD.name(), new String[] {
+            ":string", // command name
+            "[block:int]", // blocking milliseconds
+            "[streams:var]" // streams key with variable args after it
+    });
+
     private List<String> keys;
     private List<String> startValues;
     private Long timeoutMillis;
@@ -79,11 +86,7 @@ public class XreadCommand extends RedisCommand {
 
     @Override
     protected void setArgs(RespValue[] args) {
-        ArgReader argReader = new ArgReader(type.name(), new String[] { ":string", // command name
-                "[block:int]",
-                "[streams:var]" // streams key with variable args after it
-        });
-        Map<String, RespValue> optionsMap = argReader.readArgs(args);
+        Map<String, RespValue> optionsMap = ARG_READER.readArgs(args);
         if (optionsMap.containsKey("block")) {
             timeoutMillis = optionsMap.get("block").getValueAsLong();
         }
