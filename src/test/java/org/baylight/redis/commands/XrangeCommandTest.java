@@ -76,22 +76,22 @@ public class XrangeCommandTest implements WithAssertions, TestConstants {
 
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args.toArray(new RespValue[0])))
-                .withMessage("XRANGE: Invalid arg, expected string. 0: null");
+                .withMessage("XREAD: Missing required arg '' at index 0");
 
         args.add(new RespSimpleStringValue("xrange"));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args.toArray(new RespValue[0])))
-                .withMessage("XRANGE: Invalid arg, expected string. 1: null");
+                .withMessage("XREAD: Missing required arg '' at index 1");
 
         args.add(new RespSimpleStringValue("streamKey"));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args.toArray(new RespValue[0])))
-                .withMessage("XRANGE: Invalid arg, expected string. 2: null");
+                .withMessage("XREAD: Missing required arg '' at index 2");
 
         args.add(new RespSimpleStringValue("startItem"));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args.toArray(new RespValue[0])))
-                .withMessage("XRANGE: Invalid arg, expected string. 3: null");
+                .withMessage("XREAD: Missing required arg '' at index 3");
     }
 
 }

@@ -1,6 +1,7 @@
 package org.baylight.redis.commands;
 
 import java.util.List;
+import java.util.Map;
 
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespBulkString;
@@ -10,6 +11,14 @@ import org.baylight.redis.streams.IllegalStreamItemIdException;
 import org.baylight.redis.streams.StreamValue;
 
 public class XrangeCommand extends RedisCommand {
+
+    private static ArgReader ARG_READER = new ArgReader(Type.XREAD.name(), new String[] {
+            ":string", // command name
+            ":string", // key
+            ":string", // start id
+            ":string" // end id
+    });
+
     private String key;
     private String start;
     private String end;
@@ -48,18 +57,10 @@ public class XrangeCommand extends RedisCommand {
 
     @Override
     protected void setArgs(RespValue[] args) {
-        validateArgIsString(args, 0);
-        if (!args[0].getValueAsString().toLowerCase().equals("xrange")) {
-            throw new IllegalArgumentException(
-                    String.format("%s: Invalid command arg: %s", type.name(),
-                            args[0].getValueAsString()));
-        }
-        validateArgIsString(args, 1);
-        key = args[1].getValueAsString();
-        validateArgIsString(args, 2);
-        start = args[2].getValueAsString();
-        validateArgIsString(args, 3);
-        end = args[3].getValueAsString();
+        Map<String, RespValue> optionsMap = ARG_READER.readArgs(args);
+        key = optionsMap.get("1").getValueAsString();
+        start = optionsMap.get("2").getValueAsString();
+        end = optionsMap.get("3").getValueAsString();
     }
 
     @Override

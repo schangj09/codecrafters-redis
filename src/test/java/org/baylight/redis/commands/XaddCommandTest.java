@@ -77,7 +77,7 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
         // when
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args))
-                .withMessage("XADD: Invalid arg, expected string. 0: null");
+                .withMessage("XADD: Missing required arg '' at index 0");
     }
 
     // When setArgs is called with an invalid key, an IllegalArgumentException should be thrown.
@@ -90,7 +90,7 @@ public class XaddCommandTest implements WithAssertions, TestConstants {
         // when
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args))
-                .withMessage("XADD: Invalid arg, expected string. 1: null");
+                .withMessage("XADD: Missing required arg '' at index 1");
     }
 
     // When setArgs is called with invalid data, an IllegalArgumentException should be thrown.

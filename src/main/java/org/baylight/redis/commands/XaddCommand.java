@@ -2,6 +2,7 @@ package org.baylight.redis.commands;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.baylight.redis.RedisServiceBase;
@@ -13,6 +14,14 @@ import org.baylight.redis.streams.IllegalStreamItemIdException;
 import org.baylight.redis.streams.StreamId;
 
 public class XaddCommand extends RedisCommand {
+
+    private static ArgReader ARG_READER = new ArgReader(Type.XADD.name(), new String[] {
+            ":string", // command name
+            ":string", // key
+            ":string", // itemId
+            ":var" // itemMap
+    });
+
     private String key;
     private String itemId;
     RespValue[] itemMap = null;
@@ -46,35 +55,29 @@ public class XaddCommand extends RedisCommand {
 
     @Override
     protected void setArgs(RespValue[] args) {
-        validateArgIsString(args, 0);
-        if (!args[0].getValueAsString().toLowerCase().equals("xadd")) {
-            throw new IllegalArgumentException(
-                    String.format("%s: Invalid command arg: %s", type.name(),
-                            args[0].getValueAsString()));
-        }
-        validateArgIsString(args, 1);
-        key = args[1].getValueAsString();
-        validateArgIsString(args, 2);
-        itemId = args[2].getValueAsString();
+        Map<String, RespValue> optionsMap = ARG_READER.readArgs(args);
+        key = optionsMap.get("1").getValueAsString();
+        itemId = optionsMap.get("2").getValueAsString();
 
-        int nextArg = 3;
-        itemMap = new RespValue[args.length - nextArg];
-        int itemIndex = 0;
-        Set<RespValue> itemKeys = new HashSet<>();
-        if ((args.length - nextArg) % 2 == 1) {
-            throw new IllegalArgumentException(
-                    String.format("%s: Invalid number of item key value pairs", type.name()));
-        }
-        for (int i = nextArg; i < args.length; i += 2, itemIndex += 2) {
-            validateArgIsString(args, i);
-            validateArgIsString(args, i + 1);
-            if (itemKeys.contains(args[i])) {
+        if (!optionsMap.containsKey("3")) {
+            throw new IllegalArgumentException(String
+                    .format("%s: missing map values", type.name()));
+        } else {
+            RespArrayValue itemMapArg = (RespArrayValue) optionsMap.get("3");
+            itemMap = itemMapArg.getValues();
+
+            Set<RespValue> itemKeys = new HashSet<>();
+            if ((itemMap.length) % 2 == 1) {
                 throw new IllegalArgumentException(
-                        String.format("%s: Duplicate item key: %s", type.name(), args[i]));
+                        String.format("%s: Invalid number of item key value pairs", type.name()));
             }
-            itemKeys.add(args[i]);
-            itemMap[itemIndex] = args[i];
-            itemMap[itemIndex + 1] = args[i + 1];
+            for (int i = 0; i < itemMap.length; i += 2) {
+                if (itemKeys.contains(itemMap[i])) {
+                    throw new IllegalArgumentException(
+                            String.format("%s: Duplicate item key: %s", type.name(), itemMap[i]));
+                }
+                itemKeys.add(itemMap[i]);
+            }
         }
     }
 
