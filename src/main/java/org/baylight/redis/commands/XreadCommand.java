@@ -19,7 +19,7 @@ public class XreadCommand extends RedisCommand {
     private static ArgReader ARG_READER = new ArgReader(Type.XREAD.name(), new String[] {
             ":string", // command name
             "[block:int]", // blocking milliseconds
-            "[streams:var]" // streams key with variable args after it
+            "<streams:var>" // streams key required with variable args after it
     });
 
     private List<String> keys;
@@ -90,21 +90,17 @@ public class XreadCommand extends RedisCommand {
         if (optionsMap.containsKey("block")) {
             timeoutMillis = optionsMap.get("block").getValueAsLong();
         }
-        if (!optionsMap.containsKey("streams")) {
-            throw new IllegalArgumentException(String
-                    .format("%s: Missing streams arg", type.name()));
-        } else {
-            RespArrayValue streams = (RespArrayValue) optionsMap.get("streams");
-            RespValue[] valuesArray = streams.getValues();
-            if (valuesArray.length == 0 || valuesArray.length % 2 == 1) {
-                throw new IllegalArgumentException(
-                        String.format("%s: Invalid number of streams pairs", type.name()));
-            }
-            int n = valuesArray.length / 2;
-            for (int i = 0; i < n; i++) {
-                keys.add(valuesArray[i].getValueAsString());
-                startValues.add(valuesArray[n + i].getValueAsString());
-            }
+
+        RespArrayValue streams = (RespArrayValue) optionsMap.get("streams");
+        RespValue[] valuesArray = streams.getValues();
+        if (valuesArray.length == 0 || valuesArray.length % 2 == 1) {
+            throw new IllegalArgumentException(
+                    String.format("%s: Invalid number of streams pairs", type.name()));
+        }
+        int n = valuesArray.length / 2;
+        for (int i = 0; i < n; i++) {
+            keys.add(valuesArray[i].getValueAsString());
+            startValues.add(valuesArray[n + i].getValueAsString());
         }
     }
 
