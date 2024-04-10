@@ -81,6 +81,29 @@ class ArgReaderTest implements WithAssertions {
     }
 
     @Test
+    public void testReadArgsRequiredVar() {
+        String[] argSpec = { ":int", ":var" };
+        ArgReader reader = new ArgReader("mycmd", argSpec);
+        RespValue[] args = {
+                new RespSimpleStringValue("23"),
+                new RespSimpleStringValue("c1"),
+                new RespSimpleStringValue("v1"),
+                new RespSimpleStringValue("c2")
+        };
+        Map<String, RespValue> options = reader.readArgs(args);
+
+        assertThat(options).hasSize(2);
+        assertThat(options).isEqualTo(
+                Map.of(
+                        "0", new RespSimpleStringValue("23"),
+                        "1", new RespArrayValue(new RespValue[] {
+                                new RespSimpleStringValue("c1"),
+                                new RespSimpleStringValue("v1"),
+                                new RespSimpleStringValue("c2")
+                        })));
+    }
+
+    @Test
     public void testReadArgsMissingRequiredPositional() {
         String[] argSpec = { ":int", ":string" };
         ArgReader reader = new ArgReader("mycmd", argSpec);

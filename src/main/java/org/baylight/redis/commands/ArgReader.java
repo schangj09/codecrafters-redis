@@ -207,7 +207,7 @@ public class ArgReader {
             validateArgIsInteger(args, index);
         } else if (argSpec.type.equals("string")) {
             validateArgIsString(args, index);
-        } else {
+        } else if (!argSpec.type.equals("var")) {
             throw new IllegalArgumentException(
                     String.format("%s: Invalid value for arg '%s' expected type %s at index %d: %s",
                             commandName, argSpec.name, argSpec.type, index, arg));
