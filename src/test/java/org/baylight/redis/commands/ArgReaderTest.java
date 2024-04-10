@@ -35,7 +35,7 @@ class ArgReaderTest implements WithAssertions {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> new ArgReader("mycmd", argSpec))
                 .withMessage(
-                        "mycmd: invalid spec multiple vararg");
+                        "mycmd: Invalid arg spec - there can be only one option group with a var arg");
     }
 
     @Test

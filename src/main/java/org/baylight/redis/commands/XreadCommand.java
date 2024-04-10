@@ -92,7 +92,7 @@ public class XreadCommand extends RedisCommand {
         }
         if (!optionsMap.containsKey("streams")) {
             throw new IllegalArgumentException(String
-                    .format("%s: missing streams arg", type.name()));
+                    .format("%s: Missing streams arg", type.name()));
         } else {
             RespArrayValue streams = (RespArrayValue) optionsMap.get("streams");
             RespValue[] valuesArray = streams.getValues();

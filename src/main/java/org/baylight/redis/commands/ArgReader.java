@@ -89,7 +89,9 @@ public class ArgReader {
                 }
                 if (groupHasVarArg && foundVarArg) {
                     throw new IllegalStateException(
-                            String.format("%s: invalid spec multiple vararg", commandName));
+                            String.format(
+                                    "%s: Invalid arg spec - there can be only one option group with a var arg",
+                                    commandName));
                 }
                 if (groupHasVarArg) {
                     foundVarArg = true;

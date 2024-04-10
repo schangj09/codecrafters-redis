@@ -106,7 +106,7 @@ public class XreadCommandTest implements WithAssertions, TestConstants {
         args.add(new RespSimpleStringValue("xread"));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> command.setArgs(args.toArray(new RespValue[0])))
-                .withMessage("XREAD: missing streams arg");
+                .withMessage("XREAD: Missing streams arg");
 
         args.add(new RespSimpleStringValue("streams"));
         assertThatExceptionOfType(IllegalArgumentException.class)
