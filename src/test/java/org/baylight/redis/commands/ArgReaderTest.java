@@ -22,7 +22,7 @@ class ArgReaderTest implements WithAssertions {
     };
 
     @Test
-    public void testInvalidArgSpec() {
+    public void testInvalidArgSpec_unknownType() {
         assertThatThrownBy(() -> new ArgReader("mycmd", new String[] { "myarg:float" }))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Invalid type in arg spec: float");
@@ -36,6 +36,26 @@ class ArgReaderTest implements WithAssertions {
                 .isThrownBy(() -> new ArgReader("mycmd", argSpec))
                 .withMessage(
                         "mycmd: Invalid arg spec - there can be only one option group with a var arg");
+    }
+
+    @Test
+    public void testInvalidArgSpec_badOptionGroup() {
+        String[] argSpec = { ":int", "[c1:var", "[c2:var]" };
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> new ArgReader("mycmd", argSpec))
+                .withMessage(
+                        "mycmd: Invalid arg spec - bad optional group spec '[c1:var'");
+    }
+
+    @Test
+    public void testInvalidArgSpec_badRequiredGroup() {
+        String[] argSpec = { ":int", "[c1:var]", "<c2:var]" };
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> new ArgReader("mycmd", argSpec))
+                .withMessage(
+                        "mycmd: Invalid arg spec - bad required group spec '<c2:var]'");
     }
 
     @Test
@@ -104,6 +124,31 @@ class ArgReaderTest implements WithAssertions {
     }
 
     @Test
+    public void testReadArgsRequiredNamedVar() {
+        String[] argSpec = { ":int", "[x:int]", "<c1:var>" };
+        ArgReader reader = new ArgReader("mycmd", argSpec);
+        RespValue[] args = {
+                new RespSimpleStringValue("23"),
+                new RespSimpleStringValue("x"),
+                new RespSimpleStringValue("22"),
+                new RespSimpleStringValue("c1"),
+                new RespSimpleStringValue("v1"),
+                new RespSimpleStringValue("c2")
+        };
+        Map<String, RespValue> options = reader.readArgs(args);
+
+        assertThat(options).hasSize(3);
+        assertThat(options).isEqualTo(
+                Map.of(
+                        "0", new RespSimpleStringValue("23"),
+                        "c1", new RespArrayValue(new RespValue[] {
+                                new RespSimpleStringValue("v1"),
+                                new RespSimpleStringValue("c2")
+                        }),
+                        "x", new RespSimpleStringValue("22")));
+    }
+
+    @Test
     public void testReadArgsMissingRequiredPositional() {
         String[] argSpec = { ":int", ":string" };
         ArgReader reader = new ArgReader("mycmd", argSpec);
@@ -148,6 +193,22 @@ class ArgReaderTest implements WithAssertions {
                 .isThrownBy(() -> reader.readArgs(args))
                 .withMessage(
                         "mycmd: Invalid arg, expected 'c1' at index 1: RespSimpleStringValue [s=c111]");
+    }
+
+    @Test
+    public void testReadArgsMissingRequiredNamedGroup() {
+        String[] argSpec = { ":int", "[x:int]", "<c1:var>" };
+        ArgReader reader = new ArgReader("mycmd", argSpec);
+        RespValue[] args = {
+                new RespSimpleStringValue("23"),
+                new RespSimpleStringValue("x"),
+                new RespSimpleStringValue("22")
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> reader.readArgs(args))
+                .withMessage(
+                        "mycmd: Invalid args, required arg group [c1:var] not found in args");
     }
 
     @Test

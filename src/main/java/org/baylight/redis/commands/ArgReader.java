@@ -20,6 +20,11 @@ import org.baylight.redis.protocol.RespValue;
 // algorithm: iterate args and maintain next expected state
 
 public class ArgReader {
+    private static final String OPTION_GROUP_PREFIX = "[";
+    private static final String OPTION_GROUP_SUFFIX = "]";
+    private static final String REQUIRED_GROUP_PREFIX = "<";
+    private static final String REQUIRED_GROUP_SUFFIX = ">";
+
     static class Arg {
         String name;
         String type;
@@ -49,6 +54,18 @@ public class ArgReader {
         public boolean isVarArg() {
             return "var".equals(type);
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            if (hasName()) {
+                sb.append(name);
+            }
+            if (hasType()) {
+                sb.append(":").append(type);
+            }
+            return sb.toString();
+        }
     }
 
     static class GroupArg extends Arg {
@@ -61,11 +78,12 @@ public class ArgReader {
 
     }
 
-    String commandName;
+    private String commandName;
     // required args
-    List<Arg> requiredArgs = new ArrayList<>();
+    private List<Arg> requiredArgs = new ArrayList<>();
+    private Set<Integer> requiredGroups = new HashSet<>();
     // optional arg groups - keyed by unique id (index in the arg spec)
-    Map<Integer, Set<GroupArg>> optionGroups = new HashMap<>();
+    private Map<Integer, Set<GroupArg>> optionGroups = new HashMap<>();
 
     public ArgReader(String commandName, String[] argSpec) {
         this.commandName = commandName;
@@ -76,7 +94,19 @@ public class ArgReader {
         boolean foundVarArg = false;
         for (int i = 0; i < argSpec.length; i++) {
             String s = argSpec[i];
-            if (s.startsWith("[")) {
+            if (s.startsWith(OPTION_GROUP_PREFIX) || s.startsWith(REQUIRED_GROUP_PREFIX)) {
+                if (s.startsWith(OPTION_GROUP_PREFIX) && !s.endsWith(OPTION_GROUP_SUFFIX)) {
+                    throw new IllegalStateException(
+                            String.format(
+                                    "%s: Invalid arg spec - bad optional group spec '%s'",
+                                    commandName, s));
+                }
+                if (s.startsWith(REQUIRED_GROUP_PREFIX) && !s.endsWith(REQUIRED_GROUP_SUFFIX)) {
+                    throw new IllegalStateException(
+                            String.format(
+                                    "%s: Invalid arg spec - bad required group spec '%s'",
+                                    commandName, s));
+                }
                 String[] options = s.substring(1, s.length() - 1).split(" ");
                 Set<GroupArg> group = new HashSet<>();
                 boolean groupHasVarArg = false;
@@ -97,6 +127,9 @@ public class ArgReader {
                     foundVarArg = true;
                 }
                 optionGroups.put(i, group);
+                if (s.startsWith(REQUIRED_GROUP_PREFIX)) {
+                    requiredGroups.add(i);
+                }
             } else {
                 requiredArgs.add(parseArg(s));
             }
@@ -147,6 +180,14 @@ public class ArgReader {
             // succeeded to add it, so store as the group value
             foundGroupOptions.put(arg.group, next);
         }
+        requiredGroups.forEach(groupId -> {
+            if (!foundGroupOptions.containsKey(groupId)) {
+                throw new IllegalArgumentException(String
+                        .format("%s: Invalid args, required arg group %s not found in args",
+                                commandName, optionGroups.get(groupId)));
+
+            }
+        });
         return optionMap;
     }
 
