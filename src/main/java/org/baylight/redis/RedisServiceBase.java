@@ -290,6 +290,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     public void terminate() {
         System.out.println(String.format("Terminate invoked. Closing %d connections.",
                 connectionManager.getNumConnections()));
+        eventLoop.terminate();
         done = true;
         // stop accepting new connections and shut down the accept connections thread
         try {
@@ -327,7 +328,6 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
             conn.close();
         }
         case TerminateCommand c -> {
-            eventLoop.terminate();
             terminate();
         }
         default -> {
