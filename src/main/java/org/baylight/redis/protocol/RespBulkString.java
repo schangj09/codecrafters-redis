@@ -16,8 +16,13 @@ public class RespBulkString extends RespValueBase {
 
     public RespBulkString(BufferedInputLineReader reader) throws IOException {
         super(RespType.BULK_STRING);
-        value = reader.readNBytes(reader.readInt());
-        reader.readCRLF();
+        int len = reader.readInt();
+        if (len >= 0) {
+            value = reader.readNBytes(len);
+            reader.readCRLF();
+        } else {
+            value = null;
+        }
     }
 
     public byte[] asResponse() {
@@ -25,6 +30,10 @@ public class RespBulkString extends RespValueBase {
     }
 
     public byte[] asResponse(boolean trailingCRLF) {
+        if (isNullValue()) {
+            return RespConstants.NULL;
+        }
+
         StringBuilder builder = new StringBuilder("$").append(value.length).append("\r\n");
         byte[] prefixBytes = builder.toString().getBytes();
         int n = prefixBytes.length + value.length;
@@ -44,6 +53,9 @@ public class RespBulkString extends RespValueBase {
 
     @Override
     public String toString() {
+        if (isNullValue()) {
+            return RespNullValue.INSTANCE.toString();
+        }
         return "BulkString [length=" + value.length + ", value=" + truncValueString(15) + "]";
     }
 
@@ -56,8 +68,12 @@ public class RespBulkString extends RespValueBase {
         return sb.toString();
     }
 
+    public boolean isNullValue() {
+        return value == null;
+    }
+
     public byte[] getValue() {
-        return value;
+        return !isNullValue() ? value : RespConstants.NULL;
     }
 
     public String getValueAsString() {
