@@ -33,7 +33,7 @@ public class ClientConnection {
         writer = new BufferedResponseStreamWriter(new BufferedOutputStream(outputStream));
     }
 
-    RespValue readValue() throws IOException {
+    public RespValue readValue() throws IOException {
         long startBytesOffset = reader.getNumBytesReceived();
 
         RespValue value = valueParser.parse(reader);
