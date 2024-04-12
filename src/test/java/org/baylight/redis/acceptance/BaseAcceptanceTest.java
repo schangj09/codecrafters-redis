@@ -31,34 +31,40 @@ public class BaseAcceptanceTest implements WithAssertions, TestConstants {
     @Test
     void testPing() throws Exception {
         Socket socket = new Socket("localhost", 6379);
-
-        ClientConnection conn = new ClientConnection(socket, new RespValueParser());
-        conn.writeFlush("*1\r\n+ping\r\n".getBytes());
-        RespValue value = conn.readValue();
-        System.out.println(value.toString());
-        assertThat(encodeResponse(value)).isEqualTo(encodeResponse("+PONG\r\n"));
+        try {
+            ClientConnection conn = new ClientConnection(socket, new RespValueParser());
+            conn.writeFlush("*1\r\n+ping\r\n".getBytes());
+            RespValue value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse("+PONG\r\n"));
+        } finally {
+            socket.close();
+        }
     }
 
     @Test
     void testSetGet() throws Exception {
         Socket socket = new Socket("localhost", 6379);
+        try {
+            ClientConnection conn = new ClientConnection(socket, new RespValueParser());
+            RespValue value;
 
-        ClientConnection conn = new ClientConnection(socket, new RespValueParser());
-        RespValue value;
+            conn.writeFlush("*2\r\n+get\r\n+m1\r\n".getBytes());
+            value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse("$-1\r\n"));
 
-        conn.writeFlush("*2\r\n+get\r\n+m1\r\n".getBytes());
-        value = conn.readValue();
-        System.out.println(value.toString());
-        assertThat(encodeResponse(value)).isEqualTo(encodeResponse("$-1\r\n"));
+            conn.writeFlush("*3\r\n+set\r\n+m1\r\n+456\r\n".getBytes());
+            value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse("+OK\r\n"));
 
-        conn.writeFlush("*3\r\n+set\r\n+m1\r\n+456\r\n".getBytes());
-        value = conn.readValue();
-        System.out.println(value.toString());
-        assertThat(encodeResponse(value)).isEqualTo(encodeResponse("+OK\r\n"));
-
-        conn.writeFlush("*2\r\n+get\r\n+m1\r\n".getBytes());
-        value = conn.readValue();
-        System.out.println(value.toString());
-        assertThat(encodeResponse(value)).isEqualTo(encodeResponse("$3\r\n456\r\n"));
+            conn.writeFlush("*2\r\n+get\r\n+m1\r\n".getBytes());
+            value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse("$3\r\n456\r\n"));
+        } finally {
+            socket.close();
+        }
     }
 }
