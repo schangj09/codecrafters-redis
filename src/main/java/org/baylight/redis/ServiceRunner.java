@@ -7,7 +7,7 @@ public class ServiceRunner implements Runnable {
     RedisServiceOptions options;
     RedisServiceBase service = null;
 
-    public ServiceRunner(String[] args) {
+    public ServiceRunner(String... args) {
         options = new RedisServiceOptions();
         if (!options.parseArgs(args)) {
             throw new RuntimeException("Invalid arguments");
