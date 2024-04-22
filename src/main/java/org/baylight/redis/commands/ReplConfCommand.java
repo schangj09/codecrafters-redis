@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.baylight.redis.ClientConnection;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
@@ -37,23 +38,25 @@ public class ReplConfCommand extends RedisCommand {
                     "[ack:int capa:string getack:string listening-port:int]" });
 
     private Map<String, RespValue> optionsMap = new HashMap<>();
+    private final ClientConnection connection;
     private final long startBytesOffset;
 
     public ReplConfCommand() {
-        this(0L);
+        this(null, 0L);
     }
 
     public ReplConfCommand(Option option, String optionValue) {
-        this(option, optionValue, 0L);
+        this(null, option, optionValue, 0L);
     }
 
-    public ReplConfCommand(long startBytesOffset) {
+    public ReplConfCommand(ClientConnection conn, long startBytesOffset) {
         super(Type.REPLCONF);
+        this.connection = conn;
         this.startBytesOffset = startBytesOffset;
     }
 
-    public ReplConfCommand(Option option, String optionValue, long startBytesOffset) {
-        this(startBytesOffset);
+    public ReplConfCommand(ClientConnection conn, Option option, String optionValue, long startBytesOffset) {
+        this(conn, startBytesOffset);
         optionsMap.put("0", new RespSimpleStringValue(Type.REPLCONF.name()));
         optionsMap.put(option.getName(), optionValue == null ? RespConstants.NULL_VALUE
                 : new RespSimpleStringValue(optionValue));
@@ -66,7 +69,7 @@ public class ReplConfCommand extends RedisCommand {
 
     @Override
     public byte[] execute(RedisServiceBase service) {
-        return service.replicationConfirm(optionsMap, startBytesOffset);
+        return service.replicationConfirm(connection, optionsMap, startBytesOffset);
     }
 
     @Override
@@ -93,7 +96,8 @@ public class ReplConfCommand extends RedisCommand {
 
     @Override
     public String toString() {
-        return "ReplConfCommand [optionsMap=" + optionsMap + "]";
+        return "ReplConfCommand [optionsMap=" + optionsMap + ", connection=" + connection
+                + ", startBytesOffset=" + startBytesOffset + "]";
     }
 
     public Map<String, RespValue> getOptionsMap() {

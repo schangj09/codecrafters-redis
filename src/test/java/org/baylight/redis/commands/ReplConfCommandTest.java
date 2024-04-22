@@ -1,5 +1,6 @@
 package org.baylight.redis.commands;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 
 import org.assertj.core.api.WithAssertions;
+import org.baylight.redis.ClientConnection;
 import org.baylight.redis.LeaderService;
 import org.baylight.redis.RedisServiceBase;
 import org.baylight.redis.commands.ReplConfCommand.Option;
@@ -35,8 +37,10 @@ public class ReplConfCommandTest implements WithAssertions {
     public void test_listeningPortProvided_executeMethodShouldConfirmListeningPort() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        when(service.replicationConfirm(anyMap(), anyLong())).thenReturn(RespConstants.OK);
-        ReplConfCommand command = new ReplConfCommand(Option.LISTENING_PORT, "1111", START_OFFSET);
+        when(service.replicationConfirm(any(), anyMap(), anyLong())).thenReturn(RespConstants.OK);
+        ClientConnection conn = mock(ClientConnection.class);
+        ReplConfCommand command = new ReplConfCommand(conn, Option.LISTENING_PORT, "1111",
+                START_OFFSET);
 
         // when
         byte[] result = command.execute(service);
@@ -44,6 +48,7 @@ public class ReplConfCommandTest implements WithAssertions {
         // then
         assertThat(result).isEqualTo(RespConstants.OK);
         verify(service).replicationConfirm(
+                eq(conn),
                 eq(Map.of("0", V1, "listening-port", new RespSimpleStringValue("1111"))),
                 eq(START_OFFSET));
         verifyNoMoreInteractions(service);
@@ -54,8 +59,9 @@ public class ReplConfCommandTest implements WithAssertions {
     public void test_capaProvided_executeMethodShouldConfirmPsync2() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        when(service.replicationConfirm(anyMap(), anyLong())).thenReturn(RespConstants.OK);
-        ReplConfCommand command = new ReplConfCommand(Option.CAPA, "psync2", START_OFFSET);
+        when(service.replicationConfirm(any(), anyMap(), anyLong())).thenReturn(RespConstants.OK);
+        ClientConnection conn = mock(ClientConnection.class);
+        ReplConfCommand command = new ReplConfCommand(conn, Option.CAPA, "psync2", START_OFFSET);
 
         // when
         byte[] result = command.execute(service);
@@ -63,7 +69,9 @@ public class ReplConfCommandTest implements WithAssertions {
         // then
         assertThat(result).isEqualTo(RespConstants.OK);
         verify(service).replicationConfirm(
-                eq(Map.of("0", V1, "capa", new RespSimpleStringValue("psync2"))), eq(START_OFFSET));
+                eq(conn),
+                eq(Map.of("0", V1, "capa", new RespSimpleStringValue("psync2"))),
+                eq(START_OFFSET));
         verifyNoMoreInteractions(service);
     }
 
@@ -72,8 +80,9 @@ public class ReplConfCommandTest implements WithAssertions {
     public void test_getackProvided_executeMethodShouldConfirmGetack() {
         // given
         RedisServiceBase service = mock(LeaderService.class);
-        when(service.replicationConfirm(anyMap(), anyLong())).thenReturn(RespConstants.OK);
-        ReplConfCommand command = new ReplConfCommand(Option.GETACK, "*", START_OFFSET);
+        when(service.replicationConfirm(any(), anyMap(), anyLong())).thenReturn(RespConstants.OK);
+        ClientConnection conn = mock(ClientConnection.class);
+        ReplConfCommand command = new ReplConfCommand(conn, Option.GETACK, "*", START_OFFSET);
 
         // when
         byte[] result = command.execute(service);
@@ -81,7 +90,9 @@ public class ReplConfCommandTest implements WithAssertions {
         // then
         assertThat(result).isEqualTo(RespConstants.OK);
         verify(service).replicationConfirm(
-                eq(Map.of("0", V1, "getack", new RespSimpleStringValue("*"))), eq(START_OFFSET));
+                eq(conn),
+                eq(Map.of("0", V1, "getack", new RespSimpleStringValue("*"))),
+                eq(START_OFFSET));
         verifyNoMoreInteractions(service);
     }
 

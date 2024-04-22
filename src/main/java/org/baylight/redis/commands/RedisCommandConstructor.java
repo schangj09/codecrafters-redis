@@ -60,7 +60,7 @@ public class RedisCommandConstructor {
         case KEYS -> new KeysCommand();
         case PING -> new PingCommand();
         case PSYNC -> new PsyncCommand();
-        case REPLCONF -> new ReplConfCommand(arrayStartBytesOffset);
+        case REPLCONF -> new ReplConfCommand(array.getContext().getClientConnection(), arrayStartBytesOffset);
         case SET -> new SetCommand();
         case TYPE -> new TypeCommand();
         case WAIT -> new WaitCommand();

@@ -1,11 +1,13 @@
 package org.baylight.redis.commands;
 
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.util.List;
 
 import org.assertj.core.api.WithAssertions;
+import org.baylight.redis.ClientConnection;
 import org.baylight.redis.protocol.RespArrayValue;
 import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespInteger;
@@ -136,7 +138,8 @@ public class RedisCommandConstructorTest implements WithAssertions {
                 new RespSimpleStringValue("replconf"),
                 new RespSimpleStringValue("listening-port"),
                 new RespInteger(123L));
-        value.setContext(new RespValueContext(START_OFFSET, 21));
+        ClientConnection conn = mock(ClientConnection.class);
+        value.setContext(new RespValueContext(conn, START_OFFSET, 21));
 
         // when
         RedisCommand actualCommand = new RedisCommandConstructor().newCommandFromValue(value);
@@ -145,6 +148,7 @@ public class RedisCommandConstructorTest implements WithAssertions {
         String expectedResponse = "*3\r\n$8\r\nreplconf\r\n$14\r\nlistening-port\r\n$3\r\n123\r\n";
         assertThat(actualCommand).asInstanceOf(type(ReplConfCommand.class));
         assertThat(new String(actualCommand.asCommand())).isEqualTo(expectedResponse);
+        assertThat(actualCommand).hasFieldOrPropertyWithValue("connection", conn);
         assertThat(actualCommand).hasFieldOrPropertyWithValue("startBytesOffset", START_OFFSET);
     }
 

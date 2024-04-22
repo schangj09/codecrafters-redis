@@ -255,6 +255,11 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
         return DEFAULT_SECTIONS.contains(section);
     }
 
+    public byte[] replicationConfirm(ClientConnection connection, Map<String, RespValue> optionsMap,
+            long startBytesOffset) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
+
     public abstract byte[] replicationConfirm(Map<String, RespValue> optionsMap,
             long startBytesOffset);
 
