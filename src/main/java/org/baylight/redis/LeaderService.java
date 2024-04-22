@@ -96,7 +96,8 @@ public class LeaderService extends RedisServiceBase {
     }
 
     @Override
-    public byte[] replicationConfirm(Map<String, RespValue> optionsMap, long startBytesOffset) {
+    public byte[] replicationConfirm(ClientConnection connection, Map<String, RespValue> optionsMap,
+            long startBytesOffset) {
         if (optionsMap.containsKey(ReplConfCommand.GETACK_NAME)) {
             String responseValue = String.valueOf(startBytesOffset);
             return new RespArrayValue(new RespValue[] {
@@ -104,6 +105,7 @@ public class LeaderService extends RedisServiceBase {
                     new RespBulkString("ACK".getBytes()),
                     new RespBulkString(responseValue.getBytes()) }).asResponse();
         } else if (optionsMap.containsKey(ReplConfCommand.ACK_NAME)) {
+            ReplConfAckManager.INSTANCE.notifyFollowerSet(connection);
             return null;
         }
         return RespConstants.OK;

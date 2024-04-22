@@ -83,7 +83,8 @@ public class FollowerService extends RedisServiceBase {
         if (leaderConnection.isLeaderConnection(conn)) {
             leaderConnection.executeCommandFromLeader(conn, command);
         } else {
-            System.out.println(String.format("Executing command from non-leader connection: %s", conn));
+            System.out.println(
+                    String.format("Executing command from non-leader connection: %s", conn));
             byte[] response = command.execute(this);
             if (response != null && response.length > 0) {
                 conn.writeFlush(response);
@@ -92,7 +93,8 @@ public class FollowerService extends RedisServiceBase {
     }
 
     @Override
-    public byte[] replicationConfirm(Map<String, RespValue> optionsMap, long startBytesOffset) {
+    public byte[] replicationConfirm(ClientConnection connection, Map<String, RespValue> optionsMap,
+            long startBytesOffset) {
         if (optionsMap.containsKey(ReplConfCommand.GETACK_NAME)) {
             String responseValue = String
                     .valueOf(startBytesOffset - leaderConnection.getHandshakeBytesReceived());
