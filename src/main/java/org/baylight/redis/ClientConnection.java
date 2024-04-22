@@ -41,7 +41,8 @@ public class ClientConnection {
         // set the context for the top-level value from the stream - used for creating a REPLCONF
         // command
         long length = reader.getNumBytesReceived() - startBytesOffset;
-        ((RespValueBase) value).setContext(new RespValueContext(startBytesOffset, (int) length));
+        RespValueContext context = new RespValueContext(this, startBytesOffset, (int) length);
+        ((RespValueBase) value).setContext(context);
         return value;
     }
 
