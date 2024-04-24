@@ -13,10 +13,15 @@ import org.baylight.redis.commands.ReplConfCommand;
 public final class ReplConfAckManager {
     private Map<Object, Set<ClientConnection>> waitFollowerSets = new ConcurrentHashMap<>();
     private Map<Object, Set<ClientConnection>> ackFollowerSets = new ConcurrentHashMap<>();
+    private boolean testingDontWaitForAck = true;
 
     public static ReplConfAckManager INSTANCE = new ReplConfAckManager();
 
     private ReplConfAckManager() {
+    }
+
+    public void setTestingDontWaitForAck(boolean testingDontWaitForAck) {
+        this.testingDontWaitForAck = testingDontWaitForAck;
     }
 
     // get notified that a connection has received a replconf ack
@@ -50,6 +55,9 @@ public final class ReplConfAckManager {
             // wait for either the requested number of acks or all current followers, whichever is
             // less
             int numToWaitFor = Math.min(requestWaitFor, followerSet.size());
+            if (testingDontWaitForAck) {
+                return numToWaitFor;
+            }
             try {
                 while ((start + timeoutMillis - now > 0)
                         && ackSet.size() < numToWaitFor) {

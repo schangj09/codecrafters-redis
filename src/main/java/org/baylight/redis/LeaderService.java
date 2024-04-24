@@ -76,6 +76,7 @@ public class LeaderService extends RedisServiceBase {
                     // once we send the first replicated command, then stop hardcoding the replconf
                     // ack
                     follower.setTestingDontWaitForAck(false);
+                    ReplConfAckManager.INSTANCE.setTestingDontWaitForAck(false);
                     try {
                         clientConnection.writeFlush(command.asCommand());
                     } catch (IOException e) {
