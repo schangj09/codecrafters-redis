@@ -1,6 +1,7 @@
 package org.baylight.redis.acceptance;
 
 import java.net.Socket;
+import java.util.List;
 
 import org.assertj.core.api.WithAssertions;
 import org.baylight.redis.ClientConnection;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class ReplicationAcceptanceTest implements WithAssertions, TestConstants {
+    private static RespValue ACK_RESPONSE = TestConstants
+            .valueOf("*3\r\n+REPLCONF\r\n+ACK\r\n+1000\r\n");
     private static ServiceRunner leader;
     private static ServiceRunner follower1;
     private static ServiceRunner follower2;
@@ -98,6 +101,86 @@ public class ReplicationAcceptanceTest implements WithAssertions, TestConstants 
             System.out.println(value.toString());
             assertThat(encodeResponse(value)).isEqualTo(encodeResponse(":2\r\n"));
         } finally {
+            socket.close();
+            f1Socket.close();
+            f2Socket.close();
+        }
+    }
+
+    @Test
+    void testWaitForReplConfAckShortDelay() throws Exception {
+        Socket socket = new Socket("localhost", 6379);
+        Socket f1Socket = new Socket("localhost", 6380);
+        Socket f2Socket = new Socket("localhost", 6381);
+
+        MockReplicaService mockReplica = new MockReplicaService(6379);
+        mockReplica.start();
+        mockReplica.expect(
+                new CommandResponse(TestConstants.commandOf("*3\r\n+SET\r\n+m2\r\n+456\r\n"),
+                        null));
+        mockReplica.expect(
+                new CommandResponse(TestConstants.commandOf("*3\r\n+REPLCONF\r\n+GETACK\r\n+*\r\n"),
+                        ACK_RESPONSE,
+                        400L));
+
+        try {
+            ClientConnection conn = new ClientConnection(socket, new RespValueParser());
+            RespValue value;
+
+            conn.writeFlush("*3\r\n+set\r\n+m2\r\n+456\r\n".getBytes());
+            value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse("+OK\r\n"));
+
+            conn.writeFlush("*3\r\n+wait\r\n+4\r\n+1000\r\n".getBytes());
+            value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse(":3\r\n"));
+
+            assertThat(mockReplica.nextCommand).isEqualTo(2);
+            assertThat(mockReplica.exceptions).isEqualTo(List.of());
+        } finally {
+            mockReplica.terminate();
+            socket.close();
+            f1Socket.close();
+            f2Socket.close();
+        }
+    }
+
+    @Test
+    void testWaitForReplConfAckLongDelay() throws Exception {
+        Socket socket = new Socket("localhost", 6379);
+        Socket f1Socket = new Socket("localhost", 6380);
+        Socket f2Socket = new Socket("localhost", 6381);
+
+        MockReplicaService mockReplica = new MockReplicaService(6379);
+        mockReplica.start();
+        mockReplica.expect(
+                new CommandResponse(TestConstants.commandOf("*3\r\n+SET\r\n+m2\r\n+456\r\n"),
+                        null));
+        mockReplica.expect(
+                new CommandResponse(TestConstants.commandOf("*3\r\n+REPLCONF\r\n+GETACK\r\n+*\r\n"),
+                        ACK_RESPONSE,
+                        1400L));
+
+        try {
+            ClientConnection conn = new ClientConnection(socket, new RespValueParser());
+            RespValue value;
+
+            conn.writeFlush("*3\r\n+set\r\n+m2\r\n+456\r\n".getBytes());
+            value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse("+OK\r\n"));
+
+            conn.writeFlush("*3\r\n+wait\r\n+4\r\n+1000\r\n".getBytes());
+            value = conn.readValue();
+            System.out.println(value.toString());
+            assertThat(encodeResponse(value)).isEqualTo(encodeResponse(":2\r\n"));
+
+            assertThat(mockReplica.nextCommand).isEqualTo(2);
+            assertThat(mockReplica.exceptions).isEqualTo(List.of());
+        } finally {
+            mockReplica.terminate();
             socket.close();
             f1Socket.close();
             f2Socket.close();

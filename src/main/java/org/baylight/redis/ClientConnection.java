@@ -46,7 +46,7 @@ public class ClientConnection {
         return value;
     }
 
-    byte[] readRDB() throws IOException {
+    public byte[] readRDB() throws IOException {
         int val = reader.read();
         if (val != '$') {
             throw new IllegalArgumentException("Expected RDB from leader, got char " + val);
