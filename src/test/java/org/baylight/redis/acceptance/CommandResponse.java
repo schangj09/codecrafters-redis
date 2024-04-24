@@ -21,8 +21,6 @@ public class CommandResponse {
     }
 
     boolean commandMatches(RedisCommand command) {
-        System.out.println(new String(this.command.asCommand()));
-        System.out.println(new String(command.asCommand()));
         return Arrays.compare(this.command.asCommand(), command.asCommand()) == 0;
     }
 }

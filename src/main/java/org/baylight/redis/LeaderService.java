@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.baylight.redis.commands.RedisCommand;
 import org.baylight.redis.commands.RedisCommand.Type;
@@ -18,6 +19,7 @@ import org.baylight.redis.protocol.RespBulkString;
 import org.baylight.redis.protocol.RespConstants;
 import org.baylight.redis.protocol.RespSimpleStringValue;
 import org.baylight.redis.protocol.RespValue;
+import java.util.Set;
 
 public class LeaderService extends RedisServiceBase {
     private final static String EMPTY_RDB_BASE64 = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==";
@@ -105,7 +107,7 @@ public class LeaderService extends RedisServiceBase {
                     new RespBulkString("ACK".getBytes()),
                     new RespBulkString(responseValue.getBytes()) }).asResponse();
         } else if (optionsMap.containsKey(ReplConfCommand.ACK_NAME)) {
-            ReplConfAckManager.INSTANCE.notifyFollowerSet(connection);
+            ReplConfAckManager.INSTANCE.notifyGotAckFromFollower(connection);
             return null;
         }
         return RespConstants.OK;
@@ -113,12 +115,21 @@ public class LeaderService extends RedisServiceBase {
 
     @Override
     public int waitForReplicationServers(int numReplicas, long timeoutMillis) {
-        // Note: the waitExecutor should return all replicated services that acknowledge, even if it
-        // is greater than requested number, but there is no point in waiting for more responses
-        // than we have replicas, so we use min(numReplicas, replMap.size())
-        WaitExecutor waitExecutor = new WaitExecutor(numReplicas, replMap.size(),
-                executorService);
-        return waitExecutor.wait(replMap.values(), timeoutMillis);
+        boolean useNewWaitMethod = true;
+        if (useNewWaitMethod) {
+            Set<ClientConnection> followerSet = replMap.values().stream()
+                    .map(ConnectionToFollower::getFollowerConnection).collect(Collectors.toSet());
+            return ReplConfAckManager.INSTANCE.waitForAcksFromFollowerSet(numReplicas,
+                    followerSet, clock, timeoutMillis);
+        } else {
+            // Note: the waitExecutor should return all replicated services that acknowledge, even
+            // if it
+            // is greater than requested number, but there is no point in waiting for more responses
+            // than we have replicas, so we use min(numReplicas, replMap.size())
+            WaitExecutor waitExecutor = new WaitExecutor(numReplicas, replMap.size(),
+                    executorService);
+            return waitExecutor.wait(replMap.values(), timeoutMillis);
+        }
     }
 
     @Override

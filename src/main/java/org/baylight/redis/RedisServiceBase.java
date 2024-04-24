@@ -43,7 +43,7 @@ public abstract class RedisServiceBase implements ReplicationServiceInfoProvider
     private final RedisServiceOptions options;
     private final int port;
     private final String role;
-    private final Clock clock;
+    protected final Clock clock;
     private final Map<String, StoredData> dataStoreMap = new ConcurrentHashMap<>();
 
     public static RedisServiceBase newInstance(RedisServiceOptions options, Clock clock) {
