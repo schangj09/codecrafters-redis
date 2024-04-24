@@ -56,7 +56,7 @@ public final class ReplConfAckManager {
             // less
             int numToWaitFor = Math.min(requestWaitFor, followerSet.size());
             if (testingDontWaitForAck) {
-                return numToWaitFor;
+                return followerSet.size();
             }
             try {
                 while ((start + timeoutMillis - now > 0)
